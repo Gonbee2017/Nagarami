@@ -60,10 +60,13 @@ LRESULT Window::onReceive
     } catch(const shared_ptr<runtime_error>&error)
     {
         ct().error=error;
-        result=DefWindowProc(handle,message,wParam,lParam);
         if(message==WM_NCCREATE) result=FALSE;
         else if(message==WM_CREATE) result=-1;
-        else DestroyWindow(handle);
+        else
+        {
+            result=DefWindowProc(handle,message,wParam,lParam);
+            DestroyWindow(handle);
+        }
     }
     return result;
 }
