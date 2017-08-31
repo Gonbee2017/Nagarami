@@ -1,0 +1,43 @@
+#include"resource.h"
+#include<windows.h>
+
+IDB_ACTIVATE    BITMAP DISCARDABLE "../rc/activate.bmp"
+IDB_ALPHA       BITMAP DISCARDABLE "../rc/alpha.bmp"
+IDB_BACK        BITMAP DISCARDABLE "../rc/back.bmp"
+IDB_CLOSE       BITMAP DISCARDABLE "../rc/close.bmp"
+IDB_FIT         BITMAP DISCARDABLE "../rc/fit.bmp"
+IDB_HALFTONE    BITMAP DISCARDABLE "../rc/halftone.bmp"
+IDB_HOLE        BITMAP DISCARDABLE "../rc/hole.bmp"
+IDB_MAXIMIZE    BITMAP DISCARDABLE "../rc/maximize.bmp"
+IDB_MINIMIZE    BITMAP DISCARDABLE "../rc/minimize.bmp"
+IDB_RESET       BITMAP DISCARDABLE "../rc/reset.bmp"
+IDB_SCALE       BITMAP DISCARDABLE "../rc/scale.bmp"
+IDB_SYNCHRONIZE BITMAP DISCARDABLE "../rc/synchronize.bmp"
+
+IDI_APPLICATION_ ICON "../rc/application.ico"
+
+VS_VERSION_INFO VERSIONINFO
+FILEVERSION    VER_VERSION
+PRODUCTVERSION VER_VERSION
+FILEFLAGSMASK  VS_FFI_FILEFLAGSMASK
+FILEFLAGS      VS_FF_PRERELEASE
+FILEOS         VOS_NT_WINDOWS32
+FILETYPE       VFT_APP
+FILESUBTYPE    VFT2_UNKNOWN
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "000004b0"
+        BEGIN
+            VALUE "FileDescription",VER_FILEDESCRIPTION
+            VALUE "FileVersion",    VER_VERSION_STR
+            VALUE "LegalCopyright", VER_LEGALCOPYRIGHT
+            VALUE "ProductName",    VER_PRODUCTNAME
+            VALUE "ProductVersion", VER_VERSION_STR
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation",0x0,1200
+    END
+END
