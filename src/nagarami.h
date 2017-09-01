@@ -36,8 +36,8 @@ constexpr LONG  MINIMUM_WINDOW_WIDTH    =UNIT_LENGTH*8+FRAME_LENGTH*2;
 constexpr LONG  MINIMUM_WINDOW_HEIGHT   =UNIT_LENGTH*4+FRAME_LENGTH*2;
 constexpr SIZE  MINIMUM_WINDOW_SIZE     =
     SIZE({MINIMUM_WINDOW_WIDTH,MINIMUM_WINDOW_HEIGHT});
-constexpr int   ALPHA_DIVISOR           =20;
 constexpr int   SCALE_DIVISOR           =10;
+constexpr int   ALPHA_DIVISOR           =20;
 constexpr int   MAXIMUM_SCALE           =500;
 constexpr int   MAXIMUM_HOLE            =UNIT_LENGTH*20;
 constexpr LONG  SLIDER_BAR_WIDTH        =UNIT_LENGTH/4;
@@ -57,8 +57,8 @@ constexpr char ACTIVATE_BUTTON_HINT[]   ="Activate";
 constexpr char MINIMIZE_BUTTON_HINT[]   ="Minimize";
 constexpr char MAXIMIZE_BUTTON_HINT[]   ="Maximize";
 constexpr char CLOSE_BUTTON_HINT[]      ="Close";
-constexpr char ALPHA_SLIDER_HINT[]      ="Alpha";
 constexpr char SCALE_SLIDER_HINT[]      ="Scale";
+constexpr char ALPHA_SLIDER_HINT[]      ="Alpha";
 constexpr char HOLE_SLIDER_HINT[]       ="Hole";
 
 constexpr BYTE     DEFAULT_ALPHA              =255;
@@ -184,8 +184,7 @@ class TimeKillEvent:public Finalizer {public:TimeKillEvent(UINT timer);};
 
 class Timer
 {
-public:
-    Timer(UINT delay,HWND dest);
+public:Timer(UINT delay,HWND dest);
 protected:
     static void CALLBACK timeProcedure
     (
@@ -295,8 +294,7 @@ public:
         const string&toolHint
     );
     virtual void deactivate(const POINT&cursorPos) override;
-protected:
-    virtual void render() override;
+protected:virtual void render() override;
 };
 
 class RadioButton:public Button
