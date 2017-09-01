@@ -11,10 +11,10 @@
 #define IDB_SCALE       111
 #define IDB_SYNCHRONIZE 112
 
-#define IDI_APPLICATION_ 201
+#define IDI_NAGARAMI 201
 
 #define VER_FILEDESCRIPTION "Nagarami utility"
 #define VER_LEGALCOPYRIGHT  "Copyright (c) 2017 Gonbee"
 #define VER_PRODUCTNAME     "Nagarami"
-#define VER_VERSION         0,1,1,2
-#define VER_VERSION_STR     "0,1,1,2"
+#define VER_VERSION         0,1,1,3
+#define VER_VERSION_STR     "0,1,1,3"

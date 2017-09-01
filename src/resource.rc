@@ -14,7 +14,7 @@ IDB_RESET       BITMAP DISCARDABLE "../rc/reset.bmp"
 IDB_SCALE       BITMAP DISCARDABLE "../rc/scale.bmp"
 IDB_SYNCHRONIZE BITMAP DISCARDABLE "../rc/synchronize.bmp"
 
-IDI_APPLICATION_ ICON "../rc/application.ico"
+IDI_NAGARAMI ICON "../rc/nagarami.ico"
 
 VS_VERSION_INFO VERSIONINFO
 FILEVERSION    VER_VERSION
