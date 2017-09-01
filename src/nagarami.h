@@ -574,6 +574,7 @@ void GetCursorPos(LPPOINT point);
 bool GetMessage(LPMSG msg,HWND window,UINT first,UINT last);
 int GetObject(HGDIOBJ object,int sizeOfBuffer,LPVOID buffer);
 int GetSystemMetrics(int index);
+void GetWindowPlacement(HWND window,WINDOWPLACEMENT*placement);
 void InvalidateRect(HWND window,CONST RECT*rect,BOOL erase);
 shared_ptr<DeleteObject> LoadBitmap(HINSTANCE instance,LPCTSTR name);
 HCURSOR LoadCursor(HINSTANCE instance,LPCTSTR name);

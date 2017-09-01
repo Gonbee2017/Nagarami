@@ -16,5 +16,5 @@
 #define VER_FILEDESCRIPTION "Nagarami utility"
 #define VER_LEGALCOPYRIGHT  "Copyright (c) 2017 Gonbee"
 #define VER_PRODUCTNAME     "Nagarami"
-#define VER_VERSION         0,1,1,4
-#define VER_VERSION_STR     "0,1,1,4"
+#define VER_VERSION         0,1,1,5
+#define VER_VERSION_STR     "0,1,1,5"

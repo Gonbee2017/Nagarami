@@ -62,7 +62,8 @@ LRESULT Window::onReceive
         ct().error=error;
         if(message==WM_NCCREATE) result=FALSE;
         else if(message==WM_CREATE) result=-1;
-        else
+        else if(message==WM_DESTROY) result=0;
+        else if(message==WM_NCDESTROY) result=0;
         {
             result=DefWindowProc(handle,message,wParam,lParam);
             DestroyWindow(handle);
@@ -173,6 +174,10 @@ LRESULT MainWindow::onCreate
 LRESULT MainWindow::onDestroy
 (UINT message,WPARAM wParam,LPARAM lParam)
 {
+    WINDOWPLACEMENT placement;
+    nagarami::GetWindowPlacement(handle_,&placement);
+    ct().ps.window_pos=pos(placement.rcNormalPosition);
+    ct().ps.window_size=size(placement.rcNormalPosition);
     if(tool_!=NULL) DestroyWindow(tool_);
     if(!ct().error.get()) PostQuitMessage(0);
     return 0;
@@ -348,33 +353,31 @@ LRESULT MainWindow::onNCHitTest
     LRESULT result=HTCAPTION;
     if(GetKeyState(VK_LBUTTON)>=0&&GetKeyState(VK_RBUTTON)>=0)
     {
-        RECT captionRect=
+        const RECT captionRect=
             rect(CLIENT_POS,ct().ps.window_size-FRAME_LENGTH*2);
         POINT cursorPos=coordinates(lParam);
         nagarami::ScreenToClient(handle_,&cursorPos);
-        if(cursorPos.x<captionRect.left)
+        const bool zoomed=IsZoomed(handle_);
+        if(!zoomed&&cursorPos.x<captionRect.left)
         {
             if(cursorPos.y<captionRect.top) result=HTTOPLEFT;
             else if(cursorPos.y>=captionRect.bottom) result=HTBOTTOMLEFT;
             else result=HTLEFT;
-        } else if(cursorPos.x>=captionRect.right)
+        } else if(!zoomed&&cursorPos.x>=captionRect.right)
         {
             if(cursorPos.y<captionRect.top) result=HTTOPRIGHT;
             else if(cursorPos.y>=captionRect.bottom) result=HTBOTTOMRIGHT;
             else result=HTRIGHT;
-        } else
+        } else if(!zoomed&&cursorPos.y<captionRect.top) result=HTTOP;
+        else if(!zoomed&&cursorPos.y>=captionRect.bottom) result=HTBOTTOM;
+        else
         {
-            if(cursorPos.y<captionRect.top) result=HTTOP;
-            else if(cursorPos.y>=captionRect.bottom) result=HTBOTTOM;
-            else
+            for(Component*component:components_)
             {
-                for(Component*component:components_)
+                if(component->hitTest(cursorPos))
                 {
-                    if(component->hitTest(cursorPos))
-                    {
-                        result=HTCLIENT;
-                        break;
-                    }
+                    result=HTCLIENT;
+                    break;
                 }
             }
         }
@@ -564,9 +567,9 @@ LRESULT MainWindow::onSize
         ct().ps.window_size=size(lParam);
         for(Component*component:components_)
             component->move(ct().ps.window_size);
-        const bool zoomed=IsZoomed(handle_);
-        if(zoomed!=maximizeButton_->value())
-            maximizeButton_->value(zoomed);
+        const bool maximized=wParam==SIZE_MAXIMIZED;
+        if(maximized!=maximizeButton_->value())
+            maximizeButton_->value(maximized);
         nagarami::InvalidateRect(handle_,NULL,FALSE);
         nagarami::UpdateWindow(handle_);
     }

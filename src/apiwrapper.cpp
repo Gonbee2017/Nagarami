@@ -166,6 +166,12 @@ int GetSystemMetrics(int index)
     return result;
 }
 
+void GetWindowPlacement(HWND window,WINDOWPLACEMENT*placement)
+{
+    if(::GetWindowPlacement(window,placement)==FALSE)
+        throw make_shared<api_error>("GetWindowPlacement");
+}
+
 void InvalidateRect(HWND window,CONST RECT*rect,BOOL erase)
 {
     if(::InvalidateRect(window,rect,erase)==FALSE)
