@@ -50,29 +50,29 @@ constexpr COLORREF ALMOST_BLACK_COLOR=RGB(  1,  1,  1);
 constexpr COLORREF BLACK_COLOR       =RGB(  0,  0,  0);
 constexpr COLORREF WHITE_COLOR       =RGB(255,255,255);
 
-constexpr POINT ALPHA_SLIDER_CELL_POS      =POINT({ 0,-2});
-constexpr POINT CLOSE_BUTTON_CELL_POS      =POINT({-1, 0});
-constexpr POINT FIT_BUTTON_CELL_POS        =POINT({ 2, 0});
-constexpr POINT FOREGROUND_BUTTON_CELL_POS =POINT({ 1, 0});
-constexpr POINT HALFTONE_BUTTON_CELL_POS   =POINT({ 3, 0});
-constexpr POINT HOLE_SLIDER_CELL_POS       =POINT({ 0,-1});
-constexpr POINT MAXIMIZE_BUTTON_CELL_POS   =POINT({-2, 0});
-constexpr POINT MINIMIZE_BUTTON_CELL_POS   =POINT({-3, 0});
-constexpr POINT RESET_BUTTON_CELL_POS      =POINT({ 4, 0});
-constexpr POINT SCALE_SLIDER_CELL_POS      =POINT({ 0,-3});
-constexpr POINT SYNCHRONIZE_BUTTON_CELL_POS=POINT({ 0, 0});
+constexpr POINT ALPHA_SLIDER_CELL_POS     =POINT({ 0,-2});
+constexpr POINT CLOSE_BUTTON_CELL_POS     =POINT({-1, 0});
+constexpr POINT FIT_BUTTON_CELL_POS       =POINT({ 2, 0});
+constexpr POINT FOREGROUND_BUTTON_CELL_POS=POINT({ 1, 0});
+constexpr POINT HALFTONE_BUTTON_CELL_POS  =POINT({ 3, 0});
+constexpr POINT HOLE_SLIDER_CELL_POS      =POINT({ 0,-1});
+constexpr POINT LOCK_BUTTON_CELL_POS      =POINT({ 0, 0});
+constexpr POINT MAXIMIZE_BUTTON_CELL_POS  =POINT({-2, 0});
+constexpr POINT MINIMIZE_BUTTON_CELL_POS  =POINT({-3, 0});
+constexpr POINT RESET_BUTTON_CELL_POS     =POINT({ 4, 0});
+constexpr POINT SCALE_SLIDER_CELL_POS     =POINT({ 0,-3});
 
-constexpr char ALPHA_SLIDER_HINT[]      ="Alpha";
-constexpr char CLOSE_BUTTON_HINT[]      ="Close";
-constexpr char FIT_BUTTON_HINT[]        ="Fit";
-constexpr char FOREGROUND_BUTTON_HINT[] ="Foreground";
-constexpr char HALFTONE_BUTTON_HINT[]   ="Halftone";
-constexpr char HOLE_SLIDER_HINT[]       ="Hole";
-constexpr char MAXIMIZE_BUTTON_HINT[]   ="Maximize";
-constexpr char MINIMIZE_BUTTON_HINT[]   ="Minimize";
-constexpr char RESET_BUTTON_HINT[]      ="Reset";
-constexpr char SCALE_SLIDER_HINT[]      ="Scale";
-constexpr char SYNCHRONIZE_BUTTON_HINT[]="Synchronize";
+constexpr char ALPHA_SLIDER_HINT[]     ="Alpha";
+constexpr char CLOSE_BUTTON_HINT[]     ="Close";
+constexpr char FIT_BUTTON_HINT[]       ="Fit";
+constexpr char FOREGROUND_BUTTON_HINT[]="Foreground";
+constexpr char HALFTONE_BUTTON_HINT[]  ="Halftone";
+constexpr char HOLE_SLIDER_HINT[]      ="Hole";
+constexpr char LOCK_BUTTON_HINT[]      ="Lock";
+constexpr char MAXIMIZE_BUTTON_HINT[]  ="Maximize";
+constexpr char MINIMIZE_BUTTON_HINT[]  ="Minimize";
+constexpr char RESET_BUTTON_HINT[]     ="Reset";
+constexpr char SCALE_SLIDER_HINT[]     ="Scale";
 
 constexpr BYTE     DEFAULT_ALPHA              =255;
 constexpr COLORREF DEFAULT_BACK_COLOR1        =RGB( 85, 86, 88);
@@ -429,12 +429,12 @@ public:
     void onForegroundButtonClick();
     LRESULT onGetMinMaxInfo
     (UINT message,WPARAM wParam,LPARAM lParam);
+    void onHalftoneButtonChange();
     void onHoleSliderChange();
     LRESULT onLButtonDown
     (UINT message,WPARAM wParam,LPARAM lParam);
     LRESULT onLButtonUp
     (UINT message,WPARAM wParam,LPARAM lParam);
-    void onHalftoneButtonChange();
     void onMaximizeButtonChange();
     void onMinimizeButtonClick();
     LRESULT onMouseMove
@@ -471,11 +471,11 @@ protected:
     shared_ptr<PushButton> foregroundButton_;
     shared_ptr<RadioButton> halftoneButton_;
     shared_ptr<Slider> holeSlider_;
+    shared_ptr<RadioButton> lockButton_;
     shared_ptr<RadioButton> maximizeButton_;
     shared_ptr<PushButton> minimizeButton_;
     shared_ptr<PushButton> resetButton_;
     shared_ptr<Slider> scaleSlider_;
-    shared_ptr<RadioButton> synchronizeButton_;
     shared_ptr<Timer> timer_;
     HWND tool_;
     shared_ptr<Buffer> viewBuffer_;

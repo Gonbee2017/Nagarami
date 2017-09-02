@@ -506,9 +506,8 @@ LRESULT MainWindow::onUserTimer
 (UINT message,WPARAM wParam,LPARAM lParam)
 {
     if(ct().target!=NULL&&IsWindow(ct().target)==FALSE) ct().target=NULL;
-    if(ct().target==NULL&&synchronizeButton_->value())
-        synchronizeButton_->value(false);
-    if(!synchronizeButton_->value())
+    if(ct().target==NULL&&lockButton_->value()) lockButton_->value(false);
+    if(!lockButton_->value())
     {
         HWND fore=GetForegroundWindow();
         if(fore!=handle_) ct().target=fore;
@@ -690,6 +689,18 @@ void MainWindow::initializeComponents()
     );
     holeSlider_->change=bind_object(&onHoleSliderChange,this);
     components_.push_back(holeSlider_.get());
+    lockButton_=make_shared<RadioButton>
+    (
+        false,
+        MAKEINTRESOURCE(IDB_LOCK),
+        buffer_->dc(),
+        LOCK_BUTTON_CELL_POS,
+        handle_,
+        tool_,
+        components_.size(),
+        LOCK_BUTTON_HINT
+    );
+    components_.push_back(lockButton_.get());
     maximizeButton_=make_shared<RadioButton>
     (
         false,
@@ -744,18 +755,6 @@ void MainWindow::initializeComponents()
     );
     scaleSlider_->change=bind_object(&onScaleSliderChange,this);
     components_.push_back(scaleSlider_.get());
-    synchronizeButton_=make_shared<RadioButton>
-    (
-        false,
-        MAKEINTRESOURCE(IDB_SYNCHRONIZE),
-        buffer_->dc(),
-        SYNCHRONIZE_BUTTON_CELL_POS,
-        handle_,
-        tool_,
-        components_.size(),
-        SYNCHRONIZE_BUTTON_HINT
-    );
-    components_.push_back(synchronizeButton_.get());
 }
 
 }
