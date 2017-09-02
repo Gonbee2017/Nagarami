@@ -10,12 +10,24 @@ namespace nagarami
 
 bool Component::active() {return active_;}
 
+void Component::relocate(const SIZE&containerSize)
+{
+    reposition(containerSize);
+    relocateTool();
+}
+
 Component::Component
-(HWND container,HWND tool,UINT toolId,const string&toolHint):
+(
+    const POINT&cellPos,
+    HWND container,
+    HWND tool,
+    UINT toolId,
+    const string&toolHint
+):
+    cellPos_(cellPos),
     tool_(tool),
     toolHint_(toolHint),
-    active_(false),
-    move([] (const SIZE&) {})
+    active_(false)
 {
     toolInfo_.cbSize=sizeof(TOOLINFO);
     toolInfo_.uFlags=TTF_SUBCLASS;
@@ -29,6 +41,14 @@ Component::Component
         ("SendMessage(TTM_ADDTOOL) is failed."));
 }
 
+void Component::reposition(const SIZE&containerSize)
+{
+    if(cellPos_.x>=0) pos_.x=FRAME_LENGTH+UNIT_LENGTH*cellPos_.x;
+    else pos_.x=containerSize.cx-FRAME_LENGTH+UNIT_LENGTH*cellPos_.x;
+    if(cellPos_.y>=0) pos_.y=FRAME_LENGTH+UNIT_LENGTH*cellPos_.y;
+    else pos_.y=containerSize.cy-FRAME_LENGTH+UNIT_LENGTH*cellPos_.y;
+}
+
 void Button::activate(const POINT&cursorPos)
 {
     active_=true;
@@ -38,15 +58,9 @@ void Button::activate(const POINT&cursorPos)
 bool Button::hitTest(const POINT&cursorPos)
 {
     return
-        contain(rect(pos,UNIT_SIZE),cursorPos)&&
+        contain(rect(pos_,UNIT_SIZE),cursorPos)&&
         contain
-        (pos+HALF_UNIT_LENGTH,SQUARED_HALF_UNIT_LENGTH,cursorPos);
-}
-
-void Button::moveTool()
-{
-    toolInfo_.rect=rect(pos,UNIT_SIZE);
-    SendMessage(tool_,TTM_NEWTOOLRECT,0,(LPARAM)&toolInfo_);
+        (pos_+HALF_UNIT_LENGTH,SQUARED_HALF_UNIT_LENGTH,cursorPos);
 }
 
 void Button::paint(HDC dc)
@@ -54,8 +68,8 @@ void Button::paint(HDC dc)
     nagarami::BitBlt
     (
         dc,
-        pos.x,
-        pos.y,
+        pos_.x,
+        pos_.y,
         UNIT_LENGTH,
         UNIT_LENGTH,
         maskBuffer_->dc(),
@@ -66,8 +80,8 @@ void Button::paint(HDC dc)
     nagarami::BitBlt
     (
         dc,
-        pos.x,
-        pos.y,
+        pos_.x,
+        pos_.y,
         UNIT_LENGTH,
         UNIT_LENGTH,
         backBuffer_->dc(),
@@ -83,23 +97,29 @@ Button::Button
 (
     LPCTSTR maskBitmapName,
     HDC destDC,
+    const POINT&cellPos,
     HWND container,
     HWND tool,
     UINT toolId,
     const string&toolHint
 ):
-    Component(container,tool,toolId,toolHint),
+    Component(cellPos,container,tool,toolId,toolHint),
     iconMaskBuffer_(Buffer::load(ct().instance,maskBitmapName,destDC)),
     foreBuffer_(Buffer::create(UNIT_SIZE,destDC)),
     backBuffer_(Buffer::create(UNIT_SIZE,destDC)),
-    maskBuffer_(Buffer::create(UNIT_SIZE,destDC)),
-    click([] () {})
+    maskBuffer_(Buffer::create(UNIT_SIZE,destDC))
 {
     nagarami::FillRect
     (maskBuffer_->dc(),&UNIT_RECT,(HBRUSH)ct().white_brush->handle());
     SelectObject(maskBuffer_->dc(),ct().black_pen->handle());
     SelectObject(maskBuffer_->dc(),ct().black_brush->handle());
     nagarami::Ellipse(maskBuffer_->dc(),0,0,UNIT_LENGTH,UNIT_LENGTH);
+}
+
+void Button::relocateTool()
+{
+    toolInfo_.rect=rect(pos_,UNIT_SIZE);
+    SendMessage(tool_,TTM_NEWTOOLRECT,0,(LPARAM)&toolInfo_);
 }
 
 void Button::render_(const bool&push)
@@ -177,11 +197,15 @@ PushButton::PushButton
 (
     LPCTSTR maskBitmapName,
     HDC destDC,
+    const POINT&cellPos,
     HWND container,
     HWND tool,
     UINT toolId,
     const string&toolHint
-):Button(maskBitmapName,destDC,container,tool,toolId,toolHint) {render();}
+):
+    Button(maskBitmapName,destDC,cellPos,container,tool,toolId,toolHint),
+    click([] () {})
+{render();}
 
 void PushButton::deactivate(const POINT&cursorPos)
 {
@@ -197,19 +221,22 @@ RadioButton::RadioButton
     const bool&initialValue,
     LPCTSTR maskBitmapName,
     HDC destDC,
+    const POINT&cellPos,
     HWND container,
     HWND tool,
     UINT toolId,
     const string&toolHint
 ):
-    Button(maskBitmapName,destDC,container,tool,toolId,toolHint),
-    value_(initialValue) {render();}
+    Button(maskBitmapName,destDC,cellPos,container,tool,toolId,toolHint),
+    value_(initialValue),
+    change([] () {}) {render();}
 
 bool RadioButton::value() {return value_;}
 
 void RadioButton::value(const bool&value_)
 {
     this->value_=value_;
+    change();
     render();
 }
 
@@ -218,7 +245,7 @@ void RadioButton::deactivate(const POINT&cursorPos)
     if(control_mode()&&hitTest(cursorPos))
     {
         value_=!value_;
-        click();
+        change();
     }
     active_=false;
     render();
@@ -232,20 +259,19 @@ Slider::Slider
     const int&maximum,
     const int&initialValue,
     function<string(const int&value)> getText,
-    const LONG&initialLength,
     LPCTSTR knobMaskBitmapName,
     HDC destDC,
+    const POINT&cellPos,
     HWND container,
     HWND tool,
     UINT toolId,
     const string&toolHint
 ):
-    Component(container,tool,toolId,toolHint),
+    Component(cellPos,container,tool,toolId,toolHint),
     minimum_(minimum),
     maximum_(maximum),
     value_(initialValue),
     getText_(getText),
-    length_(initialLength),
     knobIconMaskBuffer_
     (Buffer::load(ct().instance,knobMaskBitmapName,destDC)),
     knobForeBuffer_(Buffer::create(UNIT_SIZE,destDC)),
@@ -272,7 +298,7 @@ Slider::Slider
 
 void Slider::activate(const POINT&cursorPos)
 {
-    if(hitTestKnob(cursorPos)) pinch_=cursorPos.x-pos.x-knobX_;
+    if(hitTestKnob(cursorPos)) pinch_=cursorPos.x-pos_.x-knobX_;
     else pinch_=HALF_UNIT_LENGTH;
     update(cursorPos);
     active_=true;
@@ -288,27 +314,19 @@ void Slider::deactivate(const POINT&cursorPos)
 bool Slider::hitTest(const POINT&cursorPos)
 {return hitTestKnob(cursorPos)||hitTestBar(cursorPos);}
 
-void Slider::length(const LONG&length_)
-{
-    this->length_=length_;
-    updateKnobX();
-    renderBar();
-}
-
-void Slider::moveTool()
-{
-    toolInfo_.rect=rect(pos,SIZE({length_,UNIT_LENGTH}));
-    SendMessage(tool_,TTM_NEWTOOLRECT,0,(LPARAM)&toolInfo_);
-}
-
 void Slider::paint(HDC dc)
 {
+    const POINT barPos=POINT(
+    {
+        pos_.x+HALF_UNIT_LENGTH,
+        pos_.y+HALF_UNIT_LENGTH-SLIDER_HALF_BAR_WIDTH
+    });
     const LONG barLength=length_-SLIDER_TEXT_WIDTH-UNIT_LENGTH;
     nagarami::BitBlt
     (
         dc,
-        pos.x+HALF_UNIT_LENGTH,
-        pos.y+HALF_UNIT_LENGTH-SLIDER_HALF_BAR_WIDTH,
+        barPos.x,
+        barPos.y,
         barLength,
         SLIDER_BAR_WIDTH,
         barBuffer_->dc(),
@@ -319,8 +337,8 @@ void Slider::paint(HDC dc)
     nagarami::BitBlt
     (
         dc,
-        pos.x+knobX_,
-        pos.y,
+        pos_.x+knobX_,
+        pos_.y,
         UNIT_LENGTH,
         UNIT_LENGTH,
         knobMaskBuffer_->dc(),
@@ -331,8 +349,8 @@ void Slider::paint(HDC dc)
     nagarami::BitBlt
     (
         dc,
-        pos.x+knobX_,
-        pos.y,
+        pos_.x+knobX_,
+        pos_.y,
         UNIT_LENGTH,
         UNIT_LENGTH,
         knobBackBuffer_->dc(),
@@ -340,12 +358,12 @@ void Slider::paint(HDC dc)
         0,
         SRCPAINT
     );
-    const LONG textX=pos.x+length_-SLIDER_TEXT_WIDTH;
+    const LONG textX=pos_.x+length_-SLIDER_TEXT_WIDTH;
     nagarami::BitBlt
     (
         dc,
         textX,
-        pos.y,
+        pos_.y,
         SLIDER_TEXT_WIDTH,
         UNIT_LENGTH,
         textMaskBuffer_->dc(),
@@ -357,7 +375,7 @@ void Slider::paint(HDC dc)
     (
         dc,
         textX,
-        pos.y,
+        pos_.y,
         SLIDER_TEXT_WIDTH,
         UNIT_LENGTH,
         textBuffer_->dc(),
@@ -367,12 +385,21 @@ void Slider::paint(HDC dc)
     );
 }
 
+void Slider::relocate(const SIZE&containerSize)
+{
+    Component::reposition(containerSize);
+    length_=containerSize.cx-pos_.x-FRAME_LENGTH;
+    updateKnobX();
+    renderBar();
+    relocateTool();
+}
+
 void Slider::update(const POINT&cursorPos)
 {
     if(GetKeyState(VK_LBUTTON)<0)
     {
         const int range=maximum_-minimum_;
-        const LONG x=cursorPos.x-pos.x-pinch_;
+        const LONG x=cursorPos.x-pos_.x-pinch_;
         const LONG barLength=length_-SLIDER_TEXT_WIDTH-UNIT_LENGTH;
         value_=minimum_+(int)round(range*x/(double)barLength);
         value_=min(max(value_,minimum_),maximum_);
@@ -396,8 +423,8 @@ bool Slider::hitTestBar(const POINT&cursorPos)
 {
     const POINT barPos=POINT(
     {
-        pos.x+HALF_UNIT_LENGTH,
-        pos.y+HALF_UNIT_LENGTH-SLIDER_HALF_BAR_WIDTH
+        pos_.x+HALF_UNIT_LENGTH,
+        pos_.y+HALF_UNIT_LENGTH-SLIDER_HALF_BAR_WIDTH
     });
     const SIZE barSize=
         SIZE({length_-SLIDER_TEXT_WIDTH-UNIT_LENGTH,SLIDER_BAR_WIDTH});
@@ -406,11 +433,17 @@ bool Slider::hitTestBar(const POINT&cursorPos)
 
 bool Slider::hitTestKnob(const POINT&cursorPos)
 {
-    const POINT knobPos=POINT({pos.x+knobX_,pos.y});
+    const POINT knobPos=POINT({pos_.x+knobX_,pos_.y});
     return
         contain(rect(knobPos,UNIT_SIZE),cursorPos)&&
         contain
         (knobPos+HALF_UNIT_LENGTH,SQUARED_HALF_UNIT_LENGTH,cursorPos);
+}
+
+void Slider::relocateTool()
+{
+    toolInfo_.rect=rect(pos_,SIZE({length_,UNIT_LENGTH}));
+    SendMessage(tool_,TTM_NEWTOOLRECT,0,(LPARAM)&toolInfo_);
 }
 
 void Slider::render()

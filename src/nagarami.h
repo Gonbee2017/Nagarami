@@ -49,17 +49,29 @@ constexpr COLORREF ALMOST_BLACK_COLOR=RGB(  1,  1,  1);
 constexpr COLORREF BLACK_COLOR       =RGB(  0,  0,  0);
 constexpr COLORREF WHITE_COLOR       =RGB(255,255,255);
 
-constexpr char SYNCHRONIZE_BUTTON_HINT[]="Synchronize";
-constexpr char RESET_BUTTON_HINT[]      ="Reset";
+constexpr POINT ACTIVATE_BUTTON_CELL_POS   =POINT({ 1, 0});
+constexpr POINT ALPHA_SLIDER_CELL_POS      =POINT({ 0,-2});
+constexpr POINT CLOSE_BUTTON_CELL_POS      =POINT({-1, 0});
+constexpr POINT FIT_BUTTON_CELL_POS        =POINT({ 2, 0});
+constexpr POINT HALFTONE_BUTTON_CELL_POS   =POINT({ 3, 0});
+constexpr POINT HOLE_SLIDER_CELL_POS       =POINT({ 0,-1});
+constexpr POINT MAXIMIZE_BUTTON_CELL_POS   =POINT({-2, 0});
+constexpr POINT MINIMIZE_BUTTON_CELL_POS   =POINT({-3, 0});
+constexpr POINT RESET_BUTTON_CELL_POS      =POINT({ 4, 0});
+constexpr POINT SCALE_SLIDER_CELL_POS      =POINT({ 0,-3});
+constexpr POINT SYNCHRONIZE_BUTTON_CELL_POS=POINT({ 0, 0});
+
+constexpr char ACTIVATE_BUTTON_HINT[]   ="Activate";
+constexpr char ALPHA_SLIDER_HINT[]      ="Alpha";
+constexpr char CLOSE_BUTTON_HINT[]      ="Close";
 constexpr char FIT_BUTTON_HINT[]        ="Fit";
 constexpr char HALFTONE_BUTTON_HINT[]   ="Halftone";
-constexpr char ACTIVATE_BUTTON_HINT[]   ="Activate";
-constexpr char MINIMIZE_BUTTON_HINT[]   ="Minimize";
-constexpr char MAXIMIZE_BUTTON_HINT[]   ="Maximize";
-constexpr char CLOSE_BUTTON_HINT[]      ="Close";
-constexpr char SCALE_SLIDER_HINT[]      ="Scale";
-constexpr char ALPHA_SLIDER_HINT[]      ="Alpha";
 constexpr char HOLE_SLIDER_HINT[]       ="Hole";
+constexpr char MAXIMIZE_BUTTON_HINT[]   ="Maximize";
+constexpr char MINIMIZE_BUTTON_HINT[]   ="Minimize";
+constexpr char RESET_BUTTON_HINT[]      ="Reset";
+constexpr char SCALE_SLIDER_HINT[]      ="Scale";
+constexpr char SYNCHRONIZE_BUTTON_HINT[]="Synchronize";
 
 constexpr BYTE     DEFAULT_ALPHA              =255;
 constexpr COLORREF DEFAULT_BACK_COLOR1        =RGB( 85, 86, 88);
@@ -241,15 +253,24 @@ public:
     bool active();
     virtual void deactivate(const POINT&cursorPos)=0;
     virtual bool hitTest(const POINT&cursorPos)=0;
-    virtual void moveTool()=0;
     virtual void paint(HDC dc)=0;
+    virtual void relocate(const SIZE&containerSize);
     virtual void update(const POINT&cursorPos)=0;
-    POINT pos;
-    function<void(const SIZE&)> move;
 protected:
-    Component(HWND container,HWND tool,UINT toolId,const string&toolHint);
+    Component
+    (
+        const POINT&cellPos,
+        HWND container,
+        HWND tool,
+        UINT toolId,
+        const string&toolHint
+    );
+    virtual void relocateTool()=0;
     virtual void render()=0;
+    void reposition(const SIZE&containerSize);
     bool active_;
+    POINT cellPos_;
+    POINT pos_;
     HWND tool_;
     string toolHint_;
     TOOLINFO toolInfo_;
@@ -260,20 +281,20 @@ class Button:public Component
 public:
     virtual void activate(const POINT&cursorPos) override;
     virtual bool hitTest(const POINT&cursorPos) override;
-    virtual void moveTool() override;
     virtual void paint(HDC dc) override;
     virtual void update(const POINT&cursorPos) override;
-    function<void()> click;
 protected:
     Button
     (
         LPCTSTR maskBitmapName,
         HDC destDC,
+        const POINT&cellPos,
         HWND container,
         HWND tool,
         UINT toolId,
         const string&toolHint
     );
+    virtual void relocateTool() override;
     void render_(const bool&push);
     shared_ptr<Buffer> backBuffer_;
     shared_ptr<Buffer> foreBuffer_;
@@ -288,12 +309,14 @@ public:
     (
         LPCTSTR maskBitmapName,
         HDC destDC,
+        const POINT&cellPos,
         HWND container,
         HWND tool,
         UINT toolId,
         const string&toolHint
     );
     virtual void deactivate(const POINT&cursorPos) override;
+    function<void()> click;
 protected:virtual void render() override;
 };
 
@@ -305,6 +328,7 @@ public:
         const bool&initialValue,
         LPCTSTR maskBitmapName,
         HDC destDC,
+        const POINT&cellPos,
         HWND container,
         HWND tool,
         UINT toolId,
@@ -313,6 +337,7 @@ public:
     virtual void deactivate(const POINT&cursorPos) override;
     bool value();
     void value(const bool&value_);
+    function<void()> change;
 protected:
     virtual void render() override;
     bool value_;
@@ -327,9 +352,9 @@ public:
         const int&maximum,
         const int&initialValue,
         function<string(const int&value)> getText,
-        const LONG&initialLength,
         LPCTSTR knobMaskBitmapName,
         HDC destDC,
+        const POINT&cellPos,
         HWND container,
         HWND tool,
         UINT toolId,
@@ -338,9 +363,8 @@ public:
     virtual void activate(const POINT&cursorPos) override;
     virtual void deactivate(const POINT&cursorPos) override;
     virtual bool hitTest(const POINT&cursorPos) override;
-    void length(const LONG&length_);
-    virtual void moveTool() override;
     virtual void paint(HDC dc) override;
+    virtual void relocate(const SIZE&containerSize) override;
     virtual void update(const POINT&cursorPos) override;
     int value();
     void value(const int&value_);
@@ -348,25 +372,26 @@ public:
 protected:
     bool hitTestBar(const POINT&cursorPos);
     bool hitTestKnob(const POINT&cursorPos);
+    virtual void relocateTool() override;
     virtual void render() override;
     void renderBar();
     void renderKnob();
     void renderText();
     void updateKnobX();
     shared_ptr<Buffer> barBuffer_;
-    function<string(const int&)> getText_;
+    function<string(const int&value)> getText_;
     LONG length_;
     shared_ptr<Buffer> knobBackBuffer_;
     shared_ptr<Buffer> knobForeBuffer_;
     shared_ptr<Buffer> knobIconMaskBuffer_;
     shared_ptr<Buffer> knobMaskBuffer_;
     LONG knobX_;
-    shared_ptr<Buffer> textBuffer_;
-    shared_ptr<Buffer> textMaskBuffer_;
     int maximum_;
     int minimum_;
     LONG pinch_;
     string text_;
+    shared_ptr<Buffer> textBuffer_;
+    shared_ptr<Buffer> textMaskBuffer_;
     int value_;
 };
 
@@ -384,7 +409,8 @@ protected:
     static LRESULT CALLBACK windowProcedure
     (HWND handle,UINT message,WPARAM wParam,LPARAM lParam);
     HWND handle_;
-    map<UINT,function<LRESULT(UINT,WPARAM,LPARAM)>> handlerMap_;
+    map<UINT,function<LRESULT(UINT message,WPARAM wParam,LPARAM lParam)>>
+        handlerMap_;
     static map<HWND,Window*> windowMap_;
 };
 
@@ -393,33 +419,23 @@ class MainWindow:public Window
 public:
     MainWindow();
     void onActivateButtonClick();
-    void onActivateButtonMove(const SIZE&size);
     void onAlphaSliderChange();
-    string onAlphaSliderGetText(const int&value);
-    void onAlphaSliderMove(const SIZE&size);
     void onCloseButtonClick();
-    void onCloseButtonMove(const SIZE&size);
     LRESULT onCreate
     (UINT message,WPARAM wParam,LPARAM lParam);
     LRESULT onDestroy
     (UINT message,WPARAM wParam,LPARAM lParam);
     void onFitButtonClick();
-    void onFitButtonMove(const SIZE&size);
     LRESULT onGetMinMaxInfo
     (UINT message,WPARAM wParam,LPARAM lParam);
     void onHoleSliderChange();
-    string onHoleSliderGetText(const int&value);
-    void onHoleSliderMove(const SIZE&size);
     LRESULT onLButtonDown
     (UINT message,WPARAM wParam,LPARAM lParam);
     LRESULT onLButtonUp
     (UINT message,WPARAM wParam,LPARAM lParam);
-    void onHalftoneButtonMove(const SIZE&size);
-    void onHalftoneButtonClick();
-    void onMaximizeButtonClick();
-    void onMaximizeButtonMove(const SIZE&size);
+    void onHalftoneButtonChange();
+    void onMaximizeButtonChange();
     void onMinimizeButtonClick();
-    void onMinimizeButtonMove(const SIZE&size);
     LRESULT onMouseMove
     (UINT message,WPARAM wParam,LPARAM lParam);
     LRESULT onMove
@@ -435,13 +451,9 @@ public:
     LRESULT onRButtonUp
     (UINT message,WPARAM wParam,LPARAM lParam);
     void onResetButtonClick();
-    void onResetButtonMove(const SIZE&size);
     void onScaleSliderChange();
-    string onScaleSliderGetText(const int&value);
-    void onScaleSliderMove(const SIZE&size);
     LRESULT onSize
     (UINT message,WPARAM wParam,LPARAM lParam);
-    void onSynchronizeButtonMove(const SIZE&size);
     LRESULT onUserTimer
     (UINT message,WPARAM wParam,LPARAM lParam);
 protected:
@@ -450,7 +462,6 @@ protected:
     void initializeComponents();
     shared_ptr<PushButton> activateButton_;
     Component*activeComponent_;
-    shared_ptr<DeleteObject> almostBlackBrush_;
     shared_ptr<Slider> alphaSlider_;
     shared_ptr<DeleteObject> backBrush_;
     shared_ptr<Buffer> buffer_;
@@ -501,6 +512,7 @@ protected:
 struct context
 {
     context();
+    shared_ptr<DeleteObject> almost_black_brush;
     shared_ptr<DeleteObject> back_brush1;
     shared_ptr<DeleteObject> back_brush2;
     shared_ptr<DeleteObject> black_brush;

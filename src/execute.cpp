@@ -178,6 +178,7 @@ void properties::set(const string&name,const string&value)
 
 context::context()
 {
+    almost_black_brush=nagarami::CreateSolidBrush(ALMOST_BLACK_COLOR);
     back_brush1=nagarami::CreateSolidBrush(ps.back_color1);
     back_brush2=nagarami::CreateSolidBrush(ps.back_color2);
     black_pen=nagarami::CreatePen(PS_SOLID,0,BLACK_COLOR);

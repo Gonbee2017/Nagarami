@@ -13,8 +13,8 @@ void Window::move(const POINT&pos,const SIZE&size)
 {
     MINMAXINFO minMaxInfo;
     SendMessage(handle_,WM_GETMINMAXINFO,0,(LPARAM)&minMaxInfo);
-    LONG width=max(size.cx,minMaxInfo.ptMinTrackSize.x);
-    LONG height=max(size.cy,minMaxInfo.ptMinTrackSize.y);
+    const LONG width=max(size.cx,minMaxInfo.ptMinTrackSize.x);
+    const LONG height=max(size.cy,minMaxInfo.ptMinTrackSize.y);
     nagarami::MoveWindow
     (
         handle_,
@@ -133,34 +133,10 @@ MainWindow::MainWindow():
 void MainWindow::onActivateButtonClick()
 {if(ct().target!=NULL) nagarami::SetForegroundWindow(ct().target);}
 
-void MainWindow::onActivateButtonMove(const SIZE&size)
-{
-    activateButton_->pos=POINT({FRAME_LENGTH+UNIT_LENGTH*4,FRAME_LENGTH});
-    activateButton_->moveTool();
-}
-
 void MainWindow::onAlphaSliderChange()
 {ct().ps.alpha=(ALPHA_DIVISOR-alphaSlider_->value())*255/ALPHA_DIVISOR;}
 
-string MainWindow::onAlphaSliderGetText(const int&value)
-{return describe(value*100/ALPHA_DIVISOR,"%");}
-
-void MainWindow::onAlphaSliderMove(const SIZE&size)
-{
-    alphaSlider_->pos=POINT
-    ({FRAME_LENGTH,size.cy-FRAME_LENGTH-UNIT_LENGTH*2});
-    alphaSlider_->length(size.cx-FRAME_LENGTH*2);
-    alphaSlider_->moveTool();
-}
-
 void MainWindow::onCloseButtonClick() {PostMessage(handle_,WM_CLOSE,0,0);}
-
-void MainWindow::onCloseButtonMove(const SIZE&size)
-{
-    closeButton_->pos=POINT
-    ({size.cx-FRAME_LENGTH-UNIT_LENGTH*1,FRAME_LENGTH});
-    closeButton_->moveTool();
-}
 
 LRESULT MainWindow::onCreate
 (UINT message,WPARAM wParam,LPARAM lParam)
@@ -220,12 +196,6 @@ void MainWindow::onFitButtonClick()
     }
 }
 
-void MainWindow::onFitButtonMove(const SIZE&size)
-{
-    fitButton_->pos=POINT({FRAME_LENGTH+UNIT_LENGTH*2,FRAME_LENGTH});
-    fitButton_->moveTool();
-}
-
 LRESULT MainWindow::onGetMinMaxInfo
 (UINT message,WPARAM wParam,LPARAM lParam)
 {
@@ -235,7 +205,7 @@ LRESULT MainWindow::onGetMinMaxInfo
     return 0;
 }
 
-void MainWindow::onHalftoneButtonClick()
+void MainWindow::onHalftoneButtonChange()
 {
     HDC dc=viewBuffer_->dc();
     if(halftoneButton_->value())
@@ -246,25 +216,8 @@ void MainWindow::onHalftoneButtonClick()
     ct().ps.halftone=halftoneButton_->value();
 }
 
-void MainWindow::onHalftoneButtonMove(const SIZE&size)
-{
-    halftoneButton_->pos=POINT({FRAME_LENGTH+UNIT_LENGTH*3,FRAME_LENGTH});
-    halftoneButton_->moveTool();
-}
-
 void MainWindow::onHoleSliderChange()
 {ct().ps.hole=UNIT_LENGTH*holeSlider_->value();}
-
-string MainWindow::onHoleSliderGetText(const int&value)
-{return describe(UNIT_LENGTH*value,"p");}
-
-void MainWindow::onHoleSliderMove(const SIZE&size)
-{
-    holeSlider_->pos=POINT
-    ({FRAME_LENGTH,size.cy-FRAME_LENGTH-UNIT_LENGTH*1});
-    holeSlider_->length(size.cx-FRAME_LENGTH*2);
-    holeSlider_->moveTool();
-}
 
 LRESULT MainWindow::onLButtonDown
 (UINT message,WPARAM wParam,LPARAM lParam)
@@ -299,30 +252,19 @@ LRESULT MainWindow::onLButtonUp
     return 0;
 }
 
-void MainWindow::onMaximizeButtonClick()
+void MainWindow::onMaximizeButtonChange()
 {
-    int command;
-    if(maximizeButton_->value()) command=SW_MAXIMIZE;
-    else command=SW_RESTORE;
-    ShowWindow(handle_,command);
-}
-
-void MainWindow::onMaximizeButtonMove(const SIZE&size)
-{
-    maximizeButton_->pos=POINT
-    ({size.cx-FRAME_LENGTH-UNIT_LENGTH*2,FRAME_LENGTH});
-    maximizeButton_->moveTool();
+    if(maximizeButton_->value()!=IsZoomed(handle_))
+    {
+        int command;
+        if(maximizeButton_->value()) command=SW_MAXIMIZE;
+        else command=SW_RESTORE;
+        ShowWindow(handle_,command);
+    }
 }
 
 void MainWindow::onMinimizeButtonClick()
 {ShowWindow(handle_,SW_MINIMIZE);}
-
-void MainWindow::onMinimizeButtonMove(const SIZE&size)
-{
-    minimizeButton_->pos=POINT
-    ({size.cx-FRAME_LENGTH-UNIT_LENGTH*3,FRAME_LENGTH});
-    minimizeButton_->moveTool();
-}
 
 LRESULT MainWindow::onMouseMove
 (UINT message,WPARAM wParam,LPARAM lParam)
@@ -454,7 +396,7 @@ LRESULT MainWindow::onPaint
             (
                 buffer_->dc(),
                 &destRect,
-                (HBRUSH)almostBlackBrush_->handle()
+                (HBRUSH)ct().almost_black_brush->handle()
             );
             nagarami::BitBlt
             (
@@ -526,18 +468,13 @@ LRESULT MainWindow::onRButtonUp
 void MainWindow::onResetButtonClick()
 {
     ct().ps.view_base=POINT_DOUBLE({0,0});
+    halftoneButton_->value(DEFAULT_HALFTONE);
     scaleSlider_->value(DEFAULT_SCALE/SCALE_DIVISOR);
     alphaSlider_->value
     (ALPHA_DIVISOR-(int)round(DEFAULT_ALPHA*ALPHA_DIVISOR/(double)255));
     holeSlider_->value(DEFAULT_HOLE/UNIT_LENGTH);
     nagarami::InvalidateRect(handle_,NULL,FALSE);
     nagarami::UpdateWindow(handle_);
-}
-
-void MainWindow::onResetButtonMove(const SIZE&size)
-{
-    resetButton_->pos=POINT({FRAME_LENGTH+UNIT_LENGTH*1,FRAME_LENGTH});
-    resetButton_->moveTool();
 }
 
 void MainWindow::onScaleSliderChange()
@@ -548,17 +485,6 @@ void MainWindow::onScaleSliderChange()
     ct().ps.view_base=ct().ps.view_base*newScale/oldScale;
 }
 
-string MainWindow::onScaleSliderGetText(const int&value)
-{return describe(value*SCALE_DIVISOR,"%");}
-
-void MainWindow::onScaleSliderMove(const SIZE&size)
-{
-    scaleSlider_->pos=POINT
-    ({FRAME_LENGTH,size.cy-FRAME_LENGTH-UNIT_LENGTH*3});
-    scaleSlider_->length(size.cx-FRAME_LENGTH*2);
-    scaleSlider_->moveTool();
-}
-
 LRESULT MainWindow::onSize
 (UINT message,WPARAM wParam,LPARAM lParam)
 {
@@ -566,7 +492,7 @@ LRESULT MainWindow::onSize
     {
         ct().ps.window_size=size(lParam);
         for(Component*component:components_)
-            component->move(ct().ps.window_size);
+            component->relocate(ct().ps.window_size);
         const bool maximized=wParam==SIZE_MAXIMIZED;
         if(maximized!=maximizeButton_->value())
             maximizeButton_->value(maximized);
@@ -574,13 +500,6 @@ LRESULT MainWindow::onSize
         nagarami::UpdateWindow(handle_);
     }
     return 0;
-}
-
-void MainWindow::onSynchronizeButtonMove(const SIZE&size)
-{
-    synchronizeButton_->pos=POINT
-    ({FRAME_LENGTH+UNIT_LENGTH*0,FRAME_LENGTH});
-    synchronizeButton_->moveTool();
 }
 
 LRESULT MainWindow::onUserTimer
@@ -659,7 +578,6 @@ void MainWindow::initializeBackBrush()
         SRCPAINT
     );
     backBrush_=nagarami::CreatePatternBrush(backBuffer->bitmap());
-    almostBlackBrush_=nagarami::CreateSolidBrush(ALMOST_BLACK_COLOR);
 }
 
 void MainWindow::initializeBuffers()
@@ -688,157 +606,156 @@ void MainWindow::initializeComponents()
         NULL
     );
     if(tool_==NULL) throw make_shared<api_error>("CreateWindowEx");
-    synchronizeButton_=make_shared<RadioButton>
-    (
-        false,
-        MAKEINTRESOURCE(IDB_SYNCHRONIZE),
-        buffer_->dc(),
-        handle_,
-        tool_,
-        components_.size(),
-        SYNCHRONIZE_BUTTON_HINT
-    );
-    synchronizeButton_->move=
-        bind_object(&onSynchronizeButtonMove,this);
-    components_.push_back(synchronizeButton_.get());
-    fitButton_=make_shared<PushButton>
-    (
-        MAKEINTRESOURCE(IDB_FIT),
-        buffer_->dc(),
-        handle_,
-        tool_,
-        components_.size(),
-        FIT_BUTTON_HINT
-    );
-    fitButton_->click=bind_object(&onFitButtonClick,this);
-    fitButton_->move=bind_object(&onFitButtonMove,this);
-    components_.push_back(fitButton_.get());
-    resetButton_=make_shared<PushButton>
-    (
-        MAKEINTRESOURCE(IDB_RESET),
-        buffer_->dc(),
-        handle_,
-        tool_,
-        components_.size(),
-        RESET_BUTTON_HINT
-    );
-    resetButton_->click=bind_object(&onResetButtonClick,this);
-    resetButton_->move=bind_object(&onResetButtonMove,this);
-    components_.push_back(resetButton_.get());
-    halftoneButton_=make_shared<RadioButton>
-    (
-        ct().ps.halftone,
-        MAKEINTRESOURCE(IDB_HALFTONE),
-        buffer_->dc(),
-        handle_,
-        tool_,
-        components_.size(),
-        HALFTONE_BUTTON_HINT
-    );
-    halftoneButton_->click=bind_object(&onHalftoneButtonClick,this);
-    onHalftoneButtonClick();
-    halftoneButton_->move=bind_object(&onHalftoneButtonMove,this);
-    components_.push_back(halftoneButton_.get());
     activateButton_=make_shared<PushButton>
     (
         MAKEINTRESOURCE(IDB_ACTIVATE),
         buffer_->dc(),
+        ACTIVATE_BUTTON_CELL_POS,
         handle_,
         tool_,
         components_.size(),
         ACTIVATE_BUTTON_HINT
     );
     activateButton_->click=bind_object(&onActivateButtonClick,this);
-    activateButton_->move=bind_object(&onActivateButtonMove,this);
     components_.push_back(activateButton_.get());
-    minimizeButton_=make_shared<PushButton>
-    (
-        MAKEINTRESOURCE(IDB_MINIMIZE),
-        buffer_->dc(),
-        handle_,
-        tool_,
-        components_.size(),
-        MINIMIZE_BUTTON_HINT
-    );
-    minimizeButton_->click=bind_object(&onMinimizeButtonClick,this);
-    minimizeButton_->move=bind_object(&onMinimizeButtonMove,this);
-    components_.push_back(minimizeButton_.get());
-    maximizeButton_=make_shared<RadioButton>
-    (
-        false,
-        MAKEINTRESOURCE(IDB_MAXIMIZE),
-        buffer_->dc(),
-        handle_,
-        tool_,
-        components_.size(),
-        MAXIMIZE_BUTTON_HINT
-    );
-    maximizeButton_->click=bind_object(&onMaximizeButtonClick,this);
-    maximizeButton_->move=bind_object(&onMaximizeButtonMove,this);
-    components_.push_back(maximizeButton_.get());
-    closeButton_=make_shared<PushButton>
-    (
-        MAKEINTRESOURCE(IDB_CLOSE),
-        buffer_->dc(),
-        handle_,
-        tool_,
-        components_.size(),
-        CLOSE_BUTTON_HINT
-    );
-    closeButton_->click=bind_object(&onCloseButtonClick,this);
-    closeButton_->move=bind_object(&onCloseButtonMove,this);
-    components_.push_back(closeButton_.get());
-    scaleSlider_=make_shared<Slider>
-    (
-        1,
-        MAXIMUM_SCALE/SCALE_DIVISOR,
-        ct().ps.scale/SCALE_DIVISOR,
-        bind_object(&onScaleSliderGetText,this),
-        ct().ps.window_size.cx-FRAME_LENGTH*2,
-        MAKEINTRESOURCE(IDB_SCALE),
-        buffer_->dc(),
-        handle_,
-        tool_,
-        components_.size(),
-        SCALE_SLIDER_HINT
-    );
-    scaleSlider_->change=bind_object(&onScaleSliderChange,this);
-    scaleSlider_->move=bind_object(&onScaleSliderMove,this);
-    components_.push_back(scaleSlider_.get());
     alphaSlider_=make_shared<Slider>
     (
         0,
         ALPHA_DIVISOR,
         ALPHA_DIVISOR-(int)round(ct().ps.alpha*ALPHA_DIVISOR/(double)255),
-        bind_object(&onAlphaSliderGetText,this),
-        ct().ps.window_size.cx-FRAME_LENGTH*2,
+        [] (const int&value)->string
+        {return describe(value*100/ALPHA_DIVISOR,"%");},
         MAKEINTRESOURCE(IDB_ALPHA),
         buffer_->dc(),
+        ALPHA_SLIDER_CELL_POS,
         handle_,
         tool_,
         components_.size(),
         ALPHA_SLIDER_HINT
     );
     alphaSlider_->change=bind_object(&onAlphaSliderChange,this);
-    alphaSlider_->move=bind_object(&onAlphaSliderMove,this);
     components_.push_back(alphaSlider_.get());
+    closeButton_=make_shared<PushButton>
+    (
+        MAKEINTRESOURCE(IDB_CLOSE),
+        buffer_->dc(),
+        CLOSE_BUTTON_CELL_POS,
+        handle_,
+        tool_,
+        components_.size(),
+        CLOSE_BUTTON_HINT
+    );
+    closeButton_->click=bind_object(&onCloseButtonClick,this);
+    components_.push_back(closeButton_.get());
+    fitButton_=make_shared<PushButton>
+    (
+        MAKEINTRESOURCE(IDB_FIT),
+        buffer_->dc(),
+        FIT_BUTTON_CELL_POS,
+        handle_,
+        tool_,
+        components_.size(),
+        FIT_BUTTON_HINT
+    );
+    fitButton_->click=bind_object(&onFitButtonClick,this);
+    components_.push_back(fitButton_.get());
+    halftoneButton_=make_shared<RadioButton>
+    (
+        ct().ps.halftone,
+        MAKEINTRESOURCE(IDB_HALFTONE),
+        buffer_->dc(),
+        HALFTONE_BUTTON_CELL_POS,
+        handle_,
+        tool_,
+        components_.size(),
+        HALFTONE_BUTTON_HINT
+    );
+    halftoneButton_->change=bind_object(&onHalftoneButtonChange,this);
+    onHalftoneButtonChange();
+    components_.push_back(halftoneButton_.get());
     holeSlider_=make_shared<Slider>
     (
         1,
         MAXIMUM_HOLE/UNIT_LENGTH,
         ct().ps.hole/UNIT_LENGTH,
-        bind_object(&onHoleSliderGetText,this),
-        ct().ps.window_size.cx-FRAME_LENGTH*2,
+        [] (const int&value)->string
+        {return describe(UNIT_LENGTH*value,"p");},
         MAKEINTRESOURCE(IDB_HOLE),
         buffer_->dc(),
+        HOLE_SLIDER_CELL_POS,
         handle_,
         tool_,
         components_.size(),
         HOLE_SLIDER_HINT
     );
     holeSlider_->change=bind_object(&onHoleSliderChange,this);
-    holeSlider_->move=bind_object(&onHoleSliderMove,this);
     components_.push_back(holeSlider_.get());
+    maximizeButton_=make_shared<RadioButton>
+    (
+        false,
+        MAKEINTRESOURCE(IDB_MAXIMIZE),
+        buffer_->dc(),
+        MAXIMIZE_BUTTON_CELL_POS,
+        handle_,
+        tool_,
+        components_.size(),
+        MAXIMIZE_BUTTON_HINT
+    );
+    maximizeButton_->change=bind_object(&onMaximizeButtonChange,this);
+    components_.push_back(maximizeButton_.get());
+    minimizeButton_=make_shared<PushButton>
+    (
+        MAKEINTRESOURCE(IDB_MINIMIZE),
+        buffer_->dc(),
+        MINIMIZE_BUTTON_CELL_POS,
+        handle_,
+        tool_,
+        components_.size(),
+        MINIMIZE_BUTTON_HINT
+    );
+    minimizeButton_->click=bind_object(&onMinimizeButtonClick,this);
+    components_.push_back(minimizeButton_.get());
+    resetButton_=make_shared<PushButton>
+    (
+        MAKEINTRESOURCE(IDB_RESET),
+        buffer_->dc(),
+        RESET_BUTTON_CELL_POS,
+        handle_,
+        tool_,
+        components_.size(),
+        RESET_BUTTON_HINT
+    );
+    resetButton_->click=bind_object(&onResetButtonClick,this);
+    components_.push_back(resetButton_.get());
+    scaleSlider_=make_shared<Slider>
+    (
+        1,
+        MAXIMUM_SCALE/SCALE_DIVISOR,
+        ct().ps.scale/SCALE_DIVISOR,
+        [] (const int&value)->string
+        {return describe(value*SCALE_DIVISOR,"%");},
+        MAKEINTRESOURCE(IDB_SCALE),
+        buffer_->dc(),
+        SCALE_SLIDER_CELL_POS,
+        handle_,
+        tool_,
+        components_.size(),
+        SCALE_SLIDER_HINT
+    );
+    scaleSlider_->change=bind_object(&onScaleSliderChange,this);
+    components_.push_back(scaleSlider_.get());
+    synchronizeButton_=make_shared<RadioButton>
+    (
+        false,
+        MAKEINTRESOURCE(IDB_SYNCHRONIZE),
+        buffer_->dc(),
+        SYNCHRONIZE_BUTTON_CELL_POS,
+        handle_,
+        tool_,
+        components_.size(),
+        SYNCHRONIZE_BUTTON_HINT
+    );
+    components_.push_back(synchronizeButton_.get());
 }
 
 }
