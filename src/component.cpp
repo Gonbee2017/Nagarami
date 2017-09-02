@@ -60,7 +60,7 @@ bool Button::hitTest(const POINT&cursorPos)
     return
         contain(rect(pos_,UNIT_SIZE),cursorPos)&&
         contain
-        (pos_+HALF_UNIT_LENGTH,SQUARED_HALF_UNIT_LENGTH,cursorPos);
+        (pos_+HALF_UNIT_LENGTH,SQUARE(HALF_UNIT_LENGTH),cursorPos);
 }
 
 void Button::paint(HDC dc)
@@ -319,7 +319,7 @@ void Slider::paint(HDC dc)
     const POINT barPos=POINT(
     {
         pos_.x+HALF_UNIT_LENGTH,
-        pos_.y+HALF_UNIT_LENGTH-SLIDER_HALF_BAR_WIDTH
+        pos_.y+HALF_UNIT_LENGTH-HALF_SLIDER_BAR_WIDTH
     });
     const LONG barLength=length_-SLIDER_TEXT_WIDTH-UNIT_LENGTH;
     nagarami::BitBlt
@@ -424,7 +424,7 @@ bool Slider::hitTestBar(const POINT&cursorPos)
     const POINT barPos=POINT(
     {
         pos_.x+HALF_UNIT_LENGTH,
-        pos_.y+HALF_UNIT_LENGTH-SLIDER_HALF_BAR_WIDTH
+        pos_.y+HALF_UNIT_LENGTH-HALF_SLIDER_BAR_WIDTH
     });
     const SIZE barSize=
         SIZE({length_-SLIDER_TEXT_WIDTH-UNIT_LENGTH,SLIDER_BAR_WIDTH});
@@ -437,7 +437,7 @@ bool Slider::hitTestKnob(const POINT&cursorPos)
     return
         contain(rect(knobPos,UNIT_SIZE),cursorPos)&&
         contain
-        (knobPos+HALF_UNIT_LENGTH,SQUARED_HALF_UNIT_LENGTH,cursorPos);
+        (knobPos+HALF_UNIT_LENGTH,SQUARE(HALF_UNIT_LENGTH),cursorPos);
 }
 
 void Slider::relocateTool()

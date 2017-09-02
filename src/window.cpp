@@ -130,9 +130,6 @@ MainWindow::MainWindow():
     if(handle==NULL) throw make_shared<api_error>("CreateWindowEx");
 }
 
-void MainWindow::onActivateButtonClick()
-{if(ct().target!=NULL) nagarami::SetForegroundWindow(ct().target);}
-
 void MainWindow::onAlphaSliderChange()
 {ct().ps.alpha=(ALPHA_DIVISOR-alphaSlider_->value())*255/ALPHA_DIVISOR;}
 
@@ -195,6 +192,9 @@ void MainWindow::onFitButtonClick()
         }
     }
 }
+
+void MainWindow::onForegroundButtonClick()
+{if(ct().target!=NULL) nagarami::SetForegroundWindow(ct().target);}
 
 LRESULT MainWindow::onGetMinMaxInfo
 (UINT message,WPARAM wParam,LPARAM lParam)
@@ -606,18 +606,6 @@ void MainWindow::initializeComponents()
         NULL
     );
     if(tool_==NULL) throw make_shared<api_error>("CreateWindowEx");
-    activateButton_=make_shared<PushButton>
-    (
-        MAKEINTRESOURCE(IDB_ACTIVATE),
-        buffer_->dc(),
-        ACTIVATE_BUTTON_CELL_POS,
-        handle_,
-        tool_,
-        components_.size(),
-        ACTIVATE_BUTTON_HINT
-    );
-    activateButton_->click=bind_object(&onActivateButtonClick,this);
-    components_.push_back(activateButton_.get());
     alphaSlider_=make_shared<Slider>
     (
         0,
@@ -659,6 +647,18 @@ void MainWindow::initializeComponents()
     );
     fitButton_->click=bind_object(&onFitButtonClick,this);
     components_.push_back(fitButton_.get());
+    foregroundButton_=make_shared<PushButton>
+    (
+        MAKEINTRESOURCE(IDB_FOREGROUND),
+        buffer_->dc(),
+        FOREGROUND_BUTTON_CELL_POS,
+        handle_,
+        tool_,
+        components_.size(),
+        FOREGROUND_BUTTON_HINT
+    );
+    foregroundButton_->click=bind_object(&onForegroundButtonClick,this);
+    components_.push_back(foregroundButton_.get());
     halftoneButton_=make_shared<RadioButton>
     (
         ct().ps.halftone,

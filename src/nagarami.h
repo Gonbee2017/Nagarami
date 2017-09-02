@@ -27,32 +27,33 @@ constexpr char PROPERTIES_FILE_EXTENSION[]="ps";
 
 constexpr LONG  UNIT_LENGTH             =16;
 constexpr LONG  HALF_UNIT_LENGTH        =UNIT_LENGTH/2;
-constexpr LONG  SQUARED_HALF_UNIT_LENGTH=SQUARE(HALF_UNIT_LENGTH);
 constexpr SIZE  UNIT_SIZE               =SIZE({UNIT_LENGTH,UNIT_LENGTH});
-constexpr RECT  UNIT_RECT=RECT({0,0,UNIT_SIZE.cx,UNIT_SIZE.cy});
+constexpr RECT  UNIT_RECT               =RECT
+({0,0,UNIT_SIZE.cx,UNIT_SIZE.cy});
 constexpr LONG  FRAME_LENGTH            =UNIT_LENGTH;
 constexpr POINT CLIENT_POS=POINT({FRAME_LENGTH,FRAME_LENGTH});
 constexpr LONG  MINIMUM_WINDOW_WIDTH    =UNIT_LENGTH*8+FRAME_LENGTH*2;
 constexpr LONG  MINIMUM_WINDOW_HEIGHT   =UNIT_LENGTH*4+FRAME_LENGTH*2;
-constexpr SIZE  MINIMUM_WINDOW_SIZE     =
-    SIZE({MINIMUM_WINDOW_WIDTH,MINIMUM_WINDOW_HEIGHT});
+constexpr SIZE  MINIMUM_WINDOW_SIZE     =SIZE
+({MINIMUM_WINDOW_WIDTH,MINIMUM_WINDOW_HEIGHT});
 constexpr int   SCALE_DIVISOR           =10;
 constexpr int   ALPHA_DIVISOR           =20;
 constexpr int   MAXIMUM_SCALE           =500;
 constexpr int   MAXIMUM_HOLE            =UNIT_LENGTH*20;
 constexpr LONG  SLIDER_BAR_WIDTH        =UNIT_LENGTH/4;
-constexpr LONG  SLIDER_HALF_BAR_WIDTH   =SLIDER_BAR_WIDTH/2;
+constexpr LONG  HALF_SLIDER_BAR_WIDTH   =SLIDER_BAR_WIDTH/2;
 constexpr LONG  SLIDER_TEXT_WIDTH       =UNIT_LENGTH*2;
-constexpr SIZE  SLIDER_TEXT_SIZE=SIZE({SLIDER_TEXT_WIDTH,UNIT_LENGTH});
+constexpr SIZE  SLIDER_TEXT_SIZE        =SIZE
+({SLIDER_TEXT_WIDTH,UNIT_LENGTH});
 
 constexpr COLORREF ALMOST_BLACK_COLOR=RGB(  1,  1,  1);
 constexpr COLORREF BLACK_COLOR       =RGB(  0,  0,  0);
 constexpr COLORREF WHITE_COLOR       =RGB(255,255,255);
 
-constexpr POINT ACTIVATE_BUTTON_CELL_POS   =POINT({ 1, 0});
 constexpr POINT ALPHA_SLIDER_CELL_POS      =POINT({ 0,-2});
 constexpr POINT CLOSE_BUTTON_CELL_POS      =POINT({-1, 0});
 constexpr POINT FIT_BUTTON_CELL_POS        =POINT({ 2, 0});
+constexpr POINT FOREGROUND_BUTTON_CELL_POS =POINT({ 1, 0});
 constexpr POINT HALFTONE_BUTTON_CELL_POS   =POINT({ 3, 0});
 constexpr POINT HOLE_SLIDER_CELL_POS       =POINT({ 0,-1});
 constexpr POINT MAXIMIZE_BUTTON_CELL_POS   =POINT({-2, 0});
@@ -61,10 +62,10 @@ constexpr POINT RESET_BUTTON_CELL_POS      =POINT({ 4, 0});
 constexpr POINT SCALE_SLIDER_CELL_POS      =POINT({ 0,-3});
 constexpr POINT SYNCHRONIZE_BUTTON_CELL_POS=POINT({ 0, 0});
 
-constexpr char ACTIVATE_BUTTON_HINT[]   ="Activate";
 constexpr char ALPHA_SLIDER_HINT[]      ="Alpha";
 constexpr char CLOSE_BUTTON_HINT[]      ="Close";
 constexpr char FIT_BUTTON_HINT[]        ="Fit";
+constexpr char FOREGROUND_BUTTON_HINT[] ="Foreground";
 constexpr char HALFTONE_BUTTON_HINT[]   ="Halftone";
 constexpr char HOLE_SLIDER_HINT[]       ="Hole";
 constexpr char MAXIMIZE_BUTTON_HINT[]   ="Maximize";
@@ -418,7 +419,6 @@ class MainWindow:public Window
 {
 public:
     MainWindow();
-    void onActivateButtonClick();
     void onAlphaSliderChange();
     void onCloseButtonClick();
     LRESULT onCreate
@@ -426,6 +426,7 @@ public:
     LRESULT onDestroy
     (UINT message,WPARAM wParam,LPARAM lParam);
     void onFitButtonClick();
+    void onForegroundButtonClick();
     LRESULT onGetMinMaxInfo
     (UINT message,WPARAM wParam,LPARAM lParam);
     void onHoleSliderChange();
@@ -460,7 +461,6 @@ protected:
     void initializeBackBrush();
     void initializeBuffers();
     void initializeComponents();
-    shared_ptr<PushButton> activateButton_;
     Component*activeComponent_;
     shared_ptr<Slider> alphaSlider_;
     shared_ptr<DeleteObject> backBrush_;
@@ -468,6 +468,7 @@ protected:
     shared_ptr<PushButton> closeButton_;
     vector<Component*> components_;
     shared_ptr<PushButton> fitButton_;
+    shared_ptr<PushButton> foregroundButton_;
     shared_ptr<RadioButton> halftoneButton_;
     shared_ptr<Slider> holeSlider_;
     shared_ptr<RadioButton> maximizeButton_;
@@ -486,9 +487,10 @@ protected:
 
 struct properties
 {
+    template<class INPUT> void load(INPUT begin,INPUT end);
+
     properties();
     vector<string> lines() const;
-    template<class INPUT> void load(INPUT begin,INPUT end);
     BYTE alpha;
     COLORREF back_color1;
     COLORREF back_color2;
