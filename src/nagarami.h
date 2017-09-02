@@ -62,17 +62,17 @@ constexpr POINT MINIMIZE_BUTTON_CELL_POS  =POINT({-3, 0});
 constexpr POINT RESET_BUTTON_CELL_POS     =POINT({ 4, 0});
 constexpr POINT SCALE_SLIDER_CELL_POS     =POINT({ 0,-3});
 
-constexpr char ALPHA_SLIDER_HINT[]     ="Alpha";
-constexpr char CLOSE_BUTTON_HINT[]     ="Close";
-constexpr char FIT_BUTTON_HINT[]       ="Fit";
-constexpr char FOREGROUND_BUTTON_HINT[]="Foreground";
-constexpr char HALFTONE_BUTTON_HINT[]  ="Halftone";
-constexpr char HOLE_SLIDER_HINT[]      ="Hole";
-constexpr char LOCK_BUTTON_HINT[]      ="Lock";
-constexpr char MAXIMIZE_BUTTON_HINT[]  ="Maximize";
-constexpr char MINIMIZE_BUTTON_HINT[]  ="Minimize";
-constexpr char RESET_BUTTON_HINT[]     ="Reset";
-constexpr char SCALE_SLIDER_HINT[]     ="Scale";
+constexpr wchar_t ALPHA_SLIDER_HINT[]     =L"透過率";
+constexpr wchar_t CLOSE_BUTTON_HINT[]     =L"閉じる";
+constexpr wchar_t FIT_BUTTON_HINT[]       =L"余白をカット";
+constexpr wchar_t FOREGROUND_BUTTON_HINT[]=L"ターゲットを前面に表示";
+constexpr wchar_t HALFTONE_BUTTON_HINT[]  =L"高画質モード";
+constexpr wchar_t HOLE_SLIDER_HINT[]      =L"穴の大きさ";
+constexpr wchar_t LOCK_BUTTON_HINT[]      =L"ターゲットをロック";
+constexpr wchar_t MAXIMIZE_BUTTON_HINT[]  =L"最大化";
+constexpr wchar_t MINIMIZE_BUTTON_HINT[]  =L"最小化";
+constexpr wchar_t RESET_BUTTON_HINT[]     =L"設定をリセット";
+constexpr wchar_t SCALE_SLIDER_HINT[]     =L"倍率";
 
 constexpr BYTE     DEFAULT_ALPHA              =255;
 constexpr COLORREF DEFAULT_BACK_COLOR1        =RGB( 85, 86, 88);
@@ -262,9 +262,9 @@ protected:
     (
         const POINT&cellPos,
         HWND container,
-        HWND tool,
+        HWND toolTip,
         UINT toolId,
-        const string&toolHint
+        const wstring&toolHint
     );
     virtual void relocateTool()=0;
     virtual void render()=0;
@@ -272,9 +272,9 @@ protected:
     bool active_;
     POINT cellPos_;
     POINT pos_;
-    HWND tool_;
-    string toolHint_;
-    TOOLINFO toolInfo_;
+    HWND toolTip_;
+    wstring toolHint_;
+    TOOLINFOW toolInfo_;
 };
 
 class Button:public Component
@@ -291,9 +291,9 @@ protected:
         HDC destDC,
         const POINT&cellPos,
         HWND container,
-        HWND tool,
+        HWND toolTip,
         UINT toolId,
-        const string&toolHint
+        const wstring&toolHint
     );
     virtual void relocateTool() override;
     void render_(const bool&push);
@@ -312,9 +312,9 @@ public:
         HDC destDC,
         const POINT&cellPos,
         HWND container,
-        HWND tool,
+        HWND toolTip,
         UINT toolId,
-        const string&toolHint
+        const wstring&toolHint
     );
     virtual void deactivate(const POINT&cursorPos) override;
     function<void()> click;
@@ -331,9 +331,9 @@ public:
         HDC destDC,
         const POINT&cellPos,
         HWND container,
-        HWND tool,
+        HWND toolTip,
         UINT toolId,
-        const string&toolHint
+        const wstring&toolHint
     );
     virtual void deactivate(const POINT&cursorPos) override;
     bool value();
@@ -357,9 +357,9 @@ public:
         HDC destDC,
         const POINT&cellPos,
         HWND container,
-        HWND tool,
+        HWND toolTip,
         UINT toolId,
-        const string&toolHint
+        const wstring&toolHint
     );
     virtual void activate(const POINT&cursorPos) override;
     virtual void deactivate(const POINT&cursorPos) override;
@@ -477,7 +477,7 @@ protected:
     shared_ptr<PushButton> resetButton_;
     shared_ptr<Slider> scaleSlider_;
     shared_ptr<Timer> timer_;
-    HWND tool_;
+    HWND toolTip_;
     shared_ptr<Buffer> viewBuffer_;
     bool viewSliding_;
     POINT viewSlidingBase_;

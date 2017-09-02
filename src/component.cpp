@@ -20,25 +20,25 @@ Component::Component
 (
     const POINT&cellPos,
     HWND container,
-    HWND tool,
+    HWND toolTip,
     UINT toolId,
-    const string&toolHint
+    const wstring&toolHint
 ):
     cellPos_(cellPos),
-    tool_(tool),
+    toolTip_(toolTip),
     toolHint_(toolHint),
     active_(false)
 {
-    toolInfo_.cbSize=sizeof(TOOLINFO);
+    toolInfo_.cbSize=sizeof(TOOLINFOW)-4;
     toolInfo_.uFlags=TTF_SUBCLASS;
     toolInfo_.hwnd=container;
     toolInfo_.uId=toolId;
     toolInfo_.rect=RECT({0,0,0,0});
     toolInfo_.hinst=NULL;
-    toolInfo_.lpszText=(LPTSTR)TEXT(toolHint_.c_str());
-    if(SendMessage(tool_,TTM_ADDTOOL,0,(LPARAM)&toolInfo_)==FALSE)
+    toolInfo_.lpszText=(LPWSTR)TEXT(toolHint_.c_str());
+    if(SendMessageW(toolTip_,TTM_ADDTOOLW,0,(LPARAM)&toolInfo_)==FALSE)
         throw make_shared<runtime_error>(describe
-        ("SendMessage(TTM_ADDTOOL) is failed."));
+        ("SendMessageW(TTM_ADDTOOLW) is failed."));
 }
 
 void Component::reposition(const SIZE&containerSize)
@@ -99,11 +99,11 @@ Button::Button
     HDC destDC,
     const POINT&cellPos,
     HWND container,
-    HWND tool,
+    HWND toolTip,
     UINT toolId,
-    const string&toolHint
+    const wstring&toolHint
 ):
-    Component(cellPos,container,tool,toolId,toolHint),
+    Component(cellPos,container,toolTip,toolId,toolHint),
     iconMaskBuffer_(Buffer::load(ct().instance,maskBitmapName,destDC)),
     foreBuffer_(Buffer::create(UNIT_SIZE,destDC)),
     backBuffer_(Buffer::create(UNIT_SIZE,destDC)),
@@ -119,7 +119,7 @@ Button::Button
 void Button::relocateTool()
 {
     toolInfo_.rect=rect(pos_,UNIT_SIZE);
-    SendMessage(tool_,TTM_NEWTOOLRECT,0,(LPARAM)&toolInfo_);
+    SendMessageW(toolTip_,TTM_NEWTOOLRECTW,0,(LPARAM)&toolInfo_);
 }
 
 void Button::render_(const bool&push)
@@ -199,11 +199,12 @@ PushButton::PushButton
     HDC destDC,
     const POINT&cellPos,
     HWND container,
-    HWND tool,
+    HWND toolTip,
     UINT toolId,
-    const string&toolHint
+    const wstring&toolHint
 ):
-    Button(maskBitmapName,destDC,cellPos,container,tool,toolId,toolHint),
+    Button
+    (maskBitmapName,destDC,cellPos,container,toolTip,toolId,toolHint),
     click([] () {})
 {render();}
 
@@ -223,11 +224,12 @@ RadioButton::RadioButton
     HDC destDC,
     const POINT&cellPos,
     HWND container,
-    HWND tool,
+    HWND toolTip,
     UINT toolId,
-    const string&toolHint
+    const wstring&toolHint
 ):
-    Button(maskBitmapName,destDC,cellPos,container,tool,toolId,toolHint),
+    Button
+    (maskBitmapName,destDC,cellPos,container,toolTip,toolId,toolHint),
     value_(initialValue),
     change([] () {}) {render();}
 
@@ -263,11 +265,11 @@ Slider::Slider
     HDC destDC,
     const POINT&cellPos,
     HWND container,
-    HWND tool,
+    HWND toolTip,
     UINT toolId,
-    const string&toolHint
+    const wstring&toolHint
 ):
-    Component(cellPos,container,tool,toolId,toolHint),
+    Component(cellPos,container,toolTip,toolId,toolHint),
     minimum_(minimum),
     maximum_(maximum),
     value_(initialValue),
@@ -443,7 +445,7 @@ bool Slider::hitTestKnob(const POINT&cursorPos)
 void Slider::relocateTool()
 {
     toolInfo_.rect=rect(pos_,SIZE({length_,UNIT_LENGTH}));
-    SendMessage(tool_,TTM_NEWTOOLRECT,0,(LPARAM)&toolInfo_);
+    SendMessageW(toolTip_,TTM_NEWTOOLRECTW,0,(LPARAM)&toolInfo_);
 }
 
 void Slider::render()

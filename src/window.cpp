@@ -95,7 +95,7 @@ LRESULT CALLBACK Window::windowProcedure
 map<HWND,Window*> Window::windowMap_;
 
 MainWindow::MainWindow():
-    activeComponent_(nullptr),tool_(NULL),viewSliding_(false)
+    activeComponent_(nullptr),toolTip_(NULL),viewSliding_(false)
 {
     handlerMap_[WM_CREATE]=bind_object(&onCreate,this);
     handlerMap_[WM_DESTROY]=bind_object(&onDestroy,this);
@@ -151,7 +151,7 @@ LRESULT MainWindow::onDestroy
     nagarami::GetWindowPlacement(handle_,&placement);
     ct().ps.window_pos=pos(placement.rcNormalPosition);
     ct().ps.window_size=size(placement.rcNormalPosition);
-    if(tool_!=NULL) DestroyWindow(tool_);
+    if(toolTip_!=NULL) DestroyWindow(toolTip_);
     if(!ct().error.get()) PostQuitMessage(0);
     return 0;
 }
@@ -589,10 +589,10 @@ void MainWindow::initializeBuffers()
 
 void MainWindow::initializeComponents()
 {
-    tool_=::CreateWindowEx
+    toolTip_=::CreateWindowExW
     (
         0,
-        TOOLTIPS_CLASS,
+        TOOLTIPS_CLASSW,
         NULL,
         TTS_ALWAYSTIP,
         CW_USEDEFAULT,
@@ -604,7 +604,7 @@ void MainWindow::initializeComponents()
         ct().instance,
         NULL
     );
-    if(tool_==NULL) throw make_shared<api_error>("CreateWindowEx");
+    if(toolTip_==NULL) throw make_shared<api_error>("CreateWindowExW");
     alphaSlider_=make_shared<Slider>
     (
         0,
@@ -616,7 +616,7 @@ void MainWindow::initializeComponents()
         buffer_->dc(),
         ALPHA_SLIDER_CELL_POS,
         handle_,
-        tool_,
+        toolTip_,
         components_.size(),
         ALPHA_SLIDER_HINT
     );
@@ -628,7 +628,7 @@ void MainWindow::initializeComponents()
         buffer_->dc(),
         CLOSE_BUTTON_CELL_POS,
         handle_,
-        tool_,
+        toolTip_,
         components_.size(),
         CLOSE_BUTTON_HINT
     );
@@ -640,7 +640,7 @@ void MainWindow::initializeComponents()
         buffer_->dc(),
         FIT_BUTTON_CELL_POS,
         handle_,
-        tool_,
+        toolTip_,
         components_.size(),
         FIT_BUTTON_HINT
     );
@@ -652,7 +652,7 @@ void MainWindow::initializeComponents()
         buffer_->dc(),
         FOREGROUND_BUTTON_CELL_POS,
         handle_,
-        tool_,
+        toolTip_,
         components_.size(),
         FOREGROUND_BUTTON_HINT
     );
@@ -665,7 +665,7 @@ void MainWindow::initializeComponents()
         buffer_->dc(),
         HALFTONE_BUTTON_CELL_POS,
         handle_,
-        tool_,
+        toolTip_,
         components_.size(),
         HALFTONE_BUTTON_HINT
     );
@@ -683,7 +683,7 @@ void MainWindow::initializeComponents()
         buffer_->dc(),
         HOLE_SLIDER_CELL_POS,
         handle_,
-        tool_,
+        toolTip_,
         components_.size(),
         HOLE_SLIDER_HINT
     );
@@ -696,7 +696,7 @@ void MainWindow::initializeComponents()
         buffer_->dc(),
         LOCK_BUTTON_CELL_POS,
         handle_,
-        tool_,
+        toolTip_,
         components_.size(),
         LOCK_BUTTON_HINT
     );
@@ -708,7 +708,7 @@ void MainWindow::initializeComponents()
         buffer_->dc(),
         MAXIMIZE_BUTTON_CELL_POS,
         handle_,
-        tool_,
+        toolTip_,
         components_.size(),
         MAXIMIZE_BUTTON_HINT
     );
@@ -720,7 +720,7 @@ void MainWindow::initializeComponents()
         buffer_->dc(),
         MINIMIZE_BUTTON_CELL_POS,
         handle_,
-        tool_,
+        toolTip_,
         components_.size(),
         MINIMIZE_BUTTON_HINT
     );
@@ -732,7 +732,7 @@ void MainWindow::initializeComponents()
         buffer_->dc(),
         RESET_BUTTON_CELL_POS,
         handle_,
-        tool_,
+        toolTip_,
         components_.size(),
         RESET_BUTTON_HINT
     );
@@ -749,7 +749,7 @@ void MainWindow::initializeComponents()
         buffer_->dc(),
         SCALE_SLIDER_CELL_POS,
         handle_,
-        tool_,
+        toolTip_,
         components_.size(),
         SCALE_SLIDER_HINT
     );
