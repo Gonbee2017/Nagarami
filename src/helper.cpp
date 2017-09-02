@@ -64,7 +64,7 @@ double fpn(const string&str)
     double number=strtod(str.c_str(),&end);
     if(*end!='\0')
         throw make_shared<runtime_error>(describe
-        ("invalid number '",str,"'"));
+        ("'",str,"' is an invalid floating-point number."));
     return number;
 }
 
@@ -89,7 +89,7 @@ long integer(const string&str)
     long number=strtol(str.c_str(),&end,0);
     if(*end!='\0')
         throw make_shared<runtime_error>(describe
-        ("invalid number '",str,"'"));
+        ("'",str,"' is an invalid integer."));
     return number;
 }
 

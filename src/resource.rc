@@ -1,11 +1,11 @@
 #include"resource.h"
 #include<windows.h>
 
-IDB_ACTIVATE    BITMAP DISCARDABLE "../rc/activate.bmp"
 IDB_ALPHA       BITMAP DISCARDABLE "../rc/alpha.bmp"
 IDB_BACK        BITMAP DISCARDABLE "../rc/back.bmp"
 IDB_CLOSE       BITMAP DISCARDABLE "../rc/close.bmp"
 IDB_FIT         BITMAP DISCARDABLE "../rc/fit.bmp"
+IDB_FOREGROUND  BITMAP DISCARDABLE "../rc/foreground.bmp"
 IDB_HALFTONE    BITMAP DISCARDABLE "../rc/halftone.bmp"
 IDB_HOLE        BITMAP DISCARDABLE "../rc/hole.bmp"
 IDB_MAXIMIZE    BITMAP DISCARDABLE "../rc/maximize.bmp"

@@ -1,8 +1,11 @@
-#define IDB_ACTIVATE    101
-#define IDB_ALPHA       102
-#define IDB_BACK        103
-#define IDB_CLOSE       104
-#define IDB_FIT         105
+#define STR_(x) #x
+#define STR(x) STR_(x)
+
+#define IDB_ALPHA       101
+#define IDB_BACK        102
+#define IDB_CLOSE       103
+#define IDB_FIT         104
+#define IDB_FOREGROUND  105
 #define IDB_HALFTONE    106
 #define IDB_HOLE        107
 #define IDB_MAXIMIZE    108
@@ -16,5 +19,17 @@
 #define VER_FILEDESCRIPTION "Nagarami utility"
 #define VER_LEGALCOPYRIGHT  "Copyright (c) 2017 Gonbee"
 #define VER_PRODUCTNAME     "Nagarami"
-#define VER_VERSION         0,1,1,6
-#define VER_VERSION_STR     "0,1,1,6"
+#define VER_VERSION\
+    VER_MAJOR,\
+    VER_MINOR,\
+    VER_BUILD,\
+    VER_REVISION
+#define VER_VERSION_STR\
+    STR(VER_MAJOR) "."\
+    STR(VER_MINOR) "."\
+    STR(VER_BUILD) "."\
+    STR(VER_REVISION)
+#define VER_MAJOR    0
+#define VER_MINOR    1
+#define VER_BUILD    2
+#define VER_REVISION 0

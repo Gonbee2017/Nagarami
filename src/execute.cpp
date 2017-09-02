@@ -262,7 +262,7 @@ int execute
     } catch(const shared_ptr<runtime_error>&error)
     {
         const string message=describe
-        ("Unexpected error occured.\n",error->what());
+        ("An unexpected error occured.\n",error->what());
         cerr<<message<<endl;
         MessageBox
         (
