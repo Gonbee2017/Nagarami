@@ -27,7 +27,7 @@ FILESUBTYPE    VFT2_UNKNOWN
 BEGIN
     BLOCK "StringFileInfo"
     BEGIN
-        BLOCK "000004b0"
+        BLOCK "041104b0"
         BEGIN
             VALUE "FileDescription",VER_FILEDESCRIPTION
             VALUE "FileVersion",    VER_VERSION_STR
@@ -38,6 +38,6 @@ BEGIN
     END
     BLOCK "VarFileInfo"
     BEGIN
-        VALUE "Translation",0x0,1200
+        VALUE "Translation",0x0411,1200
     END
 END
