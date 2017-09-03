@@ -30,6 +30,6 @@
     STR(VER_BUILD) "."\
     STR(VER_REVISION)
 #define VER_MAJOR    0
-#define VER_MINOR    1
-#define VER_BUILD    5
-#define VER_REVISION 2
+#define VER_MINOR    2
+#define VER_BUILD    0
+#define VER_REVISION 0
