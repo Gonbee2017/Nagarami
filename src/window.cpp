@@ -216,6 +216,15 @@ void MainWindow::onHalftoneButtonChange()
     ct().ps.halftone=halftoneButton_->value();
 }
 
+void MainWindow::onHelpButtonClick()
+{
+    int code=(int)ShellExecute
+    (handle_,TEXT("open"),TEXT(HELP_URL),NULL,NULL,SW_SHOWNORMAL);
+    if(code<=32)
+        throw make_shared<runtime_error>(describe
+        ("ShellExecute failed.(",code,")"));
+}
+
 void MainWindow::onHoleSliderChange()
 {ct().ps.hole=UNIT_LENGTH*holeSlider_->value();}
 
@@ -672,6 +681,18 @@ void MainWindow::initializeComponents()
     halftoneButton_->change=bind_object(&onHalftoneButtonChange,this);
     onHalftoneButtonChange();
     components_.push_back(halftoneButton_.get());
+    helpButton_=make_shared<PushButton>
+    (
+        MAKEINTRESOURCE(IDB_HELP),
+        buffer_->dc(),
+        HELP_BUTTON_CELL_POS,
+        handle_,
+        toolTip_,
+        components_.size(),
+        HELP_BUTTON_HINT
+    );
+    helpButton_->click=bind_object(&onHelpButtonClick,this);
+    components_.push_back(helpButton_.get());
     holeSlider_=make_shared<Slider>
     (
         1,

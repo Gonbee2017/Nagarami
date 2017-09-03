@@ -24,18 +24,20 @@ using namespace std;
 //---- constexpr definition ----
 
 constexpr char PROPERTIES_FILE_EXTENSION[]="ps";
+constexpr char HELP_URL[]                 =
+    "https://github.com/Gonbee2017/Nagarami/blob/master/README.md";
 
 constexpr LONG  UNIT_LENGTH             =16;
 constexpr LONG  HALF_UNIT_LENGTH        =UNIT_LENGTH/2;
 constexpr SIZE  UNIT_SIZE               =SIZE({UNIT_LENGTH,UNIT_LENGTH});
-constexpr RECT  UNIT_RECT               =RECT
-({0,0,UNIT_SIZE.cx,UNIT_SIZE.cy});
+constexpr RECT  UNIT_RECT               =
+    RECT({0,0,UNIT_SIZE.cx,UNIT_SIZE.cy});
 constexpr LONG  FRAME_LENGTH            =UNIT_LENGTH;
 constexpr POINT CLIENT_POS=POINT({FRAME_LENGTH,FRAME_LENGTH});
-constexpr LONG  MINIMUM_WINDOW_WIDTH    =UNIT_LENGTH*8+FRAME_LENGTH*2;
+constexpr LONG  MINIMUM_WINDOW_WIDTH    =UNIT_LENGTH*9+FRAME_LENGTH*2;
 constexpr LONG  MINIMUM_WINDOW_HEIGHT   =UNIT_LENGTH*4+FRAME_LENGTH*2;
-constexpr SIZE  MINIMUM_WINDOW_SIZE     =SIZE
-({MINIMUM_WINDOW_WIDTH,MINIMUM_WINDOW_HEIGHT});
+constexpr SIZE  MINIMUM_WINDOW_SIZE     =
+    SIZE({MINIMUM_WINDOW_WIDTH,MINIMUM_WINDOW_HEIGHT});
 constexpr int   SCALE_DIVISOR           =10;
 constexpr int   ALPHA_DIVISOR           =20;
 constexpr int   MAXIMUM_SCALE           =500;
@@ -43,8 +45,8 @@ constexpr int   MAXIMUM_HOLE            =UNIT_LENGTH*20;
 constexpr LONG  SLIDER_BAR_WIDTH        =UNIT_LENGTH/4;
 constexpr LONG  HALF_SLIDER_BAR_WIDTH   =SLIDER_BAR_WIDTH/2;
 constexpr LONG  SLIDER_TEXT_WIDTH       =UNIT_LENGTH*2;
-constexpr SIZE  SLIDER_TEXT_SIZE        =SIZE
-({SLIDER_TEXT_WIDTH,UNIT_LENGTH});
+constexpr SIZE  SLIDER_TEXT_SIZE        =
+    SIZE({SLIDER_TEXT_WIDTH,UNIT_LENGTH});
 
 constexpr COLORREF ALMOST_BLACK_COLOR=RGB(  1,  1,  1);
 constexpr COLORREF BLACK_COLOR       =RGB(  0,  0,  0);
@@ -55,6 +57,7 @@ constexpr POINT CLOSE_BUTTON_CELL_POS     =POINT({-1, 0});
 constexpr POINT FIT_BUTTON_CELL_POS       =POINT({ 2, 0});
 constexpr POINT FOREGROUND_BUTTON_CELL_POS=POINT({ 1, 0});
 constexpr POINT HALFTONE_BUTTON_CELL_POS  =POINT({ 3, 0});
+constexpr POINT HELP_BUTTON_CELL_POS      =POINT({-4, 0});
 constexpr POINT HOLE_SLIDER_CELL_POS      =POINT({ 0,-1});
 constexpr POINT LOCK_BUTTON_CELL_POS      =POINT({ 0, 0});
 constexpr POINT MAXIMIZE_BUTTON_CELL_POS  =POINT({-2, 0});
@@ -67,6 +70,7 @@ constexpr wchar_t CLOSE_BUTTON_HINT[]     =L"閉じる";
 constexpr wchar_t FIT_BUTTON_HINT[]       =L"余白をカット";
 constexpr wchar_t FOREGROUND_BUTTON_HINT[]=L"ターゲットを前面に表示";
 constexpr wchar_t HALFTONE_BUTTON_HINT[]  =L"高画質モード";
+constexpr wchar_t HELP_BUTTON_HINT[]      =L"ヘルプ";
 constexpr wchar_t HOLE_SLIDER_HINT[]      =L"穴の大きさ";
 constexpr wchar_t LOCK_BUTTON_HINT[]      =L"ターゲットをロック";
 constexpr wchar_t MAXIMIZE_BUTTON_HINT[]  =L"最大化";
@@ -106,8 +110,8 @@ class api_error:public runtime_error
 struct POINT_DOUBLE {double x,y;};
 
 template<class OBJECT,class RESULT,class...ARGUMENTS>
-    function<RESULT(ARGUMENTS...)> bind_object
-(RESULT(OBJECT::*member)(ARGUMENTS...),OBJECT*object);
+    function<RESULT(ARGUMENTS...arguments)> bind_object
+(RESULT(OBJECT::*member)(ARGUMENTS...arguments),OBJECT*object);
 template<class...ARGUMENTS> string describe(ARGUMENTS&&...arguments);
 template<class LEAD,class...TRAILER> void describe_to_with
 (ostream&os,const string&separator,LEAD&lead,TRAILER&&...trailer);
@@ -430,6 +434,7 @@ public:
     LRESULT onGetMinMaxInfo
     (UINT message,WPARAM wParam,LPARAM lParam);
     void onHalftoneButtonChange();
+    void onHelpButtonClick();
     void onHoleSliderChange();
     LRESULT onLButtonDown
     (UINT message,WPARAM wParam,LPARAM lParam);
@@ -470,6 +475,7 @@ protected:
     shared_ptr<PushButton> fitButton_;
     shared_ptr<PushButton> foregroundButton_;
     shared_ptr<RadioButton> halftoneButton_;
+    shared_ptr<PushButton> helpButton_;
     shared_ptr<Slider> holeSlider_;
     shared_ptr<RadioButton> lockButton_;
     shared_ptr<RadioButton> maximizeButton_;
@@ -629,14 +635,14 @@ void UpdateWindow(HWND window);
 //---- helper template definition ----
 
 template<class OBJECT,class RESULT,class...ARGUMENTS>
-    function<RESULT(ARGUMENTS...)> bind_object
-(RESULT(OBJECT::*member)(ARGUMENTS...),OBJECT*object)
+    function<RESULT(ARGUMENTS...arguments)> bind_object
+(RESULT(OBJECT::*member)(ARGUMENTS...arguments),OBJECT*object)
 {
-    return [object,member] (ARGUMENTS&&...arguments)->RESULT
+    return [object,member] (ARGUMENTS...arguments)->RESULT
     {return (object->*member)(arguments...);};
 }
 
-template<class... ARGUMENTS> string describe(ARGUMENTS&&...arguments)
+template<class...ARGUMENTS> string describe(ARGUMENTS&&...arguments)
 {return describe_with("",arguments...);}
 
 template<class LEAD,class... TRAILER> void describe_to_with
