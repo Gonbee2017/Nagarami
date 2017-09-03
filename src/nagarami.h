@@ -34,7 +34,7 @@ constexpr RECT  UNIT_RECT               =
     RECT({0,0,UNIT_SIZE.cx,UNIT_SIZE.cy});
 constexpr LONG  FRAME_LENGTH            =UNIT_LENGTH;
 constexpr POINT CLIENT_POS=POINT({FRAME_LENGTH,FRAME_LENGTH});
-constexpr LONG  MINIMUM_WINDOW_WIDTH    =UNIT_LENGTH*9+FRAME_LENGTH*2;
+constexpr LONG  MINIMUM_WINDOW_WIDTH    =UNIT_LENGTH*8+FRAME_LENGTH*2;
 constexpr LONG  MINIMUM_WINDOW_HEIGHT   =UNIT_LENGTH*4+FRAME_LENGTH*2;
 constexpr SIZE  MINIMUM_WINDOW_SIZE     =
     SIZE({MINIMUM_WINDOW_WIDTH,MINIMUM_WINDOW_HEIGHT});
@@ -54,20 +54,18 @@ constexpr COLORREF WHITE_COLOR       =RGB(255,255,255);
 
 constexpr POINT ALPHA_SLIDER_CELL_POS     =POINT({ 0,-2});
 constexpr POINT CLOSE_BUTTON_CELL_POS     =POINT({-1, 0});
-constexpr POINT FIT_BUTTON_CELL_POS       =POINT({ 2, 0});
 constexpr POINT FOREGROUND_BUTTON_CELL_POS=POINT({ 1, 0});
-constexpr POINT HALFTONE_BUTTON_CELL_POS  =POINT({ 3, 0});
+constexpr POINT HALFTONE_BUTTON_CELL_POS  =POINT({ 2, 0});
 constexpr POINT HELP_BUTTON_CELL_POS      =POINT({-4, 0});
 constexpr POINT HOLE_SLIDER_CELL_POS      =POINT({ 0,-1});
 constexpr POINT LOCK_BUTTON_CELL_POS      =POINT({ 0, 0});
 constexpr POINT MAXIMIZE_BUTTON_CELL_POS  =POINT({-2, 0});
 constexpr POINT MINIMIZE_BUTTON_CELL_POS  =POINT({-3, 0});
-constexpr POINT RESET_BUTTON_CELL_POS     =POINT({ 4, 0});
+constexpr POINT RESET_BUTTON_CELL_POS     =POINT({ 3, 0});
 constexpr POINT SCALE_SLIDER_CELL_POS     =POINT({ 0,-3});
 
 constexpr wchar_t ALPHA_SLIDER_HINT[]     =L"透過率";
 constexpr wchar_t CLOSE_BUTTON_HINT[]     =L"閉じる";
-constexpr wchar_t FIT_BUTTON_HINT[]       =L"余白をカット";
 constexpr wchar_t FOREGROUND_BUTTON_HINT[]=L"ターゲットを前面に表示";
 constexpr wchar_t HALFTONE_BUTTON_HINT[]  =L"高画質モード";
 constexpr wchar_t HELP_BUTTON_HINT[]      =L"ヘルプ";
@@ -429,7 +427,6 @@ public:
     (UINT message,WPARAM wParam,LPARAM lParam);
     LRESULT onDestroy
     (UINT message,WPARAM wParam,LPARAM lParam);
-    void onFitButtonClick();
     void onForegroundButtonClick();
     LRESULT onGetMinMaxInfo
     (UINT message,WPARAM wParam,LPARAM lParam);
@@ -472,7 +469,6 @@ protected:
     shared_ptr<Buffer> buffer_;
     shared_ptr<PushButton> closeButton_;
     vector<Component*> components_;
-    shared_ptr<PushButton> fitButton_;
     shared_ptr<PushButton> foregroundButton_;
     shared_ptr<RadioButton> halftoneButton_;
     shared_ptr<PushButton> helpButton_;

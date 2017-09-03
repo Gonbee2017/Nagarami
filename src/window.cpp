@@ -156,43 +156,6 @@ LRESULT MainWindow::onDestroy
     return 0;
 }
 
-void MainWindow::onFitButtonClick()
-{
-    if(ct().target!=NULL&&!IsIconic(ct().target))
-    {
-        POINT windowPos=ct().ps.window_pos;
-        SIZE windowSize=ct().ps.window_size;
-        const POINT endPos=
-            ct().ps.window_pos+point(ct().ps.window_size);
-        RECT targetRect;
-        nagarami::GetClientRect(ct().target,&targetRect);
-        const SIZE targetSize=size(targetRect);
-        const SIZE viewSize=targetSize*ct().ps.scale/100;
-        const POINT viewEndPos=point(ct().ps.view_base)+point(viewSize);
-        if(ct().ps.view_base.x>0)
-        {
-            windowPos.x+=(LONG)ct().ps.view_base.x;
-            windowSize.cx-=(LONG)ct().ps.view_base.x;
-            ct().ps.view_base.x=0;
-        }
-        if(ct().ps.view_base.y>0)
-        {
-            windowPos.y+=(LONG)ct().ps.view_base.y;
-            windowSize.cy-=(LONG)ct().ps.view_base.y;
-            ct().ps.view_base.y=0;
-        }
-        if(ct().ps.window_size.cx>viewEndPos.x)
-            windowSize.cx-=ct().ps.window_size.cx-viewEndPos.x;
-        if(ct().ps.window_size.cy>viewEndPos.y)
-            windowSize.cy-=ct().ps.window_size.cy-viewEndPos.y;
-        if(windowPos.x<endPos.x&&windowPos.y<endPos.y)
-        {
-            if(IsZoomed(handle_)) ShowWindow(handle_,SW_RESTORE);
-            move(windowPos,windowSize);
-        }
-    }
-}
-
 void MainWindow::onForegroundButtonClick()
 {if(ct().target!=NULL) nagarami::SetForegroundWindow(ct().target);}
 
@@ -643,18 +606,6 @@ void MainWindow::initializeComponents()
     );
     closeButton_->click=bind_object(&onCloseButtonClick,this);
     components_.push_back(closeButton_.get());
-    fitButton_=make_shared<PushButton>
-    (
-        MAKEINTRESOURCE(IDB_FIT),
-        buffer_->dc(),
-        FIT_BUTTON_CELL_POS,
-        handle_,
-        toolTip_,
-        components_.size(),
-        FIT_BUTTON_HINT
-    );
-    fitButton_->click=bind_object(&onFitButtonClick,this);
-    components_.push_back(fitButton_.get());
     foregroundButton_=make_shared<PushButton>
     (
         MAKEINTRESOURCE(IDB_FOREGROUND),

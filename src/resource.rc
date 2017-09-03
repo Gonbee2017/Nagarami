@@ -4,7 +4,6 @@
 IDB_ALPHA      BITMAP DISCARDABLE "../rc/alpha.bmp"
 IDB_BACK       BITMAP DISCARDABLE "../rc/back.bmp"
 IDB_CLOSE      BITMAP DISCARDABLE "../rc/close.bmp"
-IDB_FIT        BITMAP DISCARDABLE "../rc/fit.bmp"
 IDB_FOREGROUND BITMAP DISCARDABLE "../rc/foreground.bmp"
 IDB_HALFTONE   BITMAP DISCARDABLE "../rc/halftone.bmp"
 IDB_HELP       BITMAP DISCARDABLE "../rc/help.bmp"
