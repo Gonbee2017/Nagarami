@@ -1,6 +1,7 @@
 #include"nagarami.h"
 #include<fstream>
 #include<functional>
+#include<iomanip>
 #include<ios>
 #include<iostream>
 #include<map>
@@ -38,29 +39,31 @@ properties::properties()
 vector<string> properties::lines() const
 {
     vector<string> result;
-    result.push_back(describe_with("=","alpha",(UINT)alpha));
-    result.push_back(describe_with("=","back_color1",back_color1));
-    result.push_back(describe_with("=","back_color2",back_color2));
-    result.push_back
-    (describe_with("=","component_color1",component_color1));
-    result.push_back
-    (describe_with("=","component_color2",component_color2));
-    result.push_back
-    (describe_with("=","control_mode_alt",control_mode_alt));
-    result.push_back
-    (describe_with("=","control_mode_ctrl",control_mode_ctrl));
-    result.push_back
-    (describe_with("=","control_mode_shift",control_mode_shift));
-    result.push_back(describe_with("=","fps",fps));
-    result.push_back(describe_with("=","halftone",halftone));
-    result.push_back(describe_with("=","hole",hole));
-    result.push_back(describe_with("=","scale",scale));
-    result.push_back(describe_with("=","view_base.x",view_base.x));
-    result.push_back(describe_with("=","view_base.y",view_base.y));
-    result.push_back(describe_with("=","window_pos.x",window_pos.x));
-    result.push_back(describe_with("=","window_pos.y",window_pos.y));
-    result.push_back(describe_with("=","window_size.cx",window_size.cx));
-    result.push_back(describe_with("=","window_size.cy",window_size.cy));
+    result.push_back(describe("alpha","=",(UINT)alpha));
+    result.push_back(describe
+    ("back_color1","=",hex,showbase,back_color1));
+    result.push_back(describe
+    ("back_color2","=",hex,showbase,back_color2));
+    result.push_back(describe
+    ("component_color1","=",hex,showbase,component_color1));
+    result.push_back(describe
+    ("component_color2","=",hex,showbase,component_color2));
+    result.push_back(describe
+    ("control_mode_alt","=",control_mode_alt));
+    result.push_back(describe
+    ("control_mode_ctrl","=",control_mode_ctrl));
+    result.push_back(describe
+    ("control_mode_shift","=",control_mode_shift));
+    result.push_back(describe("fps","=",fps));
+    result.push_back(describe("halftone","=",halftone));
+    result.push_back(describe("hole","=",hole));
+    result.push_back(describe("scale","=",scale));
+    result.push_back(describe("view_base.x","=",view_base.x));
+    result.push_back(describe("view_base.y","=",view_base.y));
+    result.push_back(describe("window_pos.x","=",window_pos.x));
+    result.push_back(describe("window_pos.y","=",window_pos.y));
+    result.push_back(describe("window_size.cx","=",window_size.cx));
+    result.push_back(describe("window_size.cy","=",window_size.cy));
     return result;
 }
 

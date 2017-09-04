@@ -77,10 +77,10 @@ constexpr wchar_t RESET_BUTTON_HINT[]     =L"設定をリセット";
 constexpr wchar_t SCALE_SLIDER_HINT[]     =L"倍率";
 
 constexpr BYTE     DEFAULT_ALPHA              =255;
-constexpr COLORREF DEFAULT_BACK_COLOR1        =RGB( 85, 86, 88);
-constexpr COLORREF DEFAULT_BACK_COLOR2        =RGB( 55, 59, 62);
+constexpr COLORREF DEFAULT_BACK_COLOR1        =RGB( 42, 43, 44);
+constexpr COLORREF DEFAULT_BACK_COLOR2        =RGB( 27, 29, 31);
 constexpr COLORREF DEFAULT_COMPONENT_COLOR1   =RGB(195,229,231);
-constexpr COLORREF DEFAULT_COMPONENT_COLOR2   =RGB( 43,144,162);
+constexpr COLORREF DEFAULT_COMPONENT_COLOR2   =RGB( 22, 72, 81);
 constexpr bool     DEFAULT_CONTROL_MODE_ALT   =false;
 constexpr bool     DEFAULT_CONTROL_MODE_CTRL  =true;
 constexpr bool     DEFAULT_CONTROL_MODE_SHIFT =false;
