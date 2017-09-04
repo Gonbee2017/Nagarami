@@ -238,8 +238,6 @@ int execute
     int result=0;
     try
     {
-        //const DWORD ticks=GetTickCount();
-        //if(ticks<STARTUP_DELAY) Sleep(STARTUP_DELAY-ticks);
         ct().instance=instance;
         ifstream psIn(psFile,ios::in);
         if(psIn)

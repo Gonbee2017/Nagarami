@@ -26,7 +26,6 @@ using namespace std;
 constexpr char PROPERTIES_FILE_EXTENSION[]="ps";
 constexpr char HELP_URL[]                 =
     "https://github.com/Gonbee2017/Nagarami/blob/master/README.md";
-//constexpr DWORD STARTUP_DELAY              =10000;
 
 constexpr LONG  UNIT_LENGTH             =16;
 constexpr LONG  HALF_UNIT_LENGTH        =UNIT_LENGTH/2;
