@@ -8,7 +8,19 @@
 namespace nagarami
 {
 
+void Component::activateTool()
+{
+    if(!toolActive_) SendMessageW(toolTip_,TTM_ACTIVATE,TRUE,0);
+    toolActive_=true;
+}
+
 bool Component::active() {return active_;}
+
+void Component::deactivateTool()
+{
+    if(toolActive_) SendMessageW(toolTip_,TTM_ACTIVATE,FALSE,0);
+    toolActive_=false;
+}
 
 void Component::relocate(const SIZE&containerSize)
 {
@@ -22,12 +34,13 @@ Component::Component
     HWND container,
     HWND toolTip,
     UINT toolId,
-    const wstring&toolHint
+    const wstring&toolText
 ):
     cellPos_(cellPos),
     toolTip_(toolTip),
-    toolHint_(toolHint),
-    active_(false)
+    toolText_(toolText),
+    active_(false),
+    toolActive_(true)
 {
     toolInfo_.cbSize=sizeof(TOOLINFOW)-4;
     toolInfo_.uFlags=TTF_SUBCLASS;
@@ -35,10 +48,11 @@ Component::Component
     toolInfo_.uId=toolId;
     toolInfo_.rect=RECT({0,0,0,0});
     toolInfo_.hinst=NULL;
-    toolInfo_.lpszText=(LPWSTR)TEXT(toolHint_.c_str());
+    toolInfo_.lpszText=(LPWSTR)TEXT(toolText.c_str());
     if(SendMessageW(toolTip_,TTM_ADDTOOLW,0,(LPARAM)&toolInfo_)==FALSE)
         throw make_shared<runtime_error>(describe
         ("SendMessageW(TTM_ADDTOOLW) is failed."));
+    deactivateTool();
 }
 
 void Component::reposition(const SIZE&containerSize)
@@ -59,9 +73,11 @@ bool Button::hitTest(const POINT&cursorPos)
 {
     return
         contain(rect(pos_,UNIT_SIZE),cursorPos)&&
-        contain
-        (pos_+HALF_UNIT_LENGTH,SQUARE(HALF_UNIT_LENGTH),cursorPos);
+        contain(pos_+HALF_UNIT_LENGTH,SQUARE(HALF_UNIT_LENGTH),cursorPos);
 }
+
+bool Button::hitTestTool(const POINT&cursorPos)
+{return hitTest(cursorPos);}
 
 void Button::paint(HDC dc)
 {
@@ -101,9 +117,9 @@ Button::Button
     HWND container,
     HWND toolTip,
     UINT toolId,
-    const wstring&toolHint
+    const wstring&toolText
 ):
-    Component(cellPos,container,toolTip,toolId,toolHint),
+    Component(cellPos,container,toolTip,toolId,toolText),
     iconMaskBuffer_(Buffer::load(ct().instance,maskBitmapName,destDC)),
     foreBuffer_(Buffer::create(UNIT_SIZE,destDC)),
     backBuffer_(Buffer::create(UNIT_SIZE,destDC)),
@@ -201,16 +217,16 @@ PushButton::PushButton
     HWND container,
     HWND toolTip,
     UINT toolId,
-    const wstring&toolHint
+    const wstring&toolText
 ):
     Button
-    (maskBitmapName,destDC,cellPos,container,toolTip,toolId,toolHint),
+    (maskBitmapName,destDC,cellPos,container,toolTip,toolId,toolText),
     click([] () {})
 {render();}
 
 void PushButton::deactivate(const POINT&cursorPos)
 {
-    if(control_mode()&&hitTest(cursorPos)) click();
+    if(hitTest(cursorPos)) click();
     active_=false;
     render();
 }
@@ -226,10 +242,10 @@ RadioButton::RadioButton
     HWND container,
     HWND toolTip,
     UINT toolId,
-    const wstring&toolHint
+    const wstring&toolText
 ):
     Button
-    (maskBitmapName,destDC,cellPos,container,toolTip,toolId,toolHint),
+    (maskBitmapName,destDC,cellPos,container,toolTip,toolId,toolText),
     value_(initialValue),
     change([] () {}) {render();}
 
@@ -244,7 +260,7 @@ void RadioButton::value(const bool&value_)
 
 void RadioButton::deactivate(const POINT&cursorPos)
 {
-    if(control_mode()&&hitTest(cursorPos))
+    if(hitTest(cursorPos))
     {
         value_=!value_;
         change();
@@ -267,9 +283,9 @@ Slider::Slider
     HWND container,
     HWND toolTip,
     UINT toolId,
-    const wstring&toolHint
+    const wstring&toolText
 ):
-    Component(cellPos,container,toolTip,toolId,toolHint),
+    Component(cellPos,container,toolTip,toolId,toolText),
     minimum_(minimum),
     maximum_(maximum),
     value_(initialValue),
@@ -315,6 +331,13 @@ void Slider::deactivate(const POINT&cursorPos)
 
 bool Slider::hitTest(const POINT&cursorPos)
 {return hitTestKnob(cursorPos)||hitTestBar(cursorPos);}
+
+bool Slider::hitTestTool(const POINT&cursorPos)
+{return hitTest(cursorPos)||hitTestText(cursorPos);}
+
+int Slider::maximum() {return maximum_;}
+
+int Slider::minimum() {return minimum_;}
 
 void Slider::paint(HDC dc)
 {
@@ -440,6 +463,13 @@ bool Slider::hitTestKnob(const POINT&cursorPos)
         contain(rect(knobPos,UNIT_SIZE),cursorPos)&&
         contain
         (knobPos+HALF_UNIT_LENGTH,SQUARE(HALF_UNIT_LENGTH),cursorPos);
+}
+
+bool Slider::hitTestText(const POINT&cursorPos)
+{
+    const POINT textPos=POINT({pos_.x+length_-SLIDER_TEXT_WIDTH,pos_.y});
+    const SIZE textSize=SIZE({SLIDER_TEXT_WIDTH,UNIT_LENGTH});
+    return contain(rect(textPos,textSize),cursorPos);
 }
 
 void Slider::relocateTool()

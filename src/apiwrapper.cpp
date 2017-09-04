@@ -296,6 +296,21 @@ void SetLayeredWindowAttributes
         throw make_shared<api_error>("SetLayeredWindowAttributes");
 }
 
+void SetWindowPos
+(
+    HWND window,
+    HWND after,
+    int x,
+    int y,
+    int width,
+    int height,
+    UINT flags
+)
+{
+    if(::SetWindowPos(window,after,x,y,width,height,flags)==FALSE)
+        throw make_shared<api_error>("SetWindowPos");
+}
+
 void StretchBlt
 (
     HDC destDC,

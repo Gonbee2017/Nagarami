@@ -96,9 +96,6 @@ long integer(const string&str)
 POINT operator*(const POINT&lhs,const LONG&rhs)
 {return POINT({lhs.x*rhs,lhs.y*rhs});}
 
-POINT_DOUBLE operator*(const POINT_DOUBLE&lhs,const LONG&rhs)
-{return POINT_DOUBLE({lhs.x*rhs,lhs.y*rhs});}
-
 SIZE operator*(const SIZE&lhs,const LONG&rhs)
 {return SIZE({lhs.cx*rhs,lhs.cy*rhs});}
 
@@ -118,9 +115,6 @@ POINT_DOUBLE&operator+=(POINT_DOUBLE&lhs,const POINT_DOUBLE&rhs)
 
 POINT operator/(const POINT&lhs,const LONG&rhs)
 {return POINT({lhs.x/rhs,lhs.y/rhs});}
-
-POINT_DOUBLE operator/(const POINT_DOUBLE&lhs,const LONG&rhs)
-{return POINT_DOUBLE({lhs.x/rhs,lhs.y/rhs});}
 
 SIZE operator/(const SIZE&lhs,const LONG&rhs)
 {return SIZE({lhs.cx/rhs,lhs.cy/rhs});}

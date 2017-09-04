@@ -16,7 +16,7 @@
 
 #define IDI_NAGARAMI 201
 
-#define VER_FILEDESCRIPTION "Nagaramiユーティリティ"
+#define VER_FILEDESCRIPTION "Nagaramiユーティリティ(β)"
 #define VER_LEGALCOPYRIGHT  "Copyright (c) 2017 Gonbee"
 #define VER_PRODUCTNAME     "Nagarami"
 #define VER_VERSION\
@@ -31,5 +31,5 @@
     STR(VER_REVISION)
 #define VER_MAJOR    0
 #define VER_MINOR    2
-#define VER_BUILD    0
-#define VER_REVISION 2
+#define VER_BUILD    1
+#define VER_REVISION 0

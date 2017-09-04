@@ -1,4 +1,6 @@
+#include<algorithm>
 #include<cmath>
+#include<iostream>
 #include"nagarami.h"
 #include"resource.h"
 #include<string>
@@ -103,6 +105,7 @@ MainWindow::MainWindow():
     handlerMap_[WM_LBUTTONDOWN]=bind_object(&onLButtonDown,this);
     handlerMap_[WM_LBUTTONUP]=bind_object(&onLButtonUp,this);
     handlerMap_[WM_MOUSEMOVE]=bind_object(&onMouseMove,this);
+    handlerMap_[WM_MOUSEWHEEL]=bind_object(&onMouseWheel,this);
     handlerMap_[WM_MOVE]=bind_object(&onMove,this);
     handlerMap_[WM_NCHITTEST]=bind_object(&onNCHitTest,this);
     handlerMap_[WM_NCMOUSEMOVE]=bind_object(&onNCMouseMove,this);
@@ -254,6 +257,17 @@ LRESULT MainWindow::onMouseMove
     return 0;
 }
 
+
+LRESULT MainWindow::onMouseWheel
+(UINT message,WPARAM wParam,LPARAM lParam)
+{
+    int amount=GET_WHEEL_DELTA_WPARAM(wParam)/WHEEL_DELTA;
+    int value=scaleSlider_->value()+amount;
+    value=min(max(value,scaleSlider_->minimum()),scaleSlider_->maximum());
+    scaleSlider_->value(value);
+    return 0;
+}
+
 LRESULT MainWindow::onMove
 (UINT message,WPARAM wParam,LPARAM lParam)
 {
@@ -265,6 +279,7 @@ LRESULT MainWindow::onNCHitTest
 (UINT message,WPARAM wParam,LPARAM lParam)
 {
     LRESULT result=HTCAPTION;
+    Component*targetTool=nullptr;
     if(GetKeyState(VK_LBUTTON)>=0&&GetKeyState(VK_RBUTTON)>=0)
     {
         const RECT captionRect=
@@ -284,7 +299,7 @@ LRESULT MainWindow::onNCHitTest
             else result=HTRIGHT;
         } else if(!zoomed&&cursorPos.y<captionRect.top) result=HTTOP;
         else if(!zoomed&&cursorPos.y>=captionRect.bottom) result=HTBOTTOM;
-        else
+        else if(control_mode())
         {
             for(Component*component:components_)
             {
@@ -294,7 +309,20 @@ LRESULT MainWindow::onNCHitTest
                     break;
                 }
             }
+            for(Component*component:components_)
+            {
+                if(component->hitTestTool(cursorPos))
+                {
+                    targetTool=component;
+                    break;
+                }
+            }
         }
+    }
+    for(Component*component:components_)
+    {
+        if(component==targetTool) component->activateTool();
+        else component->deactivateTool();
     }
     return result;
 }
@@ -303,6 +331,8 @@ LRESULT MainWindow::onNCMouseMove
 (UINT message,WPARAM wParam,LPARAM lParam)
 {
     if(viewSliding_) SetCursor(LoadCursor(NULL,IDC_ARROW));
+    nagarami::InvalidateRect(handle_,NULL,FALSE);
+    nagarami::UpdateWindow(handle_);
     return 0;
 }
 
@@ -325,7 +355,7 @@ LRESULT MainWindow::onPaint
     SIZE clientSize=size(clientRect);
     nagarami::FillRect
     (buffer_->dc(),&clientRect,(HBRUSH)backBrush_->handle());
-    if(ct().target!=NULL&&!IsIconic(ct().target))
+    if(ct().target!=NULL&&!IsIconic(ct().target)&&ct().ps.scale>0)
     {
         RECT targetRect;
         nagarami::GetClientRect(ct().target,&targetRect);
@@ -384,7 +414,7 @@ LRESULT MainWindow::onPaint
             );
         }
     }
-    if(!control_mode()||holeSlider_->active())
+    if((!control_mode()||holeSlider_->active())&&ct().ps.hole>0)
     {
         POINT center;
         if(!control_mode()) center=cursor_pos(handle_);
@@ -406,12 +436,6 @@ LRESULT MainWindow::onPaint
         for(Component*component:components_)
             component->paint(buffer_->dc());
     }
-    if(control_mode()&&!alphaSlider_->active())
-        nagarami::SetLayeredWindowAttributes
-        (handle_,BLACK_COLOR,0,LWA_COLORKEY);
-    else
-        nagarami::SetLayeredWindowAttributes
-        (handle_,BLACK_COLOR,ct().ps.alpha,LWA_ALPHA|LWA_COLORKEY);
     nagarami::BitBlt
     (
         dc->handle(),
@@ -424,6 +448,12 @@ LRESULT MainWindow::onPaint
         0,
         CAPTUREBLT|SRCCOPY
     );
+    if(control_mode()&&!alphaSlider_->active())
+        nagarami::SetLayeredWindowAttributes
+        (handle_,BLACK_COLOR,0,LWA_COLORKEY);
+    else
+        nagarami::SetLayeredWindowAttributes
+        (handle_,BLACK_COLOR,ct().ps.alpha,LWA_ALPHA|LWA_COLORKEY);
     return 0;
 }
 
@@ -451,10 +481,15 @@ void MainWindow::onResetButtonClick()
 
 void MainWindow::onScaleSliderChange()
 {
-    const LONG oldScale=ct().ps.scale;
-    const LONG newScale=scaleSlider_->value()*SCALE_DIVISOR;
+    LONG oldScale=ct().ps.scale;
+    LONG newScale=scaleSlider_->value()*SCALE_DIVISOR;
     ct().ps.scale=newScale;
-    ct().ps.view_base=ct().ps.view_base*newScale/oldScale;
+    oldScale=max(oldScale,(LONG)1);
+    newScale=max(newScale,(LONG)1);
+    if(ct().ps.view_base.x<0)
+        ct().ps.view_base.x=ct().ps.view_base.x*newScale/oldScale;
+    if(ct().ps.view_base.y<0)
+        ct().ps.view_base.y=ct().ps.view_base.y*newScale/oldScale;
 }
 
 LRESULT MainWindow::onSize
@@ -566,7 +601,7 @@ void MainWindow::initializeComponents()
         0,
         TOOLTIPS_CLASSW,
         NULL,
-        TTS_ALWAYSTIP,
+        TTS_ALWAYSTIP|TTS_BALLOON,
         CW_USEDEFAULT,
         CW_USEDEFAULT,
         CW_USEDEFAULT,
@@ -577,6 +612,8 @@ void MainWindow::initializeComponents()
         NULL
     );
     if(toolTip_==NULL) throw make_shared<api_error>("CreateWindowExW");
+    nagarami::SetWindowPos
+    (toolTip_,HWND_TOPMOST,0,0,0,0,SWP_NOACTIVATE|SWP_NOMOVE|SWP_NOSIZE);
     alphaSlider_=make_shared<Slider>
     (
         0,
@@ -590,7 +627,7 @@ void MainWindow::initializeComponents()
         handle_,
         toolTip_,
         components_.size(),
-        ALPHA_SLIDER_HINT
+        ALPHA_SLIDER_TOOL_TEXT
     );
     alphaSlider_->change=bind_object(&onAlphaSliderChange,this);
     components_.push_back(alphaSlider_.get());
@@ -602,7 +639,7 @@ void MainWindow::initializeComponents()
         handle_,
         toolTip_,
         components_.size(),
-        CLOSE_BUTTON_HINT
+        CLOSE_BUTTON_TOOL_TEXT
     );
     closeButton_->click=bind_object(&onCloseButtonClick,this);
     components_.push_back(closeButton_.get());
@@ -614,7 +651,7 @@ void MainWindow::initializeComponents()
         handle_,
         toolTip_,
         components_.size(),
-        FOREGROUND_BUTTON_HINT
+        FOREGROUND_BUTTON_TOOL_TEXT
     );
     foregroundButton_->click=bind_object(&onForegroundButtonClick,this);
     components_.push_back(foregroundButton_.get());
@@ -627,7 +664,7 @@ void MainWindow::initializeComponents()
         handle_,
         toolTip_,
         components_.size(),
-        HALFTONE_BUTTON_HINT
+        HALFTONE_BUTTON_TOOL_TEXT
     );
     halftoneButton_->change=bind_object(&onHalftoneButtonChange,this);
     onHalftoneButtonChange();
@@ -640,13 +677,13 @@ void MainWindow::initializeComponents()
         handle_,
         toolTip_,
         components_.size(),
-        HELP_BUTTON_HINT
+        HELP_BUTTON_TOOL_TEXT
     );
     helpButton_->click=bind_object(&onHelpButtonClick,this);
     components_.push_back(helpButton_.get());
     holeSlider_=make_shared<Slider>
     (
-        1,
+        0,
         MAXIMUM_HOLE/UNIT_LENGTH,
         ct().ps.hole/UNIT_LENGTH,
         [] (const int&value)->string
@@ -657,7 +694,7 @@ void MainWindow::initializeComponents()
         handle_,
         toolTip_,
         components_.size(),
-        HOLE_SLIDER_HINT
+        HOLE_SLIDER_TOOL_TEXT
     );
     holeSlider_->change=bind_object(&onHoleSliderChange,this);
     components_.push_back(holeSlider_.get());
@@ -670,7 +707,7 @@ void MainWindow::initializeComponents()
         handle_,
         toolTip_,
         components_.size(),
-        LOCK_BUTTON_HINT
+        LOCK_BUTTON_TOOL_TEXT
     );
     components_.push_back(lockButton_.get());
     maximizeButton_=make_shared<RadioButton>
@@ -682,7 +719,7 @@ void MainWindow::initializeComponents()
         handle_,
         toolTip_,
         components_.size(),
-        MAXIMIZE_BUTTON_HINT
+        MAXIMIZE_BUTTON_TOOL_TEXT
     );
     maximizeButton_->change=bind_object(&onMaximizeButtonChange,this);
     components_.push_back(maximizeButton_.get());
@@ -694,7 +731,7 @@ void MainWindow::initializeComponents()
         handle_,
         toolTip_,
         components_.size(),
-        MINIMIZE_BUTTON_HINT
+        MINIMIZE_BUTTON_TOOL_TEXT
     );
     minimizeButton_->click=bind_object(&onMinimizeButtonClick,this);
     components_.push_back(minimizeButton_.get());
@@ -706,13 +743,13 @@ void MainWindow::initializeComponents()
         handle_,
         toolTip_,
         components_.size(),
-        RESET_BUTTON_HINT
+        RESET_BUTTON_TOOL_TEXT
     );
     resetButton_->click=bind_object(&onResetButtonClick,this);
     components_.push_back(resetButton_.get());
     scaleSlider_=make_shared<Slider>
     (
-        1,
+        0,
         MAXIMUM_SCALE/SCALE_DIVISOR,
         ct().ps.scale/SCALE_DIVISOR,
         [] (const int&value)->string
@@ -723,7 +760,7 @@ void MainWindow::initializeComponents()
         handle_,
         toolTip_,
         components_.size(),
-        SCALE_SLIDER_HINT
+        SCALE_SLIDER_TOOL_TEXT
     );
     scaleSlider_->change=bind_object(&onScaleSliderChange,this);
     components_.push_back(scaleSlider_.get());

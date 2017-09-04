@@ -64,17 +64,17 @@ constexpr POINT MINIMIZE_BUTTON_CELL_POS  =POINT({-3, 0});
 constexpr POINT RESET_BUTTON_CELL_POS     =POINT({ 3, 0});
 constexpr POINT SCALE_SLIDER_CELL_POS     =POINT({ 0,-3});
 
-constexpr wchar_t ALPHA_SLIDER_HINT[]     =L"透過率";
-constexpr wchar_t CLOSE_BUTTON_HINT[]     =L"閉じる";
-constexpr wchar_t FOREGROUND_BUTTON_HINT[]=L"ターゲットを前面に表示";
-constexpr wchar_t HALFTONE_BUTTON_HINT[]  =L"高画質モード";
-constexpr wchar_t HELP_BUTTON_HINT[]      =L"ヘルプ";
-constexpr wchar_t HOLE_SLIDER_HINT[]      =L"穴の大きさ";
-constexpr wchar_t LOCK_BUTTON_HINT[]      =L"ターゲットをロック";
-constexpr wchar_t MAXIMIZE_BUTTON_HINT[]  =L"最大化";
-constexpr wchar_t MINIMIZE_BUTTON_HINT[]  =L"最小化";
-constexpr wchar_t RESET_BUTTON_HINT[]     =L"設定をリセット";
-constexpr wchar_t SCALE_SLIDER_HINT[]     =L"倍率";
+constexpr wchar_t ALPHA_SLIDER_TOOL_TEXT[]     =L"透過率";
+constexpr wchar_t CLOSE_BUTTON_TOOL_TEXT[]     =L"閉じる";
+constexpr wchar_t FOREGROUND_BUTTON_TOOL_TEXT[]=L"ターゲットを前面に表示";
+constexpr wchar_t HALFTONE_BUTTON_TOOL_TEXT[]  =L"高画質モード";
+constexpr wchar_t HELP_BUTTON_TOOL_TEXT[]      =L"ヘルプ";
+constexpr wchar_t HOLE_SLIDER_TOOL_TEXT[]      =L"穴の大きさ";
+constexpr wchar_t LOCK_BUTTON_TOOL_TEXT[]      =L"ターゲットをロック";
+constexpr wchar_t MAXIMIZE_BUTTON_TOOL_TEXT[]  =L"最大化";
+constexpr wchar_t MINIMIZE_BUTTON_TOOL_TEXT[]  =L"最小化";
+constexpr wchar_t RESET_BUTTON_TOOL_TEXT[]     =L"設定をリセット";
+constexpr wchar_t SCALE_SLIDER_TOOL_TEXT[]     =L"倍率";
 
 constexpr BYTE     DEFAULT_ALPHA              =255;
 constexpr COLORREF DEFAULT_BACK_COLOR1        =RGB( 42, 43, 44);
@@ -131,7 +131,6 @@ vector<string> getlines(istream&in);
 LONG height(const RECT&rect);
 long integer(const string&str);
 POINT operator*(const POINT&lhs,const LONG&rhs);
-POINT_DOUBLE operator*(const POINT_DOUBLE&lhs,const LONG&rhs);
 SIZE operator*(const SIZE&lhs,const LONG&rhs);
 POINT operator+(const POINT&lhs,const LONG&rhs);
 POINT operator+(const POINT&lhs,const POINT&rhs);
@@ -139,7 +138,6 @@ POINT_DOUBLE operator+(const POINT_DOUBLE&lhs,const POINT_DOUBLE&rhs);
 POINT&operator+=(POINT&lhs,const POINT&rhs);
 POINT_DOUBLE&operator+=(POINT_DOUBLE&lhs,const POINT_DOUBLE&rhs);
 POINT operator/(const POINT&lhs,const LONG&rhs);
-POINT_DOUBLE operator/(const POINT_DOUBLE&lhs,const LONG&rhs);
 SIZE operator/(const SIZE&lhs,const LONG&rhs);
 POINT operator-(const POINT&point);
 SIZE operator-(const SIZE&lhs,const LONG&rhs);
@@ -253,9 +251,12 @@ class Component
 {
 public:
     virtual void activate(const POINT&cursorPos)=0;
+    void activateTool();
     bool active();
     virtual void deactivate(const POINT&cursorPos)=0;
+    void deactivateTool();
     virtual bool hitTest(const POINT&cursorPos)=0;
+    virtual bool hitTestTool(const POINT&cursorPos)=0;
     virtual void paint(HDC dc)=0;
     virtual void relocate(const SIZE&containerSize);
     virtual void update(const POINT&cursorPos)=0;
@@ -266,7 +267,7 @@ protected:
         HWND container,
         HWND toolTip,
         UINT toolId,
-        const wstring&toolHint
+        const wstring&toolText
     );
     virtual void relocateTool()=0;
     virtual void render()=0;
@@ -274,8 +275,9 @@ protected:
     bool active_;
     POINT cellPos_;
     POINT pos_;
+    bool toolActive_;
     HWND toolTip_;
-    wstring toolHint_;
+    wstring toolText_;
     TOOLINFOW toolInfo_;
 };
 
@@ -284,6 +286,7 @@ class Button:public Component
 public:
     virtual void activate(const POINT&cursorPos) override;
     virtual bool hitTest(const POINT&cursorPos) override;
+    virtual bool hitTestTool(const POINT&cursorPos) override;
     virtual void paint(HDC dc) override;
     virtual void update(const POINT&cursorPos) override;
 protected:
@@ -295,7 +298,7 @@ protected:
         HWND container,
         HWND toolTip,
         UINT toolId,
-        const wstring&toolHint
+        const wstring&toolText
     );
     virtual void relocateTool() override;
     void render_(const bool&push);
@@ -316,7 +319,7 @@ public:
         HWND container,
         HWND toolTip,
         UINT toolId,
-        const wstring&toolHint
+        const wstring&toolText
     );
     virtual void deactivate(const POINT&cursorPos) override;
     function<void()> click;
@@ -335,7 +338,7 @@ public:
         HWND container,
         HWND toolTip,
         UINT toolId,
-        const wstring&toolHint
+        const wstring&toolText
     );
     virtual void deactivate(const POINT&cursorPos) override;
     bool value();
@@ -361,11 +364,14 @@ public:
         HWND container,
         HWND toolTip,
         UINT toolId,
-        const wstring&toolHint
+        const wstring&toolText
     );
     virtual void activate(const POINT&cursorPos) override;
     virtual void deactivate(const POINT&cursorPos) override;
     virtual bool hitTest(const POINT&cursorPos) override;
+    virtual bool hitTestTool(const POINT&cursorPos) override;
+    int maximum();
+    int minimum();
     virtual void paint(HDC dc) override;
     virtual void relocate(const SIZE&containerSize) override;
     virtual void update(const POINT&cursorPos) override;
@@ -375,6 +381,7 @@ public:
 protected:
     bool hitTestBar(const POINT&cursorPos);
     bool hitTestKnob(const POINT&cursorPos);
+    bool hitTestText(const POINT&cursorPos);
     virtual void relocateTool() override;
     virtual void render() override;
     void renderBar();
@@ -440,6 +447,8 @@ public:
     void onMaximizeButtonChange();
     void onMinimizeButtonClick();
     LRESULT onMouseMove
+    (UINT message,WPARAM wParam,LPARAM lParam);
+    LRESULT onMouseWheel
     (UINT message,WPARAM wParam,LPARAM lParam);
     LRESULT onMove
     (UINT message,WPARAM wParam,LPARAM lParam);
@@ -603,6 +612,16 @@ void SetLayeredWindowAttributes
 (HWND window,COLORREF key,BYTE alpha,DWORD flags);
 int SetStretchBltMode(HDC dc,int mode);
 COLORREF SetTextColor(HDC dc,COLORREF color);
+void SetWindowPos
+(
+    HWND window,
+    HWND after,
+    int x,
+    int y,
+    int width,
+    int height,
+    UINT flags
+);
 void MoveWindow
 (
     HWND window,
