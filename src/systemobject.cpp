@@ -17,8 +17,8 @@ DeleteObject::DeleteObject(HGDIOBJ handle):
 
 HGDIOBJ DeleteObject::handle() {return handle_;}
 
-EndPaint::EndPaint(HWND window,PAINTSTRUCT*paintStruct,HDC handle):
-    Finalizer([window,paintStruct] () {::EndPaint(window,paintStruct);}),
+EndPaint::EndPaint(HWND window,PAINTSTRUCT*paint,HDC handle):
+    Finalizer([window,paint] () {::EndPaint(window,paint);}),
     handle_(handle) {}
 
 HDC EndPaint::handle() {return handle_;}

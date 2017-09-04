@@ -1,6 +1,5 @@
 #include<algorithm>
 #include<cmath>
-#include<iostream>
 #include"nagarami.h"
 #include"resource.h"
 #include<string>
@@ -261,8 +260,8 @@ LRESULT MainWindow::onMouseMove
 LRESULT MainWindow::onMouseWheel
 (UINT message,WPARAM wParam,LPARAM lParam)
 {
-    int amount=GET_WHEEL_DELTA_WPARAM(wParam)/WHEEL_DELTA;
-    int value=scaleSlider_->value()+amount;
+    const int offset=GET_WHEEL_DELTA_WPARAM(wParam)/WHEEL_DELTA;
+    int value=scaleSlider_->value()+offset;
     value=min(max(value,scaleSlider_->minimum()),scaleSlider_->maximum());
     scaleSlider_->value(value);
     return 0;
@@ -279,7 +278,7 @@ LRESULT MainWindow::onNCHitTest
 (UINT message,WPARAM wParam,LPARAM lParam)
 {
     LRESULT result=HTCAPTION;
-    Component*targetTool=nullptr;
+    Component*toolActiveComponent=nullptr;
     if(GetKeyState(VK_LBUTTON)>=0&&GetKeyState(VK_RBUTTON)>=0)
     {
         const RECT captionRect=
@@ -313,7 +312,7 @@ LRESULT MainWindow::onNCHitTest
             {
                 if(component->hitTestTool(cursorPos))
                 {
-                    targetTool=component;
+                    toolActiveComponent=component;
                     break;
                 }
             }
@@ -321,7 +320,7 @@ LRESULT MainWindow::onNCHitTest
     }
     for(Component*component:components_)
     {
-        if(component==targetTool) component->activateTool();
+        if(component==toolActiveComponent) component->activateTool();
         else component->deactivateTool();
     }
     return result;
@@ -348,35 +347,37 @@ LRESULT MainWindow::onNCRButtonDown
 LRESULT MainWindow::onPaint
 (UINT message,WPARAM wParam,LPARAM lParam)
 {
-    PAINTSTRUCT paintStruct;
-    auto dc=nagarami::BeginPaint(handle_,&paintStruct);
-    RECT clientRect;
-    nagarami::GetClientRect(handle_,&clientRect);
-    SIZE clientSize=size(clientRect);
+    PAINTSTRUCT paint;
+    const auto dc=nagarami::BeginPaint(handle_,&paint);
+    const POINT paintPos=pos(paint.rcPaint);
+    const SIZE paintSize=size(paint.rcPaint);
     nagarami::FillRect
-    (buffer_->dc(),&clientRect,(HBRUSH)backBrush_->handle());
+    (buffer_->dc(),&paint.rcPaint,(HBRUSH)backBrush_->handle());
     if(ct().target!=NULL&&!IsIconic(ct().target)&&ct().ps.scale>0)
     {
         RECT targetRect;
         nagarami::GetClientRect(ct().target,&targetRect);
-        SIZE targetSize=size(targetRect);
-        SIZE viewSize=targetSize*ct().ps.scale/100;
+        const SIZE targetSize=size(targetRect);
+        const SIZE viewSize=targetSize*ct().ps.scale/100;
         POINT viewPos=point(ct().ps.view_base);
         if(viewSliding_)
             viewPos+=sliding_offset(handle_,viewSlidingBase_);
-        POINT viewEndPos=viewPos+point(viewSize);
-        POINT destPos=POINT
-        ({max((LONG)0,viewPos.x),max((LONG)0,viewPos.y)});
-        SIZE destSize=SIZE(
+        const POINT viewEndPos=viewPos+point(viewSize);
+        const POINT destPos=POINT(
         {
-            min(clientRect.right,viewEndPos.x),
-            min(clientRect.bottom,viewEndPos.y)
+            max(paint.rcPaint.left,viewPos.x),
+            max(paint.rcPaint.top,viewPos.y)
+        });
+        const SIZE destSize=SIZE(
+        {
+            min(paint.rcPaint.right,viewEndPos.x),
+            min(paint.rcPaint.bottom,viewEndPos.y)
         })-size(destPos);
-        RECT destRect=nagarami::rect(destPos,destSize);
+        const RECT destRect=nagarami::rect(destPos,destSize);
         POINT srcPos=-viewPos*100/ct().ps.scale;
         srcPos.x=max(srcPos.x,(LONG)0);
         srcPos.y=max(srcPos.y,(LONG)0);
-        SIZE srcSize=destSize*100/ct().ps.scale;
+        const SIZE srcSize=destSize*100/ct().ps.scale;
         if(destSize.cx>0&&destSize.cy>0&&srcSize.cx>0&&srcSize.cy>0)
         {
             auto targetDC=nagarami::GetDC(ct().target);
@@ -418,7 +419,7 @@ LRESULT MainWindow::onPaint
     {
         POINT center;
         if(!control_mode()) center=cursor_pos(handle_);
-        else center=point(clientSize/2);
+        else center=point(paintSize/2);
         SelectObject(buffer_->dc(),ct().black_pen->handle());
         SelectObject(buffer_->dc(),ct().black_brush->handle());
         const LONG radius=ct().ps.hole/2;
@@ -439,14 +440,14 @@ LRESULT MainWindow::onPaint
     nagarami::BitBlt
     (
         dc->handle(),
-        0,
-        0,
-        clientRect.right,
-        clientRect.bottom,
+        paintPos.x,
+        paintPos.y,
+        paintSize.cx,
+        paintSize.cy,
         buffer_->dc(),
         0,
         0,
-        CAPTUREBLT|SRCCOPY
+        SRCCOPY
     );
     if(control_mode()&&!alphaSlider_->active())
         nagarami::SetLayeredWindowAttributes

@@ -26,6 +26,7 @@ using namespace std;
 constexpr char PROPERTIES_FILE_EXTENSION[]="ps";
 constexpr char HELP_URL[]                 =
     "https://github.com/Gonbee2017/Nagarami/blob/master/README.md";
+//constexpr DWORD STARTUP_DELAY              =10000;
 
 constexpr LONG  UNIT_LENGTH             =16;
 constexpr LONG  HALF_UNIT_LENGTH        =UNIT_LENGTH/2;
@@ -77,16 +78,16 @@ constexpr wchar_t RESET_BUTTON_TOOL_TEXT[]     =L"設定をリセット";
 constexpr wchar_t SCALE_SLIDER_TOOL_TEXT[]     =L"倍率";
 
 constexpr BYTE     DEFAULT_ALPHA              =255;
-constexpr COLORREF DEFAULT_BACK_COLOR1        =RGB( 42, 43, 44);
-constexpr COLORREF DEFAULT_BACK_COLOR2        =RGB( 27, 29, 31);
+constexpr COLORREF DEFAULT_BACK_COLOR1        =RGB( 85, 86, 88);
+constexpr COLORREF DEFAULT_BACK_COLOR2        =RGB( 55, 59, 62);
 constexpr COLORREF DEFAULT_COMPONENT_COLOR1   =RGB(195,229,231);
-constexpr COLORREF DEFAULT_COMPONENT_COLOR2   =RGB( 22, 72, 81);
+constexpr COLORREF DEFAULT_COMPONENT_COLOR2   =RGB( 19,122,127);
 constexpr bool     DEFAULT_CONTROL_MODE_ALT   =false;
 constexpr bool     DEFAULT_CONTROL_MODE_CTRL  =true;
 constexpr bool     DEFAULT_CONTROL_MODE_SHIFT =false;
 constexpr UINT     DEFAULT_FPS                =30;
 constexpr bool     DEFAULT_HALFTONE           =false;
-constexpr LONG     DEFAULT_HOLE               =UNIT_LENGTH*10;
+constexpr LONG     DEFAULT_HOLE               =UNIT_LENGTH*0;
 constexpr LONG     DEFAULT_SCALE              =100;
 constexpr LONG     DEFAULT_WINDOW_SIZE_DIVISOR=4;
 
@@ -177,7 +178,7 @@ protected:HGDIOBJ handle_;
 class EndPaint:public Finalizer
 {
 public:
-    EndPaint(HWND window,PAINTSTRUCT*paintStruct,HDC dc);
+    EndPaint(HWND window,PAINTSTRUCT*paint,HDC dc);
     HDC handle();
 protected:HDC handle_;
 };
