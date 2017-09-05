@@ -126,13 +126,6 @@ void FillRect(HDC dc,CONST RECT*rect,HBRUSH brush)
         throw make_shared<api_error>("FillRect");
 }
 
-shared_ptr<ReleaseDC> GetDC(HWND window)
-{
-    HDC dc=::GetDC(window);
-    if(dc==NULL) throw make_shared<api_error>("GetDC");
-    return make_shared<ReleaseDC>(window,dc);
-}
-
 void GetClientRect(HWND window,LPRECT rect)
 {
     if(::GetClientRect(window,rect)==FALSE)
@@ -143,6 +136,13 @@ void GetCursorPos(LPPOINT point)
 {
     if(::GetCursorPos(point)==FALSE)
         throw make_shared<api_error>("GetCursorPos");
+}
+
+shared_ptr<ReleaseDC> GetDC(HWND window)
+{
+    HDC dc=::GetDC(window);
+    if(dc==NULL) throw make_shared<api_error>("GetDC");
+    return make_shared<ReleaseDC>(window,dc);
 }
 
 bool GetMessage(LPMSG msg,HWND window,UINT first,UINT last)
@@ -172,12 +172,6 @@ void GetWindowPlacement(HWND window,WINDOWPLACEMENT*placement)
         throw make_shared<api_error>("GetWindowPlacement");
 }
 
-void InvalidateRect(HWND window,CONST RECT*rect,BOOL erase)
-{
-    if(::InvalidateRect(window,rect,erase)==FALSE)
-        throw make_shared<api_error>("InvalidateRect");
-}
-
 shared_ptr<DeleteObject> LoadBitmap(HINSTANCE instance,LPCTSTR name)
 {
     HBITMAP bitmap=::LoadBitmap(instance,name);
@@ -192,40 +186,10 @@ HCURSOR LoadCursor(HINSTANCE instance,LPCTSTR name)
     return cursor;
 }
 
-void MaskBlt
-(
-    HDC destDC,
-    int destX,
-    int destY,
-    int width,
-    int height,
-    HDC srcDC,
-    int srcX,
-    int srcY,
-    HBITMAP maskBitmap,
-    int maskX,
-    int maskY,
-    DWORD rop
-)
+void RedrawWindow(HWND window,CONST RECT*rect,HRGN region,UINT flags)
 {
-    if
-    (
-        ::MaskBlt
-        (
-            destDC,
-            destX,
-            destY,
-            width,
-            height,
-            srcDC,
-            srcX,
-            srcY,
-            maskBitmap,
-            maskX,
-            maskY,
-            rop
-        )==FALSE
-    ) throw make_shared<api_error>("MaskBlt");
+    if(::RedrawWindow(window,rect,region,flags)==FALSE)
+        throw make_shared<api_error>("RedrawWindow");
 }
 
 ATOM RegisterClassEx(CONST WNDCLASSEX*windowClass)
@@ -239,35 +203,6 @@ void ScreenToClient(HWND window,LPPOINT point)
 {
     if(::ScreenToClient(window,point)==FALSE)
         throw make_shared<api_error>("ScreenToClient");
-}
-
-int SetStretchBltMode(HDC dc,int mode)
-{
-    int oldMode=::SetStretchBltMode(dc,mode);
-    if(oldMode==0) throw make_shared<api_error>("SetStretchBltMode");
-    return oldMode;
-}
-
-COLORREF SetTextColor(HDC dc,COLORREF color)
-{
-    COLORREF oldColor=::SetTextColor(dc,color);
-    if(oldColor==CLR_INVALID)
-        throw make_shared<api_error>("SetTextColor");
-    return oldColor;
-}
-
-void MoveWindow
-(
-    HWND window,
-    int x,
-    int y,
-    int width,
-    int height,
-    BOOL repaint
-)
-{
-    if(::MoveWindow(window,x,y,width,height,repaint)==FALSE)
-        throw make_shared<api_error>("MoveWindow");
 }
 
 int SetBkMode(HDC dc,int mode)
@@ -296,16 +231,23 @@ void SetLayeredWindowAttributes
         throw make_shared<api_error>("SetLayeredWindowAttributes");
 }
 
+int SetStretchBltMode(HDC dc,int mode)
+{
+    int oldMode=::SetStretchBltMode(dc,mode);
+    if(oldMode==0) throw make_shared<api_error>("SetStretchBltMode");
+    return oldMode;
+}
+
+COLORREF SetTextColor(HDC dc,COLORREF color)
+{
+    COLORREF oldColor=::SetTextColor(dc,color);
+    if(oldColor==CLR_INVALID)
+        throw make_shared<api_error>("SetTextColor");
+    return oldColor;
+}
+
 void SetWindowPos
-(
-    HWND window,
-    HWND after,
-    int x,
-    int y,
-    int width,
-    int height,
-    UINT flags
-)
+(HWND window,HWND after,int x,int y,int width,int height,UINT flags)
 {
     if(::SetWindowPos(window,after,x,y,width,height,flags)==FALSE)
         throw make_shared<api_error>("SetWindowPos");
@@ -343,13 +285,6 @@ void StretchBlt
             rop
         )==FALSE
     ) throw make_shared<api_error>("StretchBlt");
-}
-
-void UpdateWindow(HWND window)
-{
-    if(::UpdateWindow(window)==FALSE)
-        throw make_shared<api_error>("UpdateWindow");
-    if(ct().error.get()) throw ct().error;
 }
 
 }

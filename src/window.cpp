@@ -10,23 +10,6 @@ namespace nagarami
 
 HWND Window::handle() {return handle_;}
 
-void Window::move(const POINT&pos,const SIZE&size)
-{
-    MINMAXINFO minMaxInfo;
-    SendMessage(handle_,WM_GETMINMAXINFO,0,(LPARAM)&minMaxInfo);
-    const LONG width=max(size.cx,minMaxInfo.ptMinTrackSize.x);
-    const LONG height=max(size.cy,minMaxInfo.ptMinTrackSize.y);
-    nagarami::MoveWindow
-    (
-        handle_,
-        pos.x,
-        pos.y,
-        width,
-        height,
-        TRUE
-    );
-}
-
 Window::Window()
 {
     static const auto registerClass=make_shared<Initializer>([] ()
@@ -204,8 +187,8 @@ LRESULT MainWindow::onLButtonDown
             component->activate(cursorPos);
             activeComponent_=component;
             SetCapture(handle_);
-            nagarami::InvalidateRect(handle_,NULL,FALSE);
-            nagarami::UpdateWindow(handle_);
+            nagarami::RedrawWindow
+            (handle_,NULL,NULL,RDW_INVALIDATE|RDW_UPDATENOW);
             break;
         }
     }
@@ -220,8 +203,8 @@ LRESULT MainWindow::onLButtonUp
         activeComponent_->deactivate(coordinates(lParam));
         activeComponent_=nullptr;
         ReleaseCapture();
-        nagarami::InvalidateRect(handle_,NULL,FALSE);
-        nagarami::UpdateWindow(handle_);
+        nagarami::RedrawWindow
+        (handle_,NULL,NULL,RDW_INVALIDATE|RDW_UPDATENOW);
     }
     return 0;
 }
@@ -249,8 +232,8 @@ LRESULT MainWindow::onMouseMove
         if(viewSliding_) cursorName=IDC_ARROW;
         else if(activeComponent_)
             activeComponent_->update(coordinates(lParam));
-        nagarami::InvalidateRect(handle_,NULL,FALSE);
-        nagarami::UpdateWindow(handle_);
+        nagarami::RedrawWindow
+        (handle_,NULL,NULL,RDW_INVALIDATE|RDW_UPDATENOW);
     }
     SetCursor(nagarami::LoadCursor(NULL,cursorName));
     return 0;
@@ -330,8 +313,7 @@ LRESULT MainWindow::onNCMouseMove
 (UINT message,WPARAM wParam,LPARAM lParam)
 {
     if(viewSliding_) SetCursor(LoadCursor(NULL,IDC_ARROW));
-    nagarami::InvalidateRect(handle_,NULL,FALSE);
-    nagarami::UpdateWindow(handle_);
+    nagarami::RedrawWindow(handle_,NULL,NULL,RDW_INVALIDATE|RDW_UPDATENOW);
     return 0;
 }
 
@@ -476,8 +458,7 @@ void MainWindow::onResetButtonClick()
     alphaSlider_->value
     (ALPHA_DIVISOR-(int)round(DEFAULT_ALPHA*ALPHA_DIVISOR/(double)255));
     holeSlider_->value(DEFAULT_HOLE/UNIT_LENGTH);
-    nagarami::InvalidateRect(handle_,NULL,FALSE);
-    nagarami::UpdateWindow(handle_);
+    nagarami::RedrawWindow(handle_,NULL,NULL,RDW_INVALIDATE|RDW_UPDATENOW);
 }
 
 void MainWindow::onScaleSliderChange()
@@ -504,8 +485,8 @@ LRESULT MainWindow::onSize
         const bool maximized=wParam==SIZE_MAXIMIZED;
         if(maximized!=maximizeButton_->value())
             maximizeButton_->value(maximized);
-        nagarami::InvalidateRect(handle_,NULL,FALSE);
-        nagarami::UpdateWindow(handle_);
+        nagarami::RedrawWindow
+        (handle_,NULL,NULL,RDW_INVALIDATE|RDW_UPDATENOW);
     }
     return 0;
 }
@@ -520,7 +501,8 @@ LRESULT MainWindow::onUserTimer
         HWND fore=GetForegroundWindow();
         if(fore!=handle_) ct().target=fore;
     }
-    if(!IsIconic(handle_)) nagarami::InvalidateRect(handle_,NULL,FALSE);
+    if(!IsIconic(handle_))
+        nagarami::RedrawWindow(handle_,NULL,NULL,RDW_INVALIDATE);
     return 0;
 }
 

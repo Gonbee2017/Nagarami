@@ -409,9 +409,7 @@ protected:
 
 class Window
 {
-public:
-    HWND handle();
-    void move(const POINT&pos,const SIZE&size);
+public:HWND handle();
 protected:
     Window();
     LRESULT onReceive
@@ -593,16 +591,16 @@ shared_ptr<DeleteObject> CreateSolidBrush(COLORREF color);
 int DrawText(HDC dc,LPCTSTR str,int count,LPRECT rect,UINT format);
 void Ellipse(HDC dc,int left,int top,int right,int bottom);
 void FillRect(HDC dc,CONST RECT*rect,HBRUSH brush);
-shared_ptr<ReleaseDC> GetDC(HWND window);
 void GetClientRect(HWND window,LPRECT rect);
 void GetCursorPos(LPPOINT point);
+shared_ptr<ReleaseDC> GetDC(HWND window);
 bool GetMessage(LPMSG msg,HWND window,UINT first,UINT last);
 int GetObject(HGDIOBJ object,int sizeOfBuffer,LPVOID buffer);
 int GetSystemMetrics(int index);
 void GetWindowPlacement(HWND window,WINDOWPLACEMENT*placement);
-void InvalidateRect(HWND window,CONST RECT*rect,BOOL erase);
 shared_ptr<DeleteObject> LoadBitmap(HINSTANCE instance,LPCTSTR name);
 HCURSOR LoadCursor(HINSTANCE instance,LPCTSTR name);
+void RedrawWindow(HWND window,CONST RECT*rect,HRGN region,UINT flags);
 ATOM RegisterClassEx(CONST WNDCLASSEX*windowClass);
 void ScreenToClient(HWND window,LPPOINT point);
 int SetBkMode(HDC dc,int mode);
@@ -613,24 +611,7 @@ void SetLayeredWindowAttributes
 int SetStretchBltMode(HDC dc,int mode);
 COLORREF SetTextColor(HDC dc,COLORREF color);
 void SetWindowPos
-(
-    HWND window,
-    HWND after,
-    int x,
-    int y,
-    int width,
-    int height,
-    UINT flags
-);
-void MoveWindow
-(
-    HWND window,
-    int x,
-    int y,
-    int width,
-    int height,
-    BOOL repaint
-);
+(HWND window,HWND after,int x,int y,int width,int height,UINT flags);
 void StretchBlt
 (
     HDC destDC,
@@ -645,7 +626,6 @@ void StretchBlt
     int srcHeight,
     DWORD rop
 );
-void UpdateWindow(HWND window);
 
 //---- helper template definition ----
 

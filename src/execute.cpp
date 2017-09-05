@@ -249,7 +249,6 @@ int execute
         ct().ps.load(expressions.begin(),expressions.end());
         auto main_window=make_shared<MainWindow>();
         ShowWindow(main_window->handle(),commandShow);
-        nagarami::UpdateWindow(main_window->handle());
         auto timer=
             make_shared<Timer>(1000/ct().ps.fps,main_window->handle());
         MSG msg;
