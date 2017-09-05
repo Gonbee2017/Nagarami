@@ -32,4 +32,4 @@
 #define VER_MAJOR    0
 #define VER_MINOR    2
 #define VER_BUILD    1
-#define VER_REVISION 3
+#define VER_REVISION 4
