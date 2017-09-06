@@ -11,6 +11,7 @@ SET(NAGARAMI_SOURCE_FILES
     component.cpp
     execute.cpp
     helper.cpp
+    import.cpp
     main.cpp
     resource.rc
     systemobject.cpp

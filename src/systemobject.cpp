@@ -3,46 +3,44 @@
 #include<stdexcept>
 #include<windows.h>
 
-namespace nagarami
+namespace nm
 {
 
 DeleteDC::DeleteDC(HDC handle):
-    Finalizer([handle] () {::DeleteDC(handle);}),handle_(handle) {}
+    Finalizer([handle] () {pt().DeleteDC(handle);}),handle_(handle) {}
 
 HDC DeleteDC::handle() {return handle_;}
 
 DeleteObject::DeleteObject(HGDIOBJ handle):
-    Finalizer([handle] () {::DeleteObject(handle);}),
-    handle_(handle) {}
+    Finalizer([handle] () {pt().DeleteObject(handle);}),handle_(handle) {}
 
 HGDIOBJ DeleteObject::handle() {return handle_;}
 
 EndPaint::EndPaint(HWND window,PAINTSTRUCT*paint,HDC handle):
-    Finalizer([window,paint] () {::EndPaint(window,paint);}),
+    Finalizer([window,paint] () {pt().EndPaint(window,paint);}),
     handle_(handle) {}
 
 HDC EndPaint::handle() {return handle_;}
 
 ReleaseDC::ReleaseDC(HWND window,HDC handle):
-    Finalizer([window,handle] () {::ReleaseDC(window,handle);}),
+    Finalizer([window,handle] () {pt().ReleaseDC(window,handle);}),
     handle_(handle) {}
 
 HDC ReleaseDC::handle() {return handle_;}
 
-TimeEndPeriod::TimeEndPeriod(UINT resolution):
-    Finalizer([resolution] () {::timeEndPeriod(resolution);}) {}
+TimeEndPeriod::TimeEndPeriod(UINT period):
+    Finalizer([period] () {pt().timeEndPeriod(period);}) {}
 
-TimeKillEvent::TimeKillEvent(UINT timer):
-    Finalizer([timer] () {::timeKillEvent(timer);}) {}
+TimeKillEvent::TimeKillEvent(UINT timerID):
+    Finalizer([timerID] () {pt().timeKillEvent(timerID);}) {}
 
 HBITMAP Buffer::bitmap() {return (HBITMAP)bitmap_->handle();}
 
 shared_ptr<Buffer> Buffer::create(const SIZE&size,HDC destDC)
 {
-    auto bitmap=nagarami::CreateCompatibleBitmap
-    (destDC,size.cx,size.cy);
-    auto dc=nagarami::CreateCompatibleDC(destDC);
-    SelectObject(dc->handle(),bitmap->handle());
+    auto bitmap=nm::CreateCompatibleBitmap(destDC,size.cx,size.cy);
+    auto dc=nm::CreateCompatibleDC(destDC);
+    pt().SelectObject(dc->handle(),bitmap->handle());
     return shared_ptr<Buffer>(new Buffer(bitmap,dc,size));
 }
 
@@ -50,13 +48,13 @@ HDC Buffer::dc() {return dc_->handle();}
 
 shared_ptr<Buffer> Buffer::load(HINSTANCE instance,LPCTSTR name,HDC destDC)
 {
-    auto bitmap=nagarami::LoadBitmap(instance,name);
+    auto bitmap=nm::LoadBitmap(instance,name);
     BITMAP bmp;
-    nagarami::GetObject((HGDIOBJ)bitmap->handle(),sizeof(BITMAP),&bmp);
-    auto dc=nagarami::CreateCompatibleDC(destDC);
-    SelectObject(dc->handle(),bitmap->handle());
-    return shared_ptr<Buffer>(new Buffer
-    (bitmap,dc,SIZE({bmp.bmWidth,bmp.bmHeight})));
+    nm::GetObject((HGDIOBJ)bitmap->handle(),sizeof(BITMAP),&bmp);
+    auto dc=nm::CreateCompatibleDC(destDC);
+    pt().SelectObject(dc->handle(),bitmap->handle());
+    return shared_ptr<Buffer>
+    (new Buffer(bitmap,dc,SIZE({bmp.bmWidth,bmp.bmHeight})));
 }
 
 const SIZE&Buffer::size() {return size_;}
@@ -70,24 +68,24 @@ Buffer::Buffer
 
 Timer::Timer(UINT delay,HWND dest):delay_(delay),dest_(dest)
 {
-    static const auto begin=make_shared<Initializer>([] ()
+    static const auto beginPeriod=make_shared<Initializer>([] ()
     {
         TIMECAPS caps;
-        nagarami::timeGetDevCaps(&caps,sizeof(TIMECAPS));
-        resolution_=caps.wPeriodMin;
-        static const auto end=nagarami::timeBeginPeriod(resolution_);
+        nm::timeGetDevCaps(&caps,sizeof(TIMECAPS));
+        period_=caps.wPeriodMin;
+        static const auto endPeriod=nm::timeBeginPeriod(period_);
     });
-    kill_=nagarami::timeSetEvent
+    killEvent_=nm::timeSetEvent
     (
         delay_,
-        resolution_,
-        &timeProcedure,
+        period_,
+        &proc,
         (DWORD)dest_,
         TIME_CALLBACK_FUNCTION|TIME_KILL_SYNCHRONOUS|TIME_PERIODIC
     );
 }
 
-void CALLBACK Timer::timeProcedure
+void CALLBACK Timer::proc
 (
     UINT timerID,
     UINT message,
@@ -96,20 +94,20 @@ void CALLBACK Timer::timeProcedure
     DWORD_PTR reserved2
 ) {PostMessage((HWND)user,WM_USERTIMER,0,0);}
 
-UINT Timer::resolution_;
+UINT Timer::period_;
 
-shared_ptr<TimeEndPeriod> timeBeginPeriod(UINT resolution)
+shared_ptr<TimeEndPeriod> timeBeginPeriod(UINT period)
 {
     MMRESULT mmr;
-    if((mmr=::timeBeginPeriod(resolution))!=TIMERR_NOERROR)
+    if((mmr=pt().timeBeginPeriod(period))!=TIMERR_NOERROR)
         throw runtime_error(describe("timeBeginPeriod failed.(",mmr,")"));
-    return make_shared<TimeEndPeriod>(resolution);
+    return make_shared<TimeEndPeriod>(period);
 }
 
 void timeGetDevCaps(LPTIMECAPS caps,UINT sizeOfCaps)
 {
     MMRESULT mmr;
-    if((mmr=::timeGetDevCaps(caps,sizeOfCaps)!=TIMERR_NOERROR))
+    if((mmr=pt().timeGetDevCaps(caps,sizeOfCaps)!=TIMERR_NOERROR))
         throw runtime_error(describe("timeGetDevCaps failed.(",mmr,")"));
 }
 
@@ -117,12 +115,12 @@ shared_ptr<TimeKillEvent> timeSetEvent
 (
     UINT delay,
     UINT resolution,
-    LPTIMECALLBACK time_procedure,
+    LPTIMECALLBACK proc,
     DWORD user,
     UINT event
 )
 {
-    UINT timer=::timeSetEvent(delay,resolution,time_procedure,user,event);
+    UINT timer=pt().timeSetEvent(delay,resolution,proc,user,event);
     if(timer==0) throw runtime_error(describe("timeSetEvent failed."));
     return make_shared<TimeKillEvent>(timer);
 }

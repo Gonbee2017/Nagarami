@@ -2,6 +2,7 @@
 #define NAGARAMI_H
 
 #include<functional>
+#include<ios>
 #include<istream>
 #include<map>
 #include<memory>
@@ -16,16 +17,21 @@
 #define SQUARE(x) ((x)*(x))
 #define WM_USERTIMER (WM_USER+1)
 
-namespace nagarami
+namespace nm
 {
 
 using namespace std;
 
 //---- constexpr definition ----
 
+constexpr char APPLICATION_NAME[]         ="Nagarami";
 constexpr char PROPERTIES_FILE_EXTENSION[]="ps";
 constexpr char HELP_URL[]                 =
     "https://github.com/Gonbee2017/Nagarami/blob/master/README.md";
+
+constexpr COLORREF ALMOST_BLACK_COLOR=RGB(  1,  1,  1);
+constexpr COLORREF BLACK_COLOR       =RGB(  0,  0,  0);
+constexpr COLORREF WHITE_COLOR       =RGB(255,255,255);
 
 constexpr LONG  UNIT_LENGTH             =16;
 constexpr LONG  HALF_UNIT_LENGTH        =UNIT_LENGTH/2;
@@ -33,24 +39,15 @@ constexpr SIZE  UNIT_SIZE               =SIZE({UNIT_LENGTH,UNIT_LENGTH});
 constexpr RECT  UNIT_RECT               =
     RECT({0,0,UNIT_SIZE.cx,UNIT_SIZE.cy});
 constexpr LONG  FRAME_LENGTH            =UNIT_LENGTH;
-constexpr POINT CLIENT_POS=POINT({FRAME_LENGTH,FRAME_LENGTH});
 constexpr LONG  MINIMUM_WINDOW_WIDTH    =UNIT_LENGTH*8+FRAME_LENGTH*2;
 constexpr LONG  MINIMUM_WINDOW_HEIGHT   =UNIT_LENGTH*4+FRAME_LENGTH*2;
 constexpr SIZE  MINIMUM_WINDOW_SIZE     =
     SIZE({MINIMUM_WINDOW_WIDTH,MINIMUM_WINDOW_HEIGHT});
-constexpr int   SCALE_DIVISOR           =10;
-constexpr int   ALPHA_DIVISOR           =20;
-constexpr int   MAXIMUM_SCALE           =500;
-constexpr int   MAXIMUM_HOLE            =UNIT_LENGTH*20;
 constexpr LONG  SLIDER_BAR_WIDTH        =UNIT_LENGTH/4;
 constexpr LONG  HALF_SLIDER_BAR_WIDTH   =SLIDER_BAR_WIDTH/2;
 constexpr LONG  SLIDER_TEXT_WIDTH       =UNIT_LENGTH*2;
 constexpr SIZE  SLIDER_TEXT_SIZE        =
     SIZE({SLIDER_TEXT_WIDTH,UNIT_LENGTH});
-
-constexpr COLORREF ALMOST_BLACK_COLOR=RGB(  1,  1,  1);
-constexpr COLORREF BLACK_COLOR       =RGB(  0,  0,  0);
-constexpr COLORREF WHITE_COLOR       =RGB(255,255,255);
 
 constexpr POINT ALPHA_SLIDER_CELL_POS     =POINT({ 0,-1});
 constexpr POINT CLOSE_BUTTON_CELL_POS     =POINT({-1, 0});
@@ -64,17 +61,10 @@ constexpr POINT MINIMIZE_BUTTON_CELL_POS  =POINT({-3, 0});
 constexpr POINT RESET_BUTTON_CELL_POS     =POINT({ 3, 0});
 constexpr POINT SCALE_SLIDER_CELL_POS     =POINT({ 0,-3});
 
-constexpr wchar_t ALPHA_SLIDER_TOOL_TEXT[]     =L"透過率";
-constexpr wchar_t CLOSE_BUTTON_TOOL_TEXT[]     =L"閉じる";
-constexpr wchar_t FOREGROUND_BUTTON_TOOL_TEXT[]=L"ターゲットを前面に表示";
-constexpr wchar_t HALFTONE_BUTTON_TOOL_TEXT[]  =L"高画質モード";
-constexpr wchar_t HELP_BUTTON_TOOL_TEXT[]      =L"ヘルプ";
-constexpr wchar_t HOLE_SLIDER_TOOL_TEXT[]      =L"穴のサイズ";
-constexpr wchar_t LOCK_BUTTON_TOOL_TEXT[]      =L"ターゲットをロック";
-constexpr wchar_t MAXIMIZE_BUTTON_TOOL_TEXT[]  =L"最大化";
-constexpr wchar_t MINIMIZE_BUTTON_TOOL_TEXT[]  =L"最小化";
-constexpr wchar_t RESET_BUTTON_TOOL_TEXT[]     =L"設定をリセット";
-constexpr wchar_t SCALE_SLIDER_TOOL_TEXT[]     =L"倍率";
+constexpr int  ALPHA_DIVISOR=20;
+constexpr LONG MAXIMUM_HOLE =UNIT_LENGTH*20;
+constexpr LONG MAXIMUM_SCALE=500;
+constexpr int  SCALE_DIVISOR=10;
 
 constexpr BYTE     DEFAULT_ALPHA              =255;
 constexpr COLORREF DEFAULT_BACK_COLOR1        =RGB( 85, 86, 88);
@@ -90,22 +80,34 @@ constexpr LONG     DEFAULT_HOLE               =UNIT_LENGTH*0;
 constexpr LONG     DEFAULT_SCALE              =100;
 constexpr LONG     DEFAULT_WINDOW_SIZE_DIVISOR=4;
 
+constexpr wchar_t ALPHA_SLIDER_TOOL_TEXT[]     =L"透過率";
+constexpr wchar_t CLOSE_BUTTON_TOOL_TEXT[]     =L"閉じる";
+constexpr wchar_t FOREGROUND_BUTTON_TOOL_TEXT[]=L"ターゲットを前面に表示";
+constexpr wchar_t HALFTONE_BUTTON_TOOL_TEXT[]  =L"高画質モード";
+constexpr wchar_t HELP_BUTTON_TOOL_TEXT[]      =L"ヘルプ";
+constexpr wchar_t HOLE_SLIDER_TOOL_TEXT[]      =L"穴のサイズ";
+constexpr wchar_t LOCK_BUTTON_TOOL_TEXT[]      =L"ターゲットをロック";
+constexpr wchar_t MAXIMIZE_BUTTON_TOOL_TEXT[]  =L"最大化";
+constexpr wchar_t MINIMIZE_BUTTON_TOOL_TEXT[]  =L"最小化";
+constexpr wchar_t RESET_BUTTON_TOOL_TEXT[]     =L"設定をリセット";
+constexpr wchar_t SCALE_SLIDER_TOOL_TEXT[]     =L"倍率";
+
 //---- helper declaration ----
 
-class Initializer {public:Initializer(function<void()> initialize);};
+class Initializer {public:Initializer(const function<void()>&initialize);};
 
 class Finalizer
 {
 public:
-    Finalizer(function<void()> finalize);
+    Finalizer(const function<void()>&finalize);
     virtual ~Finalizer();
 protected:function<void()> finalize_;
 };
 
+struct POINT_DOUBLE {double x,y;};
+
 class api_error:public runtime_error
 {public:api_error(const string&name);};
-
-struct POINT_DOUBLE {double x,y;};
 
 template<class OBJECT,class RESULT,class...ARGUMENTS>
     function<RESULT(ARGUMENTS...arguments)> bind_object
@@ -126,9 +128,10 @@ void describe_to_with
 (ostream&os,const string&separator,const char*argument);
 void describe_to_with(ostream&os,const string&separator);
 SIZE desktop_size();
-double fpn(const string&str);
+double floating_point_number(const string&str);
 vector<string> getlines(istream&in);
 LONG height(const RECT&rect);
+void ignore_exception(const function<void()>&proc);
 long integer(const string&str);
 POINT operator*(const POINT&lhs,const LONG&rhs);
 SIZE operator*(const SIZE&lhs,const LONG&rhs);
@@ -140,6 +143,7 @@ POINT_DOUBLE&operator+=(POINT_DOUBLE&lhs,const POINT_DOUBLE&rhs);
 POINT operator/(const POINT&lhs,const LONG&rhs);
 SIZE operator/(const SIZE&lhs,const LONG&rhs);
 POINT operator-(const POINT&point);
+POINT operator-(const POINT&lhs,const POINT&rhs);
 SIZE operator-(const SIZE&lhs,const LONG&rhs);
 SIZE operator-(const SIZE&lhs,const SIZE&rhs);
 POINT point(const POINT_DOUBLE&pointDouble);
@@ -151,7 +155,6 @@ RECT rect(const POINT&pos,const SIZE&size);
 SIZE size(LPARAM lParam);
 SIZE size(const POINT&pos);
 SIZE size(const RECT&rect);
-POINT sliding_offset(HWND window,const POINT&base);
 LONG squared_distance(const POINT&p,const POINT&q);
 vector<string> tokenize(const string&str,const string&dels);
 LONG width(const RECT&rect);
@@ -190,16 +193,15 @@ public:
 protected:HDC handle_;
 };
 
-class TimeEndPeriod:public Finalizer
-{public:TimeEndPeriod(UINT resolution);};
+class TimeEndPeriod:public Finalizer {public:TimeEndPeriod(UINT period);};
 
-class TimeKillEvent:public Finalizer {public:TimeKillEvent(UINT timer);};
+class TimeKillEvent:public Finalizer {public:TimeKillEvent(UINT timerID);};
 
 class Timer
 {
 public:Timer(UINT delay,HWND dest);
 protected:
-    static void CALLBACK timeProcedure
+    static void CALLBACK proc
     (
         UINT timerID,
         UINT message,
@@ -209,8 +211,8 @@ protected:
     );
     UINT delay_;
     HWND dest_;
-    shared_ptr<TimeKillEvent> kill_;
-    static UINT resolution_;
+    shared_ptr<TimeKillEvent> killEvent_;
+    static UINT period_;
 };
 
 class Buffer
@@ -234,13 +236,13 @@ protected:
     SIZE size_;
 };
 
-shared_ptr<TimeEndPeriod> timeBeginPeriod(UINT resolution);
+shared_ptr<TimeEndPeriod> timeBeginPeriod(UINT period);
 void timeGetDevCaps(LPTIMECAPS caps,UINT sizeOfCaps);
 shared_ptr<TimeKillEvent> timeSetEvent
 (
     UINT delay,
     UINT resolution,
-    LPTIMECALLBACK time_procedure,
+    LPTIMECALLBACK proc,
     DWORD user,
     UINT event
 );
@@ -357,7 +359,7 @@ public:
         const int&minimum,
         const int&maximum,
         const int&initialValue,
-        function<string(const int&value)> getText,
+        const function<string(const int&value)>&getText,
         LPCTSTR knobMaskBitmapName,
         HDC destDC,
         const POINT&cellPos,
@@ -414,7 +416,7 @@ protected:
     Window();
     LRESULT onReceive
     (HWND handle,UINT message,WPARAM wParam,LPARAM lParam);
-    static LRESULT CALLBACK windowProcedure
+    static LRESULT CALLBACK proc
     (HWND handle,UINT message,WPARAM wParam,LPARAM lParam);
     HWND handle_;
     map<UINT,function<LRESULT(UINT message,WPARAM wParam,LPARAM lParam)>>
@@ -470,6 +472,7 @@ protected:
     void initializeBackBrush();
     void initializeBuffers();
     void initializeComponents();
+    void updateToolTip(const POINT&cursorPos);
     Component*activeComponent_;
     shared_ptr<Slider> alphaSlider_;
     shared_ptr<DeleteObject> backBrush_;
@@ -498,7 +501,8 @@ struct properties
 {
     template<class INPUT> void load(INPUT begin,INPUT end);
 
-    properties();
+    void adjust();
+    void initialize();
     vector<string> lines() const;
     BYTE alpha;
     COLORREF back_color1;
@@ -522,7 +526,7 @@ protected:
 
 struct context
 {
-    context();
+    void initialize(HINSTANCE instance);
     shared_ptr<DeleteObject> almost_black_brush;
     shared_ptr<DeleteObject> back_brush1;
     shared_ptr<DeleteObject> back_brush2;
@@ -540,6 +544,150 @@ struct context
     shared_ptr<DeleteObject> white_brush;
 };
 
+struct port
+{
+    function<HDC(HWND window,PAINTSTRUCT*paint)> BeginPaint;
+    function<BOOL
+    (
+        HDC destDC,
+        int destX,
+        int destY,
+        int width,
+        int height,
+        HDC srcDC,
+        int srcX,
+        int srcY,
+        DWORD rop
+    )> BitBlt;
+    function<HBITMAP(HDC destDC,int width,int height)>
+        CreateCompatibleBitmap;
+    function<HDC(HDC dc)> CreateCompatibleDC;
+    function<HFONT
+    (
+        int height,
+        int width,
+        int escapement,
+        int orientation,
+        int weight,
+        DWORD italic,
+        DWORD underline,
+        DWORD strikeOut,
+        DWORD charSet,
+        DWORD outputPrecision,
+        DWORD clipPrecision,
+        DWORD quality,
+        DWORD pitchAndFamily,
+        LPCTSTR face
+    )> CreateFont;
+    function<HBRUSH(HBITMAP bitmap)> CreatePatternBrush;
+    function<HPEN(int style,int width,COLORREF color)> CreatePen;
+    function<HBRUSH(COLORREF color)> CreateSolidBrush;
+    function<HWND
+    (
+        DWORD exStyle,
+        LPCTSTR className,
+        LPCTSTR windowName,
+        DWORD style,
+        int x,
+        int y,
+        int width,
+        int height,
+        HWND parent,
+        HMENU menu,
+        HINSTANCE instance,
+        LPVOID param
+    )> CreateWindowEx;
+    function<LRESULT(HWND window,UINT message,WPARAM wParam,LPARAM lParam)>
+        DefWindowProc;
+    function<BOOL(HDC dc)> DeleteDC;
+    function<BOOL(HGDIOBJ object)> DeleteObject;
+    function<BOOL(HWND window)> DestroyWindow;
+    function<LRESULT(CONST MSG*message)> DispatchMessage;
+    function<int(HDC dc,LPCTSTR str,int count,LPRECT rect,UINT format)>
+        DrawText;
+    function<BOOL(HDC dc,int left,int top,int right,int bottom)> Ellipse;
+    function<BOOL(HWND window,CONST PAINTSTRUCT*paint)> EndPaint;
+    function<BOOL(HDC dc,CONST RECT*rect,HBRUSH brush)> FillRect;
+    function<BOOL(HWND window,LPRECT rect)> GetClientRect;
+    function<BOOL(LPPOINT point)> GetCursorPos;
+    function<HDC(HWND window)> GetDC;
+    function<HWND()> GetForegroundWindow;
+    function<SHORT(int key)> GetKeyState;
+    function<DWORD()> GetLastError;
+    function<int(LPMSG msg,HWND window,UINT first,UINT last)> GetMessage;
+    function<int(HGDIOBJ object,int sizeOfBuffer,LPVOID buffer)> GetObject;
+    function<int(int index)> GetSystemMetrics;
+    function<BOOL(HWND window,WINDOWPLACEMENT*placement)>
+        GetWindowPlacement;
+    function<BOOL(HWND window)> IsIconic;
+    function<BOOL(HWND window)> IsWindow;
+    function<BOOL(HWND window)> IsWindowVisible;
+    function<BOOL(HWND window)> IsZoomed;
+    function<HBITMAP(HINSTANCE instance,LPCTSTR name)> LoadBitmap;
+    function<HCURSOR(HINSTANCE instance,LPCTSTR name)> LoadCursor;
+    function<int(HWND owner,LPCTSTR text,LPCTSTR caption,UINT type)>
+        MessageBox;
+    function<VOID(int exitCode)> PostQuitMessage;
+    function<BOOL(HWND window,CONST RECT*rect,HRGN region,UINT flags)>
+        RedrawWindow;
+    function<ATOM(CONST WNDCLASSEX*windowClass)> RegisterClassEx;
+    function<BOOL()> ReleaseCapture;
+    function<int(HWND window,HDC dc)> ReleaseDC;
+    function<BOOL(HWND window,LPPOINT point)> ScreenToClient;
+    function<HGDIOBJ(HDC dc,HGDIOBJ object)> SelectObject;
+    function<LRESULT(HWND window,UINT message,WPARAM wParam,LPARAM lParam)>
+        SendMessageW;
+    function<int(HDC dc,int mode)> SetBkMode;
+    function<BOOL(HDC dc,int x,int y,LPPOINT oldPoint)> SetBrushOrgEx;
+    function<HWND(HWND window)> SetCapture;
+    function<HCURSOR(HCURSOR cursor)> SetCursor;
+    function<BOOL(HWND window)> SetForegroundWindow;
+    function<BOOL(HWND window,COLORREF key,BYTE alpha,DWORD flags)>
+        SetLayeredWindowAttributes;
+    function<int(HDC dc,int mode)> SetStretchBltMode;
+    function<COLORREF(HDC dc,COLORREF color)> SetTextColor;
+    function<HINSTANCE
+    (
+        HWND parent,
+        LPCTSTR verb,
+        LPCTSTR file,
+        LPCTSTR parameters,
+        LPCTSTR directory,
+        INT showCommand
+    )> ShellExecute;
+    function<BOOL(HWND window,int commandShow)> ShowWindow;
+    function<BOOL
+    (
+        HDC destDC,
+        int destX,
+        int destY,
+        int destWidth,
+        int destHeight,
+        HDC srcDC,
+        int srcX,
+        int srcY,
+        int srcWidth,
+        int srcHeight,
+        DWORD rop
+    )> StretchBlt;
+    function<shared_ptr<istream>
+    (const string&name,const ios_base::openmode&mode)> input_file;
+    function<shared_ptr<ostream>
+    (const string&name,const ios_base::openmode&mode)> output_file;
+    function<MMRESULT(UINT period)> timeBeginPeriod;
+    function<MMRESULT(UINT period)> timeEndPeriod;
+    function<MMRESULT(LPTIMECAPS caps,UINT sizeOfCaps)> timeGetDevCaps;
+    function<MMRESULT(UINT timerID)> timeKillEvent;
+    function<MMRESULT
+    (
+        UINT delay,
+        UINT resolution,
+        LPTIMECALLBACK proc,
+        DWORD user,
+        UINT event
+    )> timeSetEvent;
+};
+
 bool control_mode();
 context&ct();
 int execute
@@ -549,10 +697,19 @@ int execute
     LPSTR commandLine,
     int commandShow
 );
+port&pt();
+
+//---- import declaration ----
+
+void import();
+shared_ptr<istream> input_file
+(const string&name,const ios_base::openmode&mode);
+shared_ptr<ostream> output_file
+(const string&name,const ios_base::openmode&mode);
 
 //---- apiwrapper declaration ----
 
-shared_ptr<EndPaint> BeginPaint(HWND window,PAINTSTRUCT*paintStruct);
+shared_ptr<EndPaint> BeginPaint(HWND window,PAINTSTRUCT*paint);
 void BitBlt
 (
     HDC destDC,
@@ -588,6 +745,22 @@ shared_ptr<DeleteObject> CreateFont
 shared_ptr<DeleteObject> CreatePatternBrush(HBITMAP bitmap);
 shared_ptr<DeleteObject> CreatePen(int style,int width,COLORREF color);
 shared_ptr<DeleteObject> CreateSolidBrush(COLORREF color);
+HWND CreateWindowEx
+(
+    DWORD exStyle,
+    LPCTSTR className,
+    LPCTSTR windowName,
+    DWORD style,
+    int x,
+    int y,
+    int width,
+    int height,
+    HWND parent,
+    HMENU menu,
+    HINSTANCE instance,
+    LPVOID param
+);
+void DispatchMessage(CONST MSG*message);
 int DrawText(HDC dc,LPCTSTR str,int count,LPRECT rect,UINT format);
 void Ellipse(HDC dc,int left,int top,int right,int bottom);
 void FillRect(HDC dc,CONST RECT*rect,HBRUSH brush);
@@ -602,6 +775,7 @@ shared_ptr<DeleteObject> LoadBitmap(HINSTANCE instance,LPCTSTR name);
 HCURSOR LoadCursor(HINSTANCE instance,LPCTSTR name);
 void RedrawWindow(HWND window,CONST RECT*rect,HRGN region,UINT flags);
 ATOM RegisterClassEx(CONST WNDCLASSEX*windowClass);
+void ReleaseCapture();
 void ScreenToClient(HWND window,LPPOINT point);
 int SetBkMode(HDC dc,int mode);
 void SetBrushOrgEx(HDC dc,int x,int y,LPPOINT oldPoint);
@@ -610,8 +784,6 @@ void SetLayeredWindowAttributes
 (HWND window,COLORREF key,BYTE alpha,DWORD flags);
 int SetStretchBltMode(HDC dc,int mode);
 COLORREF SetTextColor(HDC dc,COLORREF color);
-void SetWindowPos
-(HWND window,HWND after,int x,int y,int width,int height,UINT flags);
 void StretchBlt
 (
     HDC destDC,

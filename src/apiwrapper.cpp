@@ -2,14 +2,14 @@
 #include<memory>
 #include<windows.h>
 
-namespace nagarami
+namespace nm
 {
 
-shared_ptr<EndPaint> BeginPaint(HWND window,PAINTSTRUCT*paintStruct)
+shared_ptr<EndPaint> BeginPaint(HWND window,PAINTSTRUCT*paint)
 {
-    HDC dc=::BeginPaint(window,paintStruct);
+    HDC dc=pt().BeginPaint(window,paint);
     if(dc==NULL) throw make_shared<api_error>("BeginPaint");
-    return make_shared<EndPaint>(window,paintStruct,dc);
+    return make_shared<EndPaint>(window,paint,dc);
 }
 
 void BitBlt
@@ -26,14 +26,16 @@ void BitBlt
 )
 {
     if
-    (::BitBlt(destDC,destX,destY,width,height,srcDC,srcX,srcY,rop)==FALSE)
-        throw make_shared<api_error>("BitBlt");
+    (
+        pt().BitBlt(destDC,destX,destY,width,height,srcDC,srcX,srcY,rop)
+            ==FALSE
+    ) throw make_shared<api_error>("BitBlt");
 }
 
 shared_ptr<DeleteObject> CreateCompatibleBitmap
 (HDC destDC,int width,int height)
 {
-    HBITMAP bitmap=::CreateCompatibleBitmap(destDC,width,height);
+    HBITMAP bitmap=pt().CreateCompatibleBitmap(destDC,width,height);
     if(bitmap==NULL)
         throw make_shared<api_error>("CreateCompatibleBitmap");
     return make_shared<DeleteObject>((HGDIOBJ)bitmap);
@@ -41,7 +43,7 @@ shared_ptr<DeleteObject> CreateCompatibleBitmap
 
 shared_ptr<DeleteDC> CreateCompatibleDC(HDC dc)
 {
-    HDC compatibleDC=::CreateCompatibleDC(dc);
+    HDC compatibleDC=pt().CreateCompatibleDC(dc);
     if(compatibleDC==NULL)
         throw make_shared<api_error>("CreateCompatibleDC");
     return make_shared<DeleteDC>(compatibleDC);
@@ -65,7 +67,7 @@ shared_ptr<DeleteObject> CreateFont
     LPCTSTR face
 )
 {
-    HFONT font=::CreateFont
+    HFONT font=pt().CreateFont
     (
         height,
         width,
@@ -88,169 +90,210 @@ shared_ptr<DeleteObject> CreateFont
 
 shared_ptr<DeleteObject> CreatePatternBrush(HBITMAP bitmap)
 {
-    HBRUSH brush=::CreatePatternBrush(bitmap);
+    HBRUSH brush=pt().CreatePatternBrush(bitmap);
     if(brush==NULL) throw make_shared<api_error>("CreatePetternBrush");
     return make_shared<DeleteObject>((HGDIOBJ)brush);
 }
 
 shared_ptr<DeleteObject> CreatePen(int style,int width,COLORREF color)
 {
-    HPEN pen=::CreatePen(style,width,color);
+    HPEN pen=pt().CreatePen(style,width,color);
     if(pen==NULL) throw make_shared<api_error>("CreatePen");
     return make_shared<DeleteObject>((HGDIOBJ)pen);
 }
 
 shared_ptr<DeleteObject> CreateSolidBrush(COLORREF color)
 {
-    HBRUSH brush=::CreateSolidBrush(color);
+    HBRUSH brush=pt().CreateSolidBrush(color);
     if(brush==NULL) throw make_shared<api_error>("CreateSolidBrush");
     return make_shared<DeleteObject>((HGDIOBJ)brush);
 }
 
+HWND CreateWindowEx
+(
+    DWORD exStyle,
+    LPCTSTR className,
+    LPCTSTR windowName,
+    DWORD style,
+    int x,
+    int y,
+    int width,
+    int height,
+    HWND parent,
+    HMENU menu,
+    HINSTANCE instance,
+    LPVOID param
+)
+{
+    HWND handle=pt().CreateWindowEx
+    (
+        exStyle,
+        className,
+        windowName,
+        style,
+        x,
+        y,
+        width,
+        height,
+        parent,
+        menu,
+        instance,
+        param
+    );
+    if(ct().error.get()) throw ct().error;
+    if(handle==NULL) throw make_shared<api_error>("CreateWindowEx");
+    return handle;
+}
+
+void DispatchMessage(CONST MSG*message)
+{
+    pt().DispatchMessage(message);
+    if(ct().error.get()) throw ct().error;
+}
+
 int DrawText(HDC dc,LPCTSTR str,int count,LPRECT rect,UINT format)
 {
-    int height=::DrawText(dc,str,count,rect,format);
+    int height=pt().DrawText(dc,str,count,rect,format);
     if(height==0) throw make_shared<api_error>("DrawText");
     return height;
 }
 
 void Ellipse(HDC dc,int left,int top,int right,int bottom)
 {
-    if(::Ellipse(dc,left,top,right,bottom)==FALSE)
+    if(pt().Ellipse(dc,left,top,right,bottom)==FALSE)
         throw make_shared<api_error>("Ellipse");
 }
 
 void FillRect(HDC dc,CONST RECT*rect,HBRUSH brush)
 {
-    if(::FillRect(dc,rect,brush)==FALSE)
+    if(pt().FillRect(dc,rect,brush)==FALSE)
         throw make_shared<api_error>("FillRect");
 }
 
 void GetClientRect(HWND window,LPRECT rect)
 {
-    if(::GetClientRect(window,rect)==FALSE)
+    if(pt().GetClientRect(window,rect)==FALSE)
         throw make_shared<api_error>("GetClientRect");
 }
 
 void GetCursorPos(LPPOINT point)
 {
-    if(::GetCursorPos(point)==FALSE)
+    if(pt().GetCursorPos(point)==FALSE)
         throw make_shared<api_error>("GetCursorPos");
 }
 
 shared_ptr<ReleaseDC> GetDC(HWND window)
 {
-    HDC dc=::GetDC(window);
+    HDC dc=pt().GetDC(window);
     if(dc==NULL) throw make_shared<api_error>("GetDC");
     return make_shared<ReleaseDC>(window,dc);
 }
 
 bool GetMessage(LPMSG msg,HWND window,UINT first,UINT last)
 {
-    int result=::GetMessage(msg,window,first,last);
+    int result=pt().GetMessage(msg,window,first,last);
     if(result==-1) throw make_shared<api_error>("GetMessage");
     return result!=0;
 }
 
 int GetObject(HGDIOBJ object,int sizeOfBuffer,LPVOID buffer)
 {
-    int read=::GetObject(object,sizeOfBuffer,buffer);
+    int read=pt().GetObject(object,sizeOfBuffer,buffer);
     if(read==0) throw make_shared<api_error>("GetObject");
     return read;
 }
 
 int GetSystemMetrics(int index)
 {
-    int result=::GetSystemMetrics(index);
+    int result=pt().GetSystemMetrics(index);
     if(result==0) throw make_shared<api_error>("GetSystemMetrics");
     return result;
 }
 
 void GetWindowPlacement(HWND window,WINDOWPLACEMENT*placement)
 {
-    if(::GetWindowPlacement(window,placement)==FALSE)
+    if(pt().GetWindowPlacement(window,placement)==FALSE)
         throw make_shared<api_error>("GetWindowPlacement");
 }
 
 shared_ptr<DeleteObject> LoadBitmap(HINSTANCE instance,LPCTSTR name)
 {
-    HBITMAP bitmap=::LoadBitmap(instance,name);
+    HBITMAP bitmap=pt().LoadBitmap(instance,name);
     if(bitmap==NULL) throw make_shared<api_error>("LoadBitmap");
     return make_shared<DeleteObject>((HGDIOBJ)bitmap);
 }
 
 HCURSOR LoadCursor(HINSTANCE instance,LPCTSTR name)
 {
-    HCURSOR cursor=::LoadCursor(instance,name);
+    HCURSOR cursor=pt().LoadCursor(instance,name);
     if(cursor==NULL) throw make_shared<api_error>("LoadCursor");
     return cursor;
 }
 
 void RedrawWindow(HWND window,CONST RECT*rect,HRGN region,UINT flags)
 {
-    if(::RedrawWindow(window,rect,region,flags)==FALSE)
+    if(pt().RedrawWindow(window,rect,region,flags)==FALSE)
         throw make_shared<api_error>("RedrawWindow");
 }
 
 ATOM RegisterClassEx(CONST WNDCLASSEX*windowClass)
 {
-    ATOM atom=::RegisterClassEx(windowClass);
+    ATOM atom=pt().RegisterClassEx(windowClass);
     if(atom==0) throw make_shared<api_error>("RegisterClassEx");
     return atom;
 }
 
+void ReleaseCapture()
+{
+    if(pt().ReleaseCapture()==FALSE)
+        throw make_shared<api_error>("ReleaseCapture");
+}
+
 void ScreenToClient(HWND window,LPPOINT point)
 {
-    if(::ScreenToClient(window,point)==FALSE)
+    if(pt().ScreenToClient(window,point)==FALSE)
         throw make_shared<api_error>("ScreenToClient");
 }
 
 int SetBkMode(HDC dc,int mode)
 {
-    int oldMode=::SetBkMode(dc,mode);
+    int oldMode=pt().SetBkMode(dc,mode);
     if(oldMode==0) throw make_shared<api_error>("SetBkMode");
     return oldMode;
 }
 
 void SetBrushOrgEx(HDC dc,int x,int y,LPPOINT oldPoint)
 {
-    if(::SetBrushOrgEx(dc,x,y,oldPoint)==FALSE)
+    if(pt().SetBrushOrgEx(dc,x,y,oldPoint)==FALSE)
         throw make_shared<api_error>("SetBrushOrgEx");
 }
 
 void SetForegroundWindow(HWND window)
 {
-    if(::SetForegroundWindow(window)==FALSE)
+    if(pt().SetForegroundWindow(window)==FALSE)
         throw make_shared<api_error>("SetForegroundWindow");
 }
 
 void SetLayeredWindowAttributes
 (HWND window,COLORREF key,BYTE alpha,DWORD flags)
 {
-    if(::SetLayeredWindowAttributes(window,key,alpha,flags)==FALSE)
+    if(pt().SetLayeredWindowAttributes(window,key,alpha,flags)==FALSE)
         throw make_shared<api_error>("SetLayeredWindowAttributes");
 }
 
 int SetStretchBltMode(HDC dc,int mode)
 {
-    int oldMode=::SetStretchBltMode(dc,mode);
+    int oldMode=pt().SetStretchBltMode(dc,mode);
     if(oldMode==0) throw make_shared<api_error>("SetStretchBltMode");
     return oldMode;
 }
 
 COLORREF SetTextColor(HDC dc,COLORREF color)
 {
-    COLORREF oldColor=::SetTextColor(dc,color);
+    COLORREF oldColor=pt().SetTextColor(dc,color);
     if(oldColor==CLR_INVALID)
         throw make_shared<api_error>("SetTextColor");
     return oldColor;
-}
-
-void SetWindowPos
-(HWND window,HWND after,int x,int y,int width,int height,UINT flags)
-{
-    if(::SetWindowPos(window,after,x,y,width,height,flags)==FALSE)
-        throw make_shared<api_error>("SetWindowPos");
 }
 
 void StretchBlt
@@ -270,7 +313,7 @@ void StretchBlt
 {
     if
     (
-        ::StretchBlt
+        pt().StretchBlt
         (
             destDC,
             destX,

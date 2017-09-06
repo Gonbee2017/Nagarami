@@ -5,7 +5,7 @@
 #include<string>
 #include<windows.h>
 
-namespace nagarami
+namespace nm
 {
 
 HWND Window::handle() {return handle_;}
@@ -18,8 +18,8 @@ Window::Window()
         clazz.cbClsExtra=0;
         clazz.cbSize=sizeof(WNDCLASSEX);
         clazz.cbWndExtra=0;
-        clazz.lpfnWndProc=&windowProcedure;
-        clazz.lpszClassName=TEXT(VER_PRODUCTNAME);
+        clazz.lpfnWndProc=&proc;
+        clazz.lpszClassName=TEXT(APPLICATION_NAME);
         clazz.lpszMenuName=NULL;
         clazz.hCursor=NULL;
         clazz.hIcon=NULL;
@@ -27,7 +27,7 @@ Window::Window()
         clazz.hInstance=ct().instance;
         clazz.hbrBackground=NULL;
         clazz.style=CS_HREDRAW|CS_VREDRAW;
-        nagarami::RegisterClassEx(&clazz);
+        nm::RegisterClassEx(&clazz);
     });
 }
 
@@ -40,7 +40,7 @@ LRESULT Window::onReceive
         if(message==WM_NCCREATE) handle_=handle;
         if(handlerMap_.find(message)!=handlerMap_.end())
             result=handlerMap_.at(message)(message,wParam,lParam);
-        else result=DefWindowProc(handle,message,wParam,lParam);
+        else result=pt().DefWindowProc(handle,message,wParam,lParam);
     } catch(const shared_ptr<runtime_error>&error)
     {
         ct().error=error;
@@ -49,14 +49,14 @@ LRESULT Window::onReceive
         else if(message==WM_DESTROY) result=0;
         else if(message==WM_NCDESTROY) result=0;
         {
-            result=DefWindowProc(handle,message,wParam,lParam);
-            DestroyWindow(handle);
+            result=pt().DefWindowProc(handle,message,wParam,lParam);
+            pt().DestroyWindow(handle);
         }
     }
     return result;
 }
 
-LRESULT CALLBACK Window::windowProcedure
+LRESULT CALLBACK Window::proc
 (HWND handle,UINT message,WPARAM wParam,LPARAM lParam)
 {
     LRESULT result;
@@ -72,7 +72,7 @@ LRESULT CALLBACK Window::windowProcedure
         Window*window=windowMap_.at(handle);
         result=window->onReceive(handle,message,wParam,lParam);
         if(message==WM_NCDESTROY) windowMap_.erase(handle);
-    } else result=DefWindowProc(handle,message,wParam,lParam);
+    } else result=pt().DefWindowProc(handle,message,wParam,lParam);
     return result;
 }
 
@@ -96,11 +96,11 @@ MainWindow::MainWindow():
     handlerMap_[WM_RBUTTONUP]=bind_object(&onRButtonUp,this);
     handlerMap_[WM_SIZE]=bind_object(&onSize,this);
     handlerMap_[WM_USERTIMER]=bind_object(&onUserTimer,this);
-    HWND handle=::CreateWindowEx
+    nm::CreateWindowEx
     (
         WS_EX_LAYERED|WS_EX_TOPMOST,
-        TEXT(VER_PRODUCTNAME),
-        TEXT(VER_PRODUCTNAME),
+        TEXT(APPLICATION_NAME),
+        TEXT(APPLICATION_NAME),
         WS_MAXIMIZEBOX|WS_MINIMIZEBOX|WS_POPUP,
         ct().ps.window_pos.x,
         ct().ps.window_pos.y,
@@ -111,8 +111,6 @@ MainWindow::MainWindow():
         ct().instance,
         static_cast<Window*>(this)
     );
-    if(ct().error.get()) throw ct().error;
-    if(handle==NULL) throw make_shared<api_error>("CreateWindowEx");
 }
 
 void MainWindow::onAlphaSliderChange()
@@ -133,16 +131,16 @@ LRESULT MainWindow::onDestroy
 (UINT message,WPARAM wParam,LPARAM lParam)
 {
     WINDOWPLACEMENT placement;
-    nagarami::GetWindowPlacement(handle_,&placement);
+    nm::GetWindowPlacement(handle_,&placement);
     ct().ps.window_pos=pos(placement.rcNormalPosition);
     ct().ps.window_size=size(placement.rcNormalPosition);
-    if(toolTip_!=NULL) DestroyWindow(toolTip_);
-    if(!ct().error.get()) PostQuitMessage(0);
+    if(toolTip_!=NULL) pt().DestroyWindow(toolTip_);
+    if(!ct().error.get()) pt().PostQuitMessage(0);
     return 0;
 }
 
 void MainWindow::onForegroundButtonClick()
-{if(ct().target!=NULL) nagarami::SetForegroundWindow(ct().target);}
+{if(ct().target!=NULL) nm::SetForegroundWindow(ct().target);}
 
 LRESULT MainWindow::onGetMinMaxInfo
 (UINT message,WPARAM wParam,LPARAM lParam)
@@ -158,19 +156,19 @@ void MainWindow::onHalftoneButtonChange()
     HDC dc=viewBuffer_->dc();
     if(halftoneButton_->value())
     {
-        nagarami::SetStretchBltMode(dc,HALFTONE);
-        nagarami::SetBrushOrgEx(dc,0,0,NULL);
-    } else nagarami::SetStretchBltMode(dc,COLORONCOLOR);
+        nm::SetStretchBltMode(dc,HALFTONE);
+        nm::SetBrushOrgEx(dc,0,0,NULL);
+    } else nm::SetStretchBltMode(dc,COLORONCOLOR);
     ct().ps.halftone=halftoneButton_->value();
 }
 
 void MainWindow::onHelpButtonClick()
 {
-    int code=(int)ShellExecute
+    int errorCode=(int)pt().ShellExecute
     (handle_,TEXT("open"),TEXT(HELP_URL),NULL,NULL,SW_SHOWNORMAL);
-    if(code<=32)
+    if(errorCode<=32)
         throw make_shared<runtime_error>(describe
-        ("ShellExecute failed.(",code,")"));
+        ("ShellExecute failed.(",errorCode,")"));
 }
 
 void MainWindow::onHoleSliderChange()
@@ -186,8 +184,8 @@ LRESULT MainWindow::onLButtonDown
         {
             component->activate(cursorPos);
             activeComponent_=component;
-            SetCapture(handle_);
-            nagarami::RedrawWindow
+            pt().SetCapture(handle_);
+            nm::RedrawWindow
             (handle_,NULL,NULL,RDW_INVALIDATE|RDW_UPDATENOW);
             break;
         }
@@ -202,9 +200,8 @@ LRESULT MainWindow::onLButtonUp
     {
         activeComponent_->deactivate(coordinates(lParam));
         activeComponent_=nullptr;
-        ReleaseCapture();
-        nagarami::RedrawWindow
-        (handle_,NULL,NULL,RDW_INVALIDATE|RDW_UPDATENOW);
+        nm::ReleaseCapture();
+        nm::RedrawWindow(handle_,NULL,NULL,RDW_INVALIDATE|RDW_UPDATENOW);
     }
     return 0;
 }
@@ -216,26 +213,27 @@ void MainWindow::onMaximizeButtonChange()
         int command;
         if(maximizeButton_->value()) command=SW_MAXIMIZE;
         else command=SW_RESTORE;
-        ShowWindow(handle_,command);
+        pt().ShowWindow(handle_,command);
     }
 }
 
 void MainWindow::onMinimizeButtonClick()
-{ShowWindow(handle_,SW_MINIMIZE);}
+{pt().ShowWindow(handle_,SW_MINIMIZE);}
 
 LRESULT MainWindow::onMouseMove
 (UINT message,WPARAM wParam,LPARAM lParam)
 {
+    const POINT cursorPos=coordinates(lParam);
     LPCTSTR cursorName=IDC_HAND;
     if(viewSliding_||activeComponent_)
     {
         if(viewSliding_) cursorName=IDC_ARROW;
-        else if(activeComponent_)
-            activeComponent_->update(coordinates(lParam));
-        nagarami::RedrawWindow
+        else if(activeComponent_) activeComponent_->update(cursorPos);
+        nm::RedrawWindow
         (handle_,NULL,NULL,RDW_INVALIDATE|RDW_UPDATENOW);
     }
-    SetCursor(nagarami::LoadCursor(NULL,cursorName));
+    pt().SetCursor(nm::LoadCursor(NULL,cursorName));
+    updateToolTip(cursorPos);
     return 0;
 }
 
@@ -253,7 +251,7 @@ LRESULT MainWindow::onMouseWheel
 LRESULT MainWindow::onMove
 (UINT message,WPARAM wParam,LPARAM lParam)
 {
-    if(!IsIconic(handle_)) ct().ps.window_pos=coordinates(lParam);
+    if(!pt().IsIconic(handle_)) ct().ps.window_pos=coordinates(lParam);
     return 0;
 }
 
@@ -261,14 +259,16 @@ LRESULT MainWindow::onNCHitTest
 (UINT message,WPARAM wParam,LPARAM lParam)
 {
     LRESULT result=HTCAPTION;
-    Component*toolActiveComponent=nullptr;
-    if(GetKeyState(VK_LBUTTON)>=0&&GetKeyState(VK_RBUTTON)>=0)
+    if(pt().GetKeyState(VK_LBUTTON)>=0&&pt().GetKeyState(VK_RBUTTON)>=0)
     {
-        const RECT captionRect=
-            rect(CLIENT_POS,ct().ps.window_size-FRAME_LENGTH*2);
+        const RECT captionRect=rect
+        (
+            POINT({FRAME_LENGTH,FRAME_LENGTH}),
+            ct().ps.window_size-FRAME_LENGTH*2
+        );
         POINT cursorPos=coordinates(lParam);
-        nagarami::ScreenToClient(handle_,&cursorPos);
-        const bool zoomed=IsZoomed(handle_);
+        nm::ScreenToClient(handle_,&cursorPos);
+        const bool zoomed=pt().IsZoomed(handle_);
         if(!zoomed&&cursorPos.x<captionRect.left)
         {
             if(cursorPos.y<captionRect.top) result=HTTOPLEFT;
@@ -291,20 +291,7 @@ LRESULT MainWindow::onNCHitTest
                     break;
                 }
             }
-            for(Component*component:components_)
-            {
-                if(component->hitTestTool(cursorPos))
-                {
-                    toolActiveComponent=component;
-                    break;
-                }
-            }
         }
-    }
-    for(Component*component:components_)
-    {
-        if(component==toolActiveComponent) component->activateTool();
-        else component->deactivateTool();
     }
     return result;
 }
@@ -312,8 +299,11 @@ LRESULT MainWindow::onNCHitTest
 LRESULT MainWindow::onNCMouseMove
 (UINT message,WPARAM wParam,LPARAM lParam)
 {
-    if(viewSliding_) SetCursor(LoadCursor(NULL,IDC_ARROW));
-    nagarami::RedrawWindow(handle_,NULL,NULL,RDW_INVALIDATE|RDW_UPDATENOW);
+    if(viewSliding_) pt().SetCursor(nm::LoadCursor(NULL,IDC_ARROW));
+    POINT cursorPos=coordinates(lParam);
+    nm::ScreenToClient(handle_,&cursorPos);
+    updateToolTip(cursorPos);
+    nm::RedrawWindow(handle_,NULL,NULL,RDW_INVALIDATE|RDW_UPDATENOW);
     return 0;
 }
 
@@ -322,7 +312,7 @@ LRESULT MainWindow::onNCRButtonDown
 {
     viewSliding_=true;
     viewSlidingBase_=cursor_pos(handle_);
-    SetCapture(handle_);
+    pt().SetCapture(handle_);
     return 0;
 }
 
@@ -330,20 +320,26 @@ LRESULT MainWindow::onPaint
 (UINT message,WPARAM wParam,LPARAM lParam)
 {
     PAINTSTRUCT paint;
-    const auto dc=nagarami::BeginPaint(handle_,&paint);
+    const auto dc=nm::BeginPaint(handle_,&paint);
     const POINT paintPos=pos(paint.rcPaint);
     const SIZE paintSize=size(paint.rcPaint);
-    nagarami::FillRect
+    nm::FillRect
     (buffer_->dc(),&paint.rcPaint,(HBRUSH)backBrush_->handle());
-    if(ct().target!=NULL&&!IsIconic(ct().target)&&ct().ps.scale>0)
+    if
+    (
+        ct().target!=NULL&&
+        pt().IsWindow(ct().target)&&
+        pt().IsWindowVisible(ct().target)&&
+        !pt().IsIconic(ct().target)&&
+        ct().ps.scale>0
+    )
     {
         RECT targetRect;
-        nagarami::GetClientRect(ct().target,&targetRect);
+        nm::GetClientRect(ct().target,&targetRect);
         const SIZE targetSize=size(targetRect);
         const SIZE viewSize=targetSize*ct().ps.scale/100;
         POINT viewPos=point(ct().ps.view_base);
-        if(viewSliding_)
-            viewPos+=sliding_offset(handle_,viewSlidingBase_);
+        if(viewSliding_) viewPos+=cursor_pos(handle_)-viewSlidingBase_;
         const POINT viewEndPos=viewPos+point(viewSize);
         const POINT destPos=POINT(
         {
@@ -355,15 +351,15 @@ LRESULT MainWindow::onPaint
             min(paint.rcPaint.right,viewEndPos.x),
             min(paint.rcPaint.bottom,viewEndPos.y)
         })-size(destPos);
-        const RECT destRect=nagarami::rect(destPos,destSize);
+        const RECT destRect=nm::rect(destPos,destSize);
         POINT srcPos=-viewPos*100/ct().ps.scale;
         srcPos.x=max(srcPos.x,(LONG)0);
         srcPos.y=max(srcPos.y,(LONG)0);
         const SIZE srcSize=destSize*100/ct().ps.scale;
         if(destSize.cx>0&&destSize.cy>0&&srcSize.cx>0&&srcSize.cy>0)
         {
-            auto targetDC=nagarami::GetDC(ct().target);
-            nagarami::StretchBlt
+            auto targetDC=nm::GetDC(ct().target);
+            nm::StretchBlt
             (
                 viewBuffer_->dc(),
                 0,
@@ -377,13 +373,13 @@ LRESULT MainWindow::onPaint
                 srcSize.cy,
                 SRCCOPY
             );
-            nagarami::FillRect
+            nm::FillRect
             (
                 buffer_->dc(),
                 &destRect,
                 (HBRUSH)ct().almost_black_brush->handle()
             );
-            nagarami::BitBlt
+            nm::BitBlt
             (
                 buffer_->dc(),
                 destPos.x,
@@ -402,10 +398,10 @@ LRESULT MainWindow::onPaint
         POINT center;
         if(!control_mode()) center=cursor_pos(handle_);
         else center=point(paintSize/2);
-        SelectObject(buffer_->dc(),ct().black_pen->handle());
-        SelectObject(buffer_->dc(),ct().black_brush->handle());
+        pt().SelectObject(buffer_->dc(),ct().black_pen->handle());
+        pt().SelectObject(buffer_->dc(),ct().black_brush->handle());
         const LONG radius=ct().ps.hole/2;
-        nagarami::Ellipse
+        nm::Ellipse
         (
             buffer_->dc(),
             center.x-radius,
@@ -419,7 +415,7 @@ LRESULT MainWindow::onPaint
         for(Component*component:components_)
             component->paint(buffer_->dc());
     }
-    nagarami::BitBlt
+    nm::BitBlt
     (
         dc->handle(),
         paintPos.x,
@@ -432,10 +428,10 @@ LRESULT MainWindow::onPaint
         SRCCOPY
     );
     if(control_mode()&&!alphaSlider_->active())
-        nagarami::SetLayeredWindowAttributes
+        nm::SetLayeredWindowAttributes
         (handle_,BLACK_COLOR,0,LWA_COLORKEY);
     else
-        nagarami::SetLayeredWindowAttributes
+        nm::SetLayeredWindowAttributes
         (handle_,BLACK_COLOR,ct().ps.alpha,LWA_ALPHA|LWA_COLORKEY);
     return 0;
 }
@@ -443,10 +439,9 @@ LRESULT MainWindow::onPaint
 LRESULT MainWindow::onRButtonUp
 (UINT message,WPARAM wParam,LPARAM lParam)
 {
-    ReleaseCapture();
+    nm::ReleaseCapture();
     viewSliding_=false;
-    ct().ps.view_base+=
-        point_double(sliding_offset(handle_,viewSlidingBase_));
+    ct().ps.view_base+=point_double(cursor_pos(handle_)-viewSlidingBase_);
     return 0;
 }
 
@@ -458,7 +453,7 @@ void MainWindow::onResetButtonClick()
     alphaSlider_->value
     (ALPHA_DIVISOR-(int)round(DEFAULT_ALPHA*ALPHA_DIVISOR/(double)255));
     holeSlider_->value(DEFAULT_HOLE/UNIT_LENGTH);
-    nagarami::RedrawWindow(handle_,NULL,NULL,RDW_INVALIDATE|RDW_UPDATENOW);
+    nm::RedrawWindow(handle_,NULL,NULL,RDW_INVALIDATE|RDW_UPDATENOW);
 }
 
 void MainWindow::onScaleSliderChange()
@@ -485,7 +480,7 @@ LRESULT MainWindow::onSize
         const bool maximized=wParam==SIZE_MAXIMIZED;
         if(maximized!=maximizeButton_->value())
             maximizeButton_->value(maximized);
-        nagarami::RedrawWindow
+        nm::RedrawWindow
         (handle_,NULL,NULL,RDW_INVALIDATE|RDW_UPDATENOW);
     }
     return 0;
@@ -494,29 +489,30 @@ LRESULT MainWindow::onSize
 LRESULT MainWindow::onUserTimer
 (UINT message,WPARAM wParam,LPARAM lParam)
 {
-    if(ct().target!=NULL&&IsWindow(ct().target)==FALSE) ct().target=NULL;
+    if(ct().target!=NULL&&pt().IsWindow(ct().target)==FALSE)
+        ct().target=NULL;
     if(ct().target==NULL&&lockButton_->value()) lockButton_->value(false);
     if(!lockButton_->value())
     {
-        HWND fore=GetForegroundWindow();
+        HWND fore=pt().GetForegroundWindow();
         if(fore!=handle_) ct().target=fore;
     }
-    if(!IsIconic(handle_))
-        nagarami::RedrawWindow(handle_,NULL,NULL,RDW_INVALIDATE);
+    if(!pt().IsIconic(handle_))
+        nm::RedrawWindow(handle_,NULL,NULL,RDW_INVALIDATE);
     return 0;
 }
 
 void MainWindow::initializeBackBrush()
 {
-    auto dc=nagarami::GetDC(handle_);
+    auto dc=nm::GetDC(handle_);
     auto maskBuffer=Buffer::load
     (ct().instance,MAKEINTRESOURCE(IDB_BACK),dc->handle());
     auto foreBuffer=Buffer::create(maskBuffer->size(),dc->handle());
     auto backBuffer=Buffer::create(maskBuffer->size(),dc->handle());
     RECT backRect=rect(POINT({0,0}),maskBuffer->size());
-    nagarami::FillRect
+    nm::FillRect
     (foreBuffer->dc(),&backRect,(HBRUSH)ct().back_brush1->handle());
-    nagarami::BitBlt
+    nm::BitBlt
     (
         backBuffer->dc(),
         0,
@@ -528,7 +524,7 @@ void MainWindow::initializeBackBrush()
         0,
         NOTSRCCOPY
     );
-    nagarami::BitBlt
+    nm::BitBlt
     (
         foreBuffer->dc(),
         0,
@@ -540,9 +536,9 @@ void MainWindow::initializeBackBrush()
         0,
         SRCAND
     );
-    nagarami::FillRect
+    nm::FillRect
     (backBuffer->dc(),&backRect,(HBRUSH)ct().back_brush2->handle());
-    nagarami::BitBlt
+    nm::BitBlt
     (
         backBuffer->dc(),
         0,
@@ -554,7 +550,7 @@ void MainWindow::initializeBackBrush()
         0,
         SRCAND
     );
-    nagarami::BitBlt
+    nm::BitBlt
     (
         backBuffer->dc(),
         0,
@@ -566,12 +562,12 @@ void MainWindow::initializeBackBrush()
         0,
         SRCPAINT
     );
-    backBrush_=nagarami::CreatePatternBrush(backBuffer->bitmap());
+    backBrush_=nm::CreatePatternBrush(backBuffer->bitmap());
 }
 
 void MainWindow::initializeBuffers()
 {
-    auto dc=nagarami::GetDC(handle_);
+    auto dc=nm::GetDC(handle_);
     SIZE desktopSize=desktop_size();
     buffer_=Buffer::create(desktopSize,dc->handle());
     viewBuffer_=Buffer::create(desktopSize,dc->handle());
@@ -579,10 +575,10 @@ void MainWindow::initializeBuffers()
 
 void MainWindow::initializeComponents()
 {
-    toolTip_=::CreateWindowExW
+    toolTip_=nm::CreateWindowEx
     (
         0,
-        TOOLTIPS_CLASSW,
+        TOOLTIPS_CLASS,
         NULL,
         TTS_ALWAYSTIP|TTS_BALLOON,
         CW_USEDEFAULT,
@@ -594,9 +590,6 @@ void MainWindow::initializeComponents()
         ct().instance,
         NULL
     );
-    if(toolTip_==NULL) throw make_shared<api_error>("CreateWindowExW");
-    nagarami::SetWindowPos
-    (toolTip_,HWND_TOPMOST,0,0,0,0,SWP_NOACTIVATE|SWP_NOMOVE|SWP_NOSIZE);
     alphaSlider_=make_shared<Slider>
     (
         0,
@@ -747,6 +740,27 @@ void MainWindow::initializeComponents()
     );
     scaleSlider_->change=bind_object(&onScaleSliderChange,this);
     components_.push_back(scaleSlider_.get());
+}
+
+void MainWindow::updateToolTip(const POINT&cursorPos)
+{
+    Component*toolActiveComponent=nullptr;
+    if(control_mode()&&!viewSliding_)
+    {
+        for(Component*component:components_)
+        {
+            if(component->hitTestTool(cursorPos))
+            {
+                toolActiveComponent=component;
+                break;
+            }
+        }
+    }
+    for(Component*component:components_)
+    {
+        if(component==toolActiveComponent) component->activateTool();
+        else component->deactivateTool();
+    }
 }
 
 }

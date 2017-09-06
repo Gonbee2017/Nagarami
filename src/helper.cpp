@@ -1,26 +1,27 @@
 #include<cmath>
 #include<cstdlib>
-#include"nagarami.h"
 #include<istream>
 #include<memory>
+#include"nagarami.h"
 #include<ostream>
 #include<stdexcept>
 #include<string>
 #include<vector>
 #include<windows.h>
 
-namespace nagarami
+namespace nm
 {
 
-Initializer::Initializer(function<void()> initialize) {initialize();}
+Initializer::Initializer(const function<void()>&initialize)
+{initialize();}
 
-Finalizer::Finalizer(function<void()> finalize):
+Finalizer::Finalizer(const function<void()>&finalize):
     finalize_(finalize) {}
 
 Finalizer::~Finalizer() {finalize_();}
 
 api_error::api_error(const string&name):
-    runtime_error(describe(name," failed.(",GetLastError(),")")) {}
+    runtime_error(describe(name," failed.(",pt().GetLastError(),")")) {}
 
 bool contain(const POINT&center,const LONG&squaredRadius,const POINT&pos)
 {return squared_distance(pos,center)<=squaredRadius;}
@@ -38,8 +39,8 @@ POINT coordinates(LPARAM lParam)
 POINT cursor_pos(HWND window)
 {
     POINT pos;
-    nagarami::GetCursorPos(&pos);
-    nagarami::ScreenToClient(window,&pos);
+    nm::GetCursorPos(&pos);
+    nm::ScreenToClient(window,&pos);
     return pos;
 }
 
@@ -53,12 +54,12 @@ SIZE desktop_size()
 {
     return SIZE(
     {
-        nagarami::GetSystemMetrics(SM_CXSCREEN),
-        nagarami::GetSystemMetrics(SM_CYSCREEN)
+        nm::GetSystemMetrics(SM_CXSCREEN),
+        nm::GetSystemMetrics(SM_CYSCREEN)
     });
 }
 
-double fpn(const string&str)
+double floating_point_number(const string&str)
 {
     char*end;
     double number=strtod(str.c_str(),&end);
@@ -82,6 +83,9 @@ vector<string> getlines(istream&in)
 }
 
 LONG height(const RECT&rect) {return rect.bottom-rect.top;}
+
+void ignore_exception(const function<void()>&proc)
+{try{proc();} catch(...) {}}
 
 long integer(const string&str)
 {
@@ -121,6 +125,9 @@ SIZE operator/(const SIZE&lhs,const LONG&rhs)
 
 POINT operator-(const POINT&point) {return POINT({-point.x,-point.y});}
 
+POINT operator-(const POINT&lhs,const POINT&rhs)
+{return POINT({lhs.x-rhs.x,lhs.y-rhs.y});}
+
 SIZE operator-(const SIZE&lhs,const LONG&rhs)
 {return SIZE({lhs.cx-rhs,lhs.cy-rhs});}
 
@@ -150,17 +157,11 @@ SIZE size(const POINT&pos) {return SIZE({pos.x,pos.y});}
 
 SIZE size(const RECT&rect) {return SIZE({width(rect),height(rect)});}
 
-POINT sliding_offset(HWND window,const POINT&base)
-{
-    POINT cursorPos=cursor_pos(window);
-    return POINT({cursorPos.x-base.x,cursorPos.y-base.y});
-}
-
 LONG squared_distance(const POINT&p,const POINT&q)
 {
-    LONG dx=p.x-q.x;
-    LONG dy=p.y-q.y;
-    return dx*dx+dy*dy;
+    const LONG dx=p.x-q.x;
+    const LONG dy=p.y-q.y;
+    return SQUARE(dx)+SQUARE(dy);
 }
 
 vector<string> tokenize(const string&str,const string&dels)

@@ -5,12 +5,12 @@
 #include<windows.h>
 #include<commctrl.h>
 
-namespace nagarami
+namespace nm
 {
 
 void Component::activateTool()
 {
-    if(!toolActive_) SendMessageW(toolTip_,TTM_ACTIVATE,TRUE,0);
+    if(!toolActive_) pt().SendMessageW(toolTip_,TTM_ACTIVATE,TRUE,0);
     toolActive_=true;
 }
 
@@ -18,7 +18,7 @@ bool Component::active() {return active_;}
 
 void Component::deactivateTool()
 {
-    if(toolActive_) SendMessageW(toolTip_,TTM_ACTIVATE,FALSE,0);
+    if(toolActive_) pt().SendMessageW(toolTip_,TTM_ACTIVATE,FALSE,0);
     toolActive_=false;
 }
 
@@ -42,16 +42,17 @@ Component::Component
     active_(false),
     toolActive_(true)
 {
-    toolInfo_.cbSize=sizeof(TOOLINFOW)-4;
+    toolInfo_.cbSize=TTTOOLINFOW_V2_SIZE;
     toolInfo_.uFlags=TTF_SUBCLASS;
     toolInfo_.hwnd=container;
     toolInfo_.uId=toolId;
     toolInfo_.rect=RECT({0,0,0,0});
     toolInfo_.hinst=NULL;
     toolInfo_.lpszText=(LPWSTR)TEXT(toolText.c_str());
-    if(SendMessageW(toolTip_,TTM_ADDTOOLW,0,(LPARAM)&toolInfo_)==FALSE)
+    if
+    (pt().SendMessageW(toolTip_,TTM_ADDTOOLW,0,(LPARAM)&toolInfo_)==FALSE)
         throw make_shared<runtime_error>(describe
-        ("SendMessageW(TTM_ADDTOOLW) is failed."));
+        ("SendMessageW with TTM_ADDTOOLW is failed."));
     deactivateTool();
 }
 
@@ -81,7 +82,7 @@ bool Button::hitTestTool(const POINT&cursorPos)
 
 void Button::paint(HDC dc)
 {
-    nagarami::BitBlt
+    nm::BitBlt
     (
         dc,
         pos_.x,
@@ -93,7 +94,7 @@ void Button::paint(HDC dc)
         0,
         SRCAND
     );
-    nagarami::BitBlt
+    nm::BitBlt
     (
         dc,
         pos_.x,
@@ -125,17 +126,17 @@ Button::Button
     backBuffer_(Buffer::create(UNIT_SIZE,destDC)),
     maskBuffer_(Buffer::create(UNIT_SIZE,destDC))
 {
-    nagarami::FillRect
+    nm::FillRect
     (maskBuffer_->dc(),&UNIT_RECT,(HBRUSH)ct().white_brush->handle());
-    SelectObject(maskBuffer_->dc(),ct().black_pen->handle());
-    SelectObject(maskBuffer_->dc(),ct().black_brush->handle());
-    nagarami::Ellipse(maskBuffer_->dc(),0,0,UNIT_LENGTH,UNIT_LENGTH);
+    pt().SelectObject(maskBuffer_->dc(),ct().black_pen->handle());
+    pt().SelectObject(maskBuffer_->dc(),ct().black_brush->handle());
+    nm::Ellipse(maskBuffer_->dc(),0,0,UNIT_LENGTH,UNIT_LENGTH);
 }
 
 void Button::relocateTool()
 {
     toolInfo_.rect=rect(pos_,UNIT_SIZE);
-    SendMessageW(toolTip_,TTM_NEWTOOLRECTW,0,(LPARAM)&toolInfo_);
+    pt().SendMessageW(toolTip_,TTM_NEWTOOLRECTW,0,(LPARAM)&toolInfo_);
 }
 
 void Button::render_(const bool&push)
@@ -153,8 +154,8 @@ void Button::render_(const bool&push)
         backPen=(HPEN)ct().component_pen1->handle();
         backBrush=(HBRUSH)ct().component_brush2->handle();
     }
-    nagarami::FillRect(foreBuffer_->dc(),&UNIT_RECT,foreBrush);
-    nagarami::BitBlt
+    nm::FillRect(foreBuffer_->dc(),&UNIT_RECT,foreBrush);
+    nm::BitBlt
     (
         backBuffer_->dc(),
         0,
@@ -166,7 +167,7 @@ void Button::render_(const bool&push)
         0,
         NOTSRCCOPY
     );
-    nagarami::BitBlt
+    nm::BitBlt
     (
         foreBuffer_->dc(),
         0,
@@ -178,12 +179,12 @@ void Button::render_(const bool&push)
         0,
         SRCAND
     );
-    nagarami::FillRect
+    nm::FillRect
     (backBuffer_->dc(),&UNIT_RECT,(HBRUSH)ct().black_brush->handle());
-    SelectObject(backBuffer_->dc(),backPen);
-    SelectObject(backBuffer_->dc(),backBrush);
-    nagarami::Ellipse(backBuffer_->dc(),0,0,UNIT_LENGTH,UNIT_LENGTH);
-    nagarami::BitBlt
+    pt().SelectObject(backBuffer_->dc(),backPen);
+    pt().SelectObject(backBuffer_->dc(),backBrush);
+    nm::Ellipse(backBuffer_->dc(),0,0,UNIT_LENGTH,UNIT_LENGTH);
+    nm::BitBlt
     (
         backBuffer_->dc(),
         0,
@@ -195,7 +196,7 @@ void Button::render_(const bool&push)
         0,
         SRCAND
     );
-    nagarami::BitBlt
+    nm::BitBlt
     (
         backBuffer_->dc(),
         0,
@@ -218,15 +219,12 @@ PushButton::PushButton
     HWND toolTip,
     UINT toolId,
     const wstring&toolText
-):
-    Button
-    (maskBitmapName,destDC,cellPos,container,toolTip,toolId,toolText),
-    click([] () {})
+):Button(maskBitmapName,destDC,cellPos,container,toolTip,toolId,toolText)
 {render();}
 
 void PushButton::deactivate(const POINT&cursorPos)
 {
-    if(hitTest(cursorPos)) click();
+    if(hitTest(cursorPos)&&click) click();
     active_=false;
     render();
 }
@@ -246,15 +244,14 @@ RadioButton::RadioButton
 ):
     Button
     (maskBitmapName,destDC,cellPos,container,toolTip,toolId,toolText),
-    value_(initialValue),
-    change([] () {}) {render();}
+    value_(initialValue) {render();}
 
 bool RadioButton::value() {return value_;}
 
 void RadioButton::value(const bool&value_)
 {
     this->value_=value_;
-    change();
+    if(change) change();
     render();
 }
 
@@ -263,7 +260,7 @@ void RadioButton::deactivate(const POINT&cursorPos)
     if(hitTest(cursorPos))
     {
         value_=!value_;
-        change();
+        if(change) change();
     }
     active_=false;
     render();
@@ -276,7 +273,7 @@ Slider::Slider
     const int&minimum,
     const int&maximum,
     const int&initialValue,
-    function<string(const int&value)> getText,
+    const function<string(const int&value)>&getText,
     LPCTSTR knobMaskBitmapName,
     HDC destDC,
     const POINT&cellPos,
@@ -298,19 +295,18 @@ Slider::Slider
     barBuffer_
     (Buffer::create(SIZE({desktop_size().cx,SLIDER_BAR_WIDTH}),destDC)),
     textBuffer_(Buffer::create(SLIDER_TEXT_SIZE,destDC)),
-    textMaskBuffer_(Buffer::create(SLIDER_TEXT_SIZE,destDC)),
-    change([] () {})
+    textMaskBuffer_(Buffer::create(SLIDER_TEXT_SIZE,destDC))
 {
     updateKnobX();
-    nagarami::FillRect
+    nm::FillRect
     (knobMaskBuffer_->dc(),&UNIT_RECT,(HBRUSH)ct().white_brush->handle());
-    SelectObject(knobMaskBuffer_->dc(),ct().black_pen->handle());
-    SelectObject(knobMaskBuffer_->dc(),ct().black_brush->handle());
-    nagarami::Ellipse(knobMaskBuffer_->dc(),0,0,UNIT_LENGTH,UNIT_LENGTH);
-    SelectObject(textBuffer_->dc(),ct().font->handle());
-    nagarami::SetBkMode(textBuffer_->dc(),TRANSPARENT);
-    SelectObject(textMaskBuffer_->dc(),ct().font->handle());
-    nagarami::SetBkMode(textMaskBuffer_->dc(),TRANSPARENT);
+    pt().SelectObject(knobMaskBuffer_->dc(),ct().black_pen->handle());
+    pt().SelectObject(knobMaskBuffer_->dc(),ct().black_brush->handle());
+    nm::Ellipse(knobMaskBuffer_->dc(),0,0,UNIT_LENGTH,UNIT_LENGTH);
+    pt().SelectObject(textBuffer_->dc(),ct().font->handle());
+    nm::SetBkMode(textBuffer_->dc(),TRANSPARENT);
+    pt().SelectObject(textMaskBuffer_->dc(),ct().font->handle());
+    nm::SetBkMode(textMaskBuffer_->dc(),TRANSPARENT);
     render();
 }
 
@@ -347,7 +343,7 @@ void Slider::paint(HDC dc)
         pos_.y+HALF_UNIT_LENGTH-HALF_SLIDER_BAR_WIDTH
     });
     const LONG barLength=length_-SLIDER_TEXT_WIDTH-UNIT_LENGTH;
-    nagarami::BitBlt
+    nm::BitBlt
     (
         dc,
         barPos.x,
@@ -359,7 +355,7 @@ void Slider::paint(HDC dc)
         0,
         SRCCOPY
     );
-    nagarami::BitBlt
+    nm::BitBlt
     (
         dc,
         pos_.x+knobX_,
@@ -371,7 +367,7 @@ void Slider::paint(HDC dc)
         0,
         SRCAND
     );
-    nagarami::BitBlt
+    nm::BitBlt
     (
         dc,
         pos_.x+knobX_,
@@ -384,7 +380,7 @@ void Slider::paint(HDC dc)
         SRCPAINT
     );
     const LONG textX=pos_.x+length_-SLIDER_TEXT_WIDTH;
-    nagarami::BitBlt
+    nm::BitBlt
     (
         dc,
         textX,
@@ -396,7 +392,7 @@ void Slider::paint(HDC dc)
         0,
         SRCAND
     );
-    nagarami::BitBlt
+    nm::BitBlt
     (
         dc,
         textX,
@@ -421,14 +417,14 @@ void Slider::relocate(const SIZE&containerSize)
 
 void Slider::update(const POINT&cursorPos)
 {
-    if(GetKeyState(VK_LBUTTON)<0)
+    if(pt().GetKeyState(VK_LBUTTON)<0)
     {
         const int range=maximum_-minimum_;
         const LONG x=cursorPos.x-pos_.x-pinch_;
         const LONG barLength=length_-SLIDER_TEXT_WIDTH-UNIT_LENGTH;
         value_=minimum_+(int)round(range*x/(double)barLength);
         value_=min(max(value_,minimum_),maximum_);
-        change();
+        if(change) change();
         updateKnobX();
         renderText();
     }
@@ -439,7 +435,7 @@ int Slider::value() {return value_;}
 void Slider::value(const int&value_)
 {
     this->value_=value_;
-    change();
+    if(change) change();
     updateKnobX();
     renderText();
 }
@@ -475,7 +471,7 @@ bool Slider::hitTestText(const POINT&cursorPos)
 void Slider::relocateTool()
 {
     toolInfo_.rect=rect(pos_,SIZE({length_,UNIT_LENGTH}));
-    SendMessageW(toolTip_,TTM_NEWTOOLRECTW,0,(LPARAM)&toolInfo_);
+    pt().SendMessageW(toolTip_,TTM_NEWTOOLRECTW,0,(LPARAM)&toolInfo_);
 }
 
 void Slider::render()
@@ -500,9 +496,9 @@ void Slider::renderBar()
     }
     const LONG length=length_-SLIDER_TEXT_WIDTH-UNIT_LENGTH;
     RECT backRect=RECT({0,0,length,SLIDER_BAR_WIDTH});
-    nagarami::FillRect(barBuffer_->dc(),&backRect,backBrush);
+    nm::FillRect(barBuffer_->dc(),&backRect,backBrush);
     RECT foreRect=RECT({1,1,length-1,SLIDER_BAR_WIDTH-1});
-    nagarami::FillRect(barBuffer_->dc(),&foreRect,foreBrush);
+    nm::FillRect(barBuffer_->dc(),&foreRect,foreBrush);
 }
 
 void Slider::renderKnob()
@@ -520,8 +516,8 @@ void Slider::renderKnob()
         backPen=(HPEN)ct().component_pen1->handle();
         backBrush=(HBRUSH)ct().component_brush2->handle();
     }
-    nagarami::FillRect(knobForeBuffer_->dc(),&UNIT_RECT,foreBrush);
-    nagarami::BitBlt
+    nm::FillRect(knobForeBuffer_->dc(),&UNIT_RECT,foreBrush);
+    nm::BitBlt
     (
         knobBackBuffer_->dc(),
         0,
@@ -533,7 +529,7 @@ void Slider::renderKnob()
         0,
         NOTSRCCOPY
     );
-    nagarami::BitBlt
+    nm::BitBlt
     (
         knobForeBuffer_->dc(),
         0,
@@ -545,12 +541,12 @@ void Slider::renderKnob()
         0,
         SRCAND
     );
-    nagarami::FillRect
+    nm::FillRect
     (knobBackBuffer_->dc(),&UNIT_RECT,(HBRUSH)ct().black_brush->handle());
-    SelectObject(knobBackBuffer_->dc(),backPen);
-    SelectObject(knobBackBuffer_->dc(),backBrush);
-    nagarami::Ellipse(knobBackBuffer_->dc(),0,0,UNIT_LENGTH,UNIT_LENGTH);
-    nagarami::BitBlt
+    pt().SelectObject(knobBackBuffer_->dc(),backPen);
+    pt().SelectObject(knobBackBuffer_->dc(),backBrush);
+    nm::Ellipse(knobBackBuffer_->dc(),0,0,UNIT_LENGTH,UNIT_LENGTH);
+    nm::BitBlt
     (
         knobBackBuffer_->dc(),
         0,
@@ -562,7 +558,7 @@ void Slider::renderKnob()
         0,
         SRCAND
     );
-    nagarami::BitBlt
+    nm::BitBlt
     (
         knobBackBuffer_->dc(),
         0,
@@ -581,9 +577,9 @@ void Slider::renderText()
     constexpr UINT FORMAT=DT_BOTTOM|DT_RIGHT|DT_SINGLELINE;
     text_=getText_(value_);
     RECT textRect=rect(POINT({0,0}),SLIDER_TEXT_SIZE);
-    nagarami::FillRect
+    nm::FillRect
     (textBuffer_->dc(),&textRect,(HBRUSH)ct().black_brush->handle());
-    nagarami::FillRect
+    nm::FillRect
     (textMaskBuffer_->dc(),&textRect,(HBRUSH)ct().white_brush->handle());
     COLORREF foreTextColor,backTextColor;
     if(active_)
@@ -595,10 +591,10 @@ void Slider::renderText()
         foreTextColor=ct().ps.component_color2;
         backTextColor=ct().ps.component_color1;
     }
-    nagarami::SetTextColor(textBuffer_->dc(),backTextColor);
-    nagarami::SetTextColor(textMaskBuffer_->dc(),BLACK_COLOR);
+    nm::SetTextColor(textBuffer_->dc(),backTextColor);
+    nm::SetTextColor(textMaskBuffer_->dc(),BLACK_COLOR);
     textRect.right--;
-    nagarami::DrawText
+    nm::DrawText
     (
         textBuffer_->dc(),
         TEXT(text_.c_str()),
@@ -606,7 +602,7 @@ void Slider::renderText()
         &textRect,
         FORMAT
     );
-    nagarami::DrawText
+    nm::DrawText
     (
         textMaskBuffer_->dc(),
         TEXT(text_.c_str()),
@@ -615,7 +611,7 @@ void Slider::renderText()
         FORMAT
     );
     textRect.bottom-=2;
-    nagarami::DrawText
+    nm::DrawText
     (
         textBuffer_->dc(),
         TEXT(text_.c_str()),
@@ -623,7 +619,7 @@ void Slider::renderText()
         &textRect,
         FORMAT
     );
-    nagarami::DrawText
+    nm::DrawText
     (
         textMaskBuffer_->dc(),
         TEXT(text_.c_str()),
@@ -633,7 +629,7 @@ void Slider::renderText()
     );
     textRect.bottom++;
     textRect.right++;
-    nagarami::DrawText
+    nm::DrawText
     (
         textBuffer_->dc(),
         TEXT(text_.c_str()),
@@ -641,7 +637,7 @@ void Slider::renderText()
         &textRect,
         FORMAT
     );
-    nagarami::DrawText
+    nm::DrawText
     (
         textMaskBuffer_->dc(),
         TEXT(text_.c_str()),
@@ -650,7 +646,7 @@ void Slider::renderText()
         FORMAT
     );
     textRect.right-=2;
-    nagarami::DrawText
+    nm::DrawText
     (
         textBuffer_->dc(),
         TEXT(text_.c_str()),
@@ -658,7 +654,7 @@ void Slider::renderText()
         &textRect,
         FORMAT
     );
-    nagarami::DrawText
+    nm::DrawText
     (
         textMaskBuffer_->dc(),
         TEXT(text_.c_str()),
@@ -666,9 +662,9 @@ void Slider::renderText()
         &textRect,
         FORMAT
     );
-    nagarami::SetTextColor(textBuffer_->dc(),foreTextColor);
+    nm::SetTextColor(textBuffer_->dc(),foreTextColor);
     textRect.right++;
-    nagarami::DrawText
+    nm::DrawText
     (
         textBuffer_->dc(),
         TEXT(text_.c_str()),

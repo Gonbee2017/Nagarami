@@ -9,6 +9,6 @@ int WINAPI WinMain
     int commandShow
 )
 {
-    return nagarami::execute
-    (instance,previousInstance,commandLine,commandShow);
+    nm::import();
+    return nm::execute(instance,previousInstance,commandLine,commandShow);
 }

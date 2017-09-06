@@ -1,22 +1,33 @@
-#include"nagarami.h"
-#include<fstream>
+#include<algorithm>
 #include<functional>
 #include<iomanip>
 #include<ios>
-#include<iostream>
 #include<map>
 #include<memory>
-#include"resource.h"
+#include"nagarami.h"
 #include<stdexcept>
 #include<string>
 #include<utility>
 #include<vector>
 #include<windows.h>
 
-namespace nagarami
+namespace nm
 {
+void properties::adjust()
+{
+    fps=min(max(fps,(UINT)1),(UINT)60);
+    hole=min(max(hole,(LONG)0),MAXIMUM_HOLE);
+    scale=min(max(scale,(LONG)0),MAXIMUM_SCALE);
+    const SIZE desktopSize=desktop_size();
+    window_size.cx=
+        min(max(window_size.cx,MINIMUM_WINDOW_WIDTH),desktopSize.cx);
+    window_size.cy=
+        min(max(window_size.cy,MINIMUM_WINDOW_WIDTH),desktopSize.cy);
+    window_pos.x=min(max(window_pos.x,-window_size.cx+1),desktopSize.cx-1);
+    window_pos.y=min(max(window_pos.y,-window_size.cy+1),desktopSize.cy-1);
+}
 
-properties::properties()
+void properties::initialize()
 {
     alpha=DEFAULT_ALPHA;
     back_color1=DEFAULT_BACK_COLOR1;
@@ -87,110 +98,165 @@ void properties::set(const string&name,const string&value)
         {
             "alpha",
             [this] (const string&value)
-            {alpha=integer(value);}
+            {
+                ignore_exception([this,&value] () 
+                {alpha=integer(value);});
+            }
         },
         {
             "back_color1",
             [this] (const string&value)
-            {back_color1=integer(value);}
+            {
+                ignore_exception([this,&value] () 
+                {back_color1=integer(value);});
+            }
         },
         {
             "back_color2",
             [this] (const string&value)
-            {back_color2=integer(value);}
+            {
+                ignore_exception([this,&value] () 
+                {back_color2=integer(value);});
+            }
         },
         {
             "component_color1",
             [this] (const string&value)
-            {component_color1=integer(value);}
+            {
+                ignore_exception([this,&value] () 
+                {component_color1=integer(value);});
+            }
         },
         {
             "component_color2",
             [this] (const string&value)
-            {component_color2=integer(value);}
+            {
+                ignore_exception([this,&value] () 
+                {component_color2=integer(value);});
+            }
         },
         {
             "control_mode_alt",
             [this] (const string&value)
-            {control_mode_alt=integer(value);}
+            {
+                ignore_exception([this,&value] () 
+                {control_mode_alt=integer(value);});
+            }
         },
         {
             "control_mode_ctrl",
             [this] (const string&value)
-            {control_mode_ctrl=integer(value);}
+            {
+                ignore_exception([this,&value] () 
+                {control_mode_ctrl=integer(value);});
+            }
         },
         {
             "control_mode_shift",
             [this] (const string&value)
-            {control_mode_shift=integer(value);}
+            {
+                ignore_exception([this,&value] () 
+                {control_mode_shift=integer(value);});
+            }
         },
         {
             "fps",
             [this] (const string&value)
-            {fps=integer(value);}
+            {
+                ignore_exception([this,&value] () 
+                {fps=integer(value);});
+            }
         },
         {
             "halftone",
             [this] (const string&value)
-            {halftone=integer(value);}
+            {
+                ignore_exception([this,&value] () 
+                {halftone=integer(value);});
+            }
         },
         {
             "hole",
             [this] (const string&value)
-            {hole=integer(value);}
+            {
+                ignore_exception([this,&value] () 
+                {hole=integer(value);});
+            }
         },
         {
             "scale",
             [this] (const string&value)
-            {scale=integer(value);}
+            {
+                ignore_exception([this,&value] () 
+                {scale=integer(value);});
+            }
         },
         {
             "view_base.x",
             [this] (const string&value)
-            {view_base.x=fpn(value);}
+            {
+                ignore_exception([this,&value] () 
+                {view_base.x=floating_point_number(value);});
+            }
         },
         {
             "view_base.y",
             [this] (const string&value)
-            {view_base.y=fpn(value);}
+            {
+                ignore_exception([this,&value] () 
+                {view_base.y=floating_point_number(value);});
+            }
         },
         {
             "window_pos.x",
             [this] (const string&value)
-            {window_pos.x=integer(value);}
+            {
+                ignore_exception([this,&value] () 
+                {window_pos.x=integer(value);});
+            }
         },
         {
             "window_pos.y",
             [this] (const string&value)
-            {window_pos.y=integer(value);}
+            {
+                ignore_exception([this,&value] () 
+                {window_pos.y=integer(value);});
+            }
         },
         {
             "window_size.cx",
             [this] (const string&value)
-            {window_size.cx=integer(value);}
+            {
+                ignore_exception([this,&value] () 
+                {window_size.cx=integer(value);});
+            }
         },
         {
             "window_size.cy",
             [this] (const string&value)
-            {window_size.cy=integer(value);}
+            {
+                ignore_exception([this,&value] () 
+                {window_size.cy=integer(value);});
+            }
         },
     };
     if(setPropertyMap.find(name)!=setPropertyMap.end())
         setPropertyMap.at(name)(value);
 }
 
-context::context()
+void context::initialize(HINSTANCE instance)
 {
-    almost_black_brush=nagarami::CreateSolidBrush(ALMOST_BLACK_COLOR);
-    back_brush1=nagarami::CreateSolidBrush(ps.back_color1);
-    back_brush2=nagarami::CreateSolidBrush(ps.back_color2);
-    black_pen=nagarami::CreatePen(PS_SOLID,0,BLACK_COLOR);
-    black_brush=nagarami::CreateSolidBrush(BLACK_COLOR);
-    component_pen1=nagarami::CreatePen(PS_SOLID,0,ps.component_color1);
-    component_brush1=nagarami::CreateSolidBrush(ps.component_color1);
-    component_pen2=nagarami::CreatePen(PS_SOLID,0,ps.component_color2);
-    component_brush2=nagarami::CreateSolidBrush(ps.component_color2);
-    font=nagarami::CreateFont
+    ps.initialize();
+    almost_black_brush=nm::CreateSolidBrush(ALMOST_BLACK_COLOR);
+    back_brush1=nm::CreateSolidBrush(ps.back_color1);
+    back_brush2=nm::CreateSolidBrush(ps.back_color2);
+    black_pen=nm::CreatePen(PS_SOLID,0,BLACK_COLOR);
+    black_brush=nm::CreateSolidBrush(BLACK_COLOR);
+    component_pen1=nm::CreatePen(PS_SOLID,0,ps.component_color1);
+    component_brush1=nm::CreateSolidBrush(ps.component_color1);
+    component_pen2=nm::CreatePen(PS_SOLID,0,ps.component_color2);
+    component_brush2=nm::CreateSolidBrush(ps.component_color2);
+    font=nm::CreateFont
     (
         UNIT_LENGTH-4,
         0,
@@ -207,22 +273,23 @@ context::context()
         FF_MODERN|FIXED_PITCH,
         NULL
     );
+    this->instance=instance;
     target=NULL;
-    white_brush=nagarami::CreateSolidBrush(WHITE_COLOR);
+    white_brush=nm::CreateSolidBrush(WHITE_COLOR);
 }
 
 context&ct()
 {
-    static context context_;
-    return context_;
+    static context instance;
+    return instance;
 }
 
 bool control_mode()
 {
     return
-        (!ct().ps.control_mode_alt||GetKeyState(VK_MENU)<0)&&
-        (!ct().ps.control_mode_ctrl||GetKeyState(VK_CONTROL)<0)&&
-        (!ct().ps.control_mode_shift||GetKeyState(VK_SHIFT)<0);
+        (!ct().ps.control_mode_alt||pt().GetKeyState(VK_MENU)<0)&&
+        (!ct().ps.control_mode_ctrl||pt().GetKeyState(VK_CONTROL)<0)&&
+        (!ct().ps.control_mode_shift||pt().GetKeyState(VK_SHIFT)<0);
 }
 
 int execute
@@ -234,48 +301,51 @@ int execute
 )
 {
     static const string psFile=
-        describe(VER_PRODUCTNAME,".",PROPERTIES_FILE_EXTENSION);
+        describe(APPLICATION_NAME,".",PROPERTIES_FILE_EXTENSION);
     int result=0;
     try
     {
-        ct().instance=instance;
-        ifstream psIn(psFile,ios::in);
-        if(psIn)
+        ct().initialize(instance);
+        auto psIn=pt().input_file(psFile,ios_base::in);
+        if(*psIn)
         {
-            auto lines=getlines(psIn);
+            auto lines=getlines(*psIn);
             ct().ps.load(lines.begin(),lines.end());
         }
-        auto expressions=tokenize(commandLine," ");
-        ct().ps.load(expressions.begin(),expressions.end());
+        auto arguments=tokenize(commandLine," ");
+        ct().ps.load(arguments.begin(),arguments.end());
+        ct().ps.adjust();
         auto main_window=make_shared<MainWindow>();
-        ShowWindow(main_window->handle(),commandShow);
-        auto timer=
-            make_shared<Timer>(1000/ct().ps.fps,main_window->handle());
+        pt().ShowWindow(main_window->handle(),commandShow);
+        const UINT delay=1000/ct().ps.fps;
+        auto timer=make_shared<Timer>(delay,main_window->handle());
         MSG msg;
-        while(nagarami::GetMessage(&msg,NULL,0,0))
-        {
-            TranslateMessage(&msg);
-            DispatchMessage(&msg);
-            if(ct().error.get()) throw ct().error;
-        }
+        while(nm::GetMessage(&msg,NULL,0,0)) nm::DispatchMessage(&msg);
         result=msg.wParam;
-        ofstream psOut(psFile,ios::out|ios::trunc);
-        if(psOut) putlines(psOut,ct().ps.lines());
+        auto psOut=pt().output_file(psFile,ios_base::out|ios_base::trunc);
+        if(*psOut) putlines(*psOut,ct().ps.lines());
     } catch(const shared_ptr<runtime_error>&error)
     {
-        const string message=describe
-        ("An unexpected error occured.\n",error->what());
-        cerr<<message<<endl;
-        MessageBox
+        pt().MessageBox
         (
             NULL,
-            TEXT(message.c_str()),
-            TEXT(VER_PRODUCTNAME),
+            TEXT(describe
+            (
+                "An unexpected error occured.\n",
+                error->what()
+            ).c_str()),
+            TEXT(APPLICATION_NAME),
             MB_ICONERROR|MB_OK
         );
         result=1;
     }
     return result;
+}
+
+port&pt()
+{
+    static port instance;
+    return instance;
 }
 
 }
