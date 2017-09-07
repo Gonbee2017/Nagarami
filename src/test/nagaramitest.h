@@ -22,8 +22,6 @@ namespace nm
 
 using namespace std;
 
-class ClearPort:Finalizer {public:ClearPort();};
-
 class call
 {
 public:
@@ -56,6 +54,7 @@ public:
         const RESULT&result
     );
 
+    ~history();
     const vector<call>&calls() const;
     size_t count(const string&callName) const;
 protected:vector<call> calls_;

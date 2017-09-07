@@ -95,185 +95,121 @@ constexpr wchar_t MINIMIZE_BUTTON_TOOL_TEXT[]  =L"最小化";
 constexpr wchar_t RESET_BUTTON_TOOL_TEXT[]     =L"設定をリセット";
 constexpr wchar_t SCALE_SLIDER_TOOL_TEXT[]     =L"倍率";
 
-//---- helper declaration ----
+//---- forward declaration ----
 
-class Initializer {public:Initializer(const function<void()>&initialize);};
-
-class Finalizer
-{
-public:
-    Finalizer(const function<void()>&finalize);
-    virtual ~Finalizer();
-protected:function<void()> finalize_;
-};
-
+class Buffer;
+class Button;
+class Component;
+class DeleteDC;
+class DeleteObject;
+class EndPaint;
+class Finalizer;
+class Initializer;
+class MainWindow;
 struct POINT_DOUBLE {double x,y;};
+class PushButton;
+class RadioButton;
+class ReleaseDC;
+class Slider;
+class TimeEndPeriod;
+class TimeKillEvent;
+class Timer;
+class Window;
+class api_error;
+struct context;
+struct port;
+struct properties;
 
-class api_error:public runtime_error
-{public:api_error(const string&name);};
+//---- apiwrapper declaration ----
 
-template<class OBJECT,class RESULT,class...ARGUMENTS>
-    function<RESULT(ARGUMENTS...arguments)> bind_object
-(RESULT(OBJECT::*member)(ARGUMENTS...arguments) const,const OBJECT*object);
-template<class OBJECT,class RESULT,class...ARGUMENTS>
-    function<RESULT(ARGUMENTS...arguments)> bind_object
-(RESULT(OBJECT::*member)(ARGUMENTS...arguments),OBJECT*object);
-template<class...ARGUMENTS> string describe(ARGUMENTS&&...arguments);
-template<class LEAD,class...TRAILER> void describe_to_with
-(ostream&os,const string&separator,LEAD&lead,TRAILER&&...trailer);
-template<class ARGUMENT> void describe_to_with
-(ostream&os,const string&separator,const ARGUMENT&argument);
-template<class ARGUMENT> void describe_to_with
-(ostream&os,const string&separator,ARGUMENT&argument);
-template<class ARGUMENT> void describe_to_with
-(ostream&os,const string&separator,const ARGUMENT*argument);
-template<class ARGUMENT> void describe_to_with
-(ostream&os,const string&separator,ARGUMENT*argument);
-template<class...ARGUMENTS> string describe_with
-(const string&separator,ARGUMENTS&&...arguments);
-
-string chomp(const string&str,const char&ch);
-bool contain(const POINT&center,const LONG&squaredRadius,const POINT&pos);
-bool contain(const RECT&rect,const POINT&pos);
-POINT coordinates(LPARAM lParam);
-POINT cursor_pos(HWND window);
-void describe_to_with(ostream&os,const string&separator);
-void describe_to_with
-(ostream&os,const string&separator,const char*str);
-void describe_to_with
-(ostream&os,const string&separator,LPPOINT point);
-SIZE desktop_size();
-double floating_point_number(const string&str);
-vector<string> getlines(istream&is);
-LONG height(const RECT&rect);
-shared_ptr<istream> input_file
-(const string&name,const ios_base::openmode&mode);
-long integer(const string&str);
-bool operator!=(const POINT&lhs,const POINT&rhs);
-bool operator!=(const POINT_DOUBLE&lhs,const POINT_DOUBLE&rhs);
-bool operator!=(const RECT&lhs,const RECT&rhs);
-bool operator!=(const SIZE&lhs,const SIZE&rhs);
-POINT operator*(const POINT&lhs,const LONG&rhs);
-SIZE operator*(const SIZE&lhs,const LONG&rhs);
-POINT operator+(const POINT&lhs,const LONG&rhs);
-POINT operator+(const POINT&lhs,const POINT&rhs);
-POINT_DOUBLE operator+(const POINT_DOUBLE&lhs,const POINT_DOUBLE&rhs);
-POINT&operator+=(POINT&lhs,const POINT&rhs);
-POINT_DOUBLE&operator+=(POINT_DOUBLE&lhs,const POINT_DOUBLE&rhs);
-POINT operator-(const POINT&point);
-POINT operator-(const POINT&lhs,const POINT&rhs);
-SIZE operator-(const SIZE&lhs,const SIZE&rhs);
-POINT operator/(const POINT&lhs,const LONG&rhs);
-SIZE operator/(const SIZE&lhs,const LONG&rhs);
-ostream&operator<<(ostream&os,const POINT&point);
-ostream&operator<<(ostream&os,const POINT_DOUBLE&point);
-ostream&operator<<(ostream&os,const RECT&rect);
-ostream&operator<<(ostream&os,const SIZE&size);
-bool operator==(const POINT&lhs,const POINT&rhs);
-bool operator==(const POINT_DOUBLE&lhs,const POINT_DOUBLE&rhs);
-bool operator==(const RECT&lhs,const RECT&rhs);
-bool operator==(const SIZE&lhs,const SIZE&rhs);
-shared_ptr<ostream> output_file
-(const string&name,const ios_base::openmode&mode);
-POINT point(const POINT_DOUBLE&pointDouble);
-POINT point(const SIZE&size);
-POINT_DOUBLE point_double(const POINT&point);
-POINT pos(const RECT&rect);
-void putlines(ostream&os,const vector<string>&lines);
-RECT rect(const POINT&pos,const SIZE&size);
-SIZE size(LPARAM lParam);
-SIZE size(const POINT&pos);
-SIZE size(const RECT&rect);
-LONG squared_distance(const POINT&p,const POINT&q);
-vector<string> tokenize(const string&str,const string&dels);
-LONG width(const RECT&rect);
-
-//---- systemobject declaration ----
-
-class DeleteDC:public Finalizer
-{
-public:
-    DeleteDC(HDC handle);
-    HDC handle();
-protected:HDC handle_;
-};
-
-class DeleteObject:public Finalizer
-{
-public:
-    DeleteObject(HGDIOBJ handle);
-    HGDIOBJ handle();
-protected:HGDIOBJ handle_;
-};
-
-class Buffer
-{
-public:
-    HBITMAP bitmap();
-    static shared_ptr<Buffer> create(const SIZE&size,HDC destDC);
-    HDC dc();
-    static shared_ptr<Buffer> load
-    (HINSTANCE instance,LPCTSTR name,HDC destDC);
-    const SIZE&size();
-protected:
-    Buffer
-    (
-        const shared_ptr<DeleteObject>&bitmap,
-        const shared_ptr<DeleteDC>&dc,
-        const SIZE&size
-    );
-    shared_ptr<DeleteObject> bitmap_;
-    shared_ptr<DeleteDC> dc_;
-    SIZE size_;
-};
-
-class EndPaint:public Finalizer
-{
-public:
-    EndPaint(HWND window,PAINTSTRUCT*paint,HDC dc);
-    HDC handle();
-protected:HDC handle_;
-};
-
-class ReleaseDC:public Finalizer
-{
-public:
-    ReleaseDC(HWND window,HDC handle);
-    HDC handle();
-protected:HDC handle_;
-};
-
-class TimeEndPeriod:public Finalizer {public:TimeEndPeriod(UINT period);};
-
-class TimeKillEvent:public Finalizer {public:TimeKillEvent(UINT timerID);};
-
-class Timer
-{
-public:Timer(UINT delay,HWND dest);
-protected:
-    static void CALLBACK procedure
-    (
-        UINT timerID,
-        UINT message,
-        DWORD_PTR user,
-        DWORD_PTR reserved1,
-        DWORD_PTR reserved2
-    );
-    UINT delay_;
-    HWND dest_;
-    shared_ptr<TimeKillEvent> killEvent_;
-    static UINT period_;
-};
-
-shared_ptr<TimeEndPeriod> timeBeginPeriod(UINT period);
-void timeGetDevCaps(LPTIMECAPS caps,UINT sizeOfCaps);
-shared_ptr<TimeKillEvent> timeSetEvent
+shared_ptr<EndPaint> BeginPaint(HWND window,PAINTSTRUCT*paint);
+void BitBlt
 (
-    UINT delay,
-    UINT resolution,
-    LPTIMECALLBACK procedure,
-    DWORD user,
-    UINT event
+    HDC destDC,
+    int destX,
+    int destY,
+    int width,
+    int height,
+    HDC srcDC,
+    int srcX,
+    int srcY,
+    DWORD rop
+);
+shared_ptr<DeleteObject> CreateCompatibleBitmap
+(HDC destDC,int width,int height);
+shared_ptr<DeleteDC> CreateCompatibleDC(HDC dc);
+shared_ptr<DeleteObject> CreateFont
+(
+    int height,
+    int width,
+    int escapement,
+    int orientation,
+    int weight,
+    DWORD italic,
+    DWORD underline,
+    DWORD strikeOut,
+    DWORD charSet,
+    DWORD outputPrecision,
+    DWORD clipPrecision,
+    DWORD quality,
+    DWORD pitchAndFamily,
+    LPCTSTR face
+);
+shared_ptr<DeleteObject> CreatePatternBrush(HBITMAP bitmap);
+shared_ptr<DeleteObject> CreatePen(int style,int width,COLORREF color);
+shared_ptr<DeleteObject> CreateSolidBrush(COLORREF color);
+HWND CreateWindowEx
+(
+    DWORD exStyle,
+    LPCTSTR className,
+    LPCTSTR windowName,
+    DWORD style,
+    int x,
+    int y,
+    int width,
+    int height,
+    HWND parent,
+    HMENU menu,
+    HINSTANCE instance,
+    LPVOID param
+);
+void DispatchMessage(CONST MSG*message);
+int DrawText(HDC dc,LPCTSTR str,int count,LPRECT rect,UINT format);
+void Ellipse(HDC dc,int left,int top,int right,int bottom);
+void FillRect(HDC dc,CONST RECT*rect,HBRUSH brush);
+void GetClientRect(HWND window,LPRECT rect);
+void GetCursorPos(LPPOINT point);
+shared_ptr<ReleaseDC> GetDC(HWND window);
+bool GetMessage(LPMSG msg,HWND window,UINT first,UINT last);
+int GetObject(HGDIOBJ object,int sizeOfBuffer,LPVOID buffer);
+int GetSystemMetrics(int index);
+void GetWindowPlacement(HWND window,WINDOWPLACEMENT*placement);
+shared_ptr<DeleteObject> LoadBitmap(HINSTANCE instance,LPCTSTR name);
+HCURSOR LoadCursor(HINSTANCE instance,LPCTSTR name);
+void RedrawWindow(HWND window,CONST RECT*rect,HRGN region,UINT flags);
+ATOM RegisterClassEx(CONST WNDCLASSEX*windowClass);
+void ReleaseCapture();
+void ScreenToClient(HWND window,LPPOINT point);
+int SetBkMode(HDC dc,int mode);
+void SetBrushOrgEx(HDC dc,int x,int y,LPPOINT oldPoint);
+void SetForegroundWindow(HWND window);
+void SetLayeredWindowAttributes
+(HWND window,COLORREF key,BYTE alpha,DWORD flags);
+int SetStretchBltMode(HDC dc,int mode);
+COLORREF SetTextColor(HDC dc,COLORREF color);
+void StretchBlt
+(
+    HDC destDC,
+    int destX,
+    int destY,
+    int destWidth,
+    int destHeight,
+    HDC srcDC,
+    int srcX,
+    int srcY,
+    int srcWidth,
+    int srcHeight,
+    DWORD rop
 );
 
 //---- component declaration ----
@@ -434,94 +370,6 @@ protected:
     shared_ptr<Buffer> textBuffer_;
     shared_ptr<Buffer> textMaskBuffer_;
     int value_;
-};
-
-//---- window declaration ----
-
-class Window
-{
-public:HWND handle();
-protected:
-    Window();
-    LRESULT onReceive
-    (HWND handle,UINT message,WPARAM wParam,LPARAM lParam);
-    static LRESULT CALLBACK procedure
-    (HWND handle,UINT message,WPARAM wParam,LPARAM lParam);
-    HWND handle_;
-    map<UINT,function<LRESULT(UINT message,WPARAM wParam,LPARAM lParam)>>
-        handlerMap_;
-    static map<HWND,Window*> windowMap_;
-};
-
-class MainWindow:public Window
-{
-public:
-    MainWindow();
-    void onAlphaSliderChange();
-    void onCloseButtonClick();
-    LRESULT onCreate
-    (UINT message,WPARAM wParam,LPARAM lParam);
-    LRESULT onDestroy
-    (UINT message,WPARAM wParam,LPARAM lParam);
-    void onForegroundButtonClick();
-    LRESULT onGetMinMaxInfo
-    (UINT message,WPARAM wParam,LPARAM lParam);
-    void onHalftoneButtonChange();
-    void onHelpButtonClick();
-    void onHoleSliderChange();
-    LRESULT onLButtonDown
-    (UINT message,WPARAM wParam,LPARAM lParam);
-    LRESULT onLButtonUp
-    (UINT message,WPARAM wParam,LPARAM lParam);
-    void onMaximizeButtonChange();
-    void onMinimizeButtonClick();
-    LRESULT onMouseMove
-    (UINT message,WPARAM wParam,LPARAM lParam);
-    LRESULT onMouseWheel
-    (UINT message,WPARAM wParam,LPARAM lParam);
-    LRESULT onMove
-    (UINT message,WPARAM wParam,LPARAM lParam);
-    LRESULT onNCHitTest
-    (UINT message,WPARAM wParam,LPARAM lParam);
-    LRESULT onNCMouseMove
-    (UINT message,WPARAM wParam,LPARAM lParam);
-    LRESULT onNCRButtonDown
-    (UINT message,WPARAM wParam,LPARAM lParam);
-    LRESULT onPaint
-    (UINT message,WPARAM wParam,LPARAM lParam);
-    LRESULT onRButtonUp
-    (UINT message,WPARAM wParam,LPARAM lParam);
-    void onResetButtonClick();
-    void onScaleSliderChange();
-    LRESULT onSize
-    (UINT message,WPARAM wParam,LPARAM lParam);
-    LRESULT onUserTimer
-    (UINT message,WPARAM wParam,LPARAM lParam);
-protected:
-    void initializeBackBrush();
-    void initializeBuffers();
-    void initializeComponents();
-    void updateToolTip(const POINT&cursorPos);
-    Component*activeComponent_;
-    shared_ptr<Slider> alphaSlider_;
-    shared_ptr<DeleteObject> backBrush_;
-    shared_ptr<Buffer> buffer_;
-    shared_ptr<PushButton> closeButton_;
-    vector<Component*> components_;
-    shared_ptr<PushButton> foregroundButton_;
-    shared_ptr<RadioButton> halftoneButton_;
-    shared_ptr<PushButton> helpButton_;
-    shared_ptr<Slider> holeSlider_;
-    shared_ptr<RadioButton> lockButton_;
-    shared_ptr<RadioButton> maximizeButton_;
-    shared_ptr<PushButton> minimizeButton_;
-    shared_ptr<PushButton> resetButton_;
-    shared_ptr<Slider> scaleSlider_;
-    shared_ptr<Timer> timer_;
-    HWND toolTip_;
-    shared_ptr<Buffer> viewBuffer_;
-    bool viewSliding_;
-    POINT viewSlidingBase_;
 };
 
 //---- execute declaration ----
@@ -730,97 +578,272 @@ int execute
 );
 port&pt();
 
-//---- apiwrapper declaration ----
+//---- helper declaration ----
 
-shared_ptr<EndPaint> BeginPaint(HWND window,PAINTSTRUCT*paint);
-void BitBlt
+class Finalizer
+{
+public:
+    Finalizer(const function<void()>&finalize);
+    virtual ~Finalizer();
+protected:function<void()> finalize_;
+};
+
+class Initializer {public:Initializer(const function<void()>&initialize);};
+
+class api_error:public runtime_error
+{public:api_error(const string&name);};
+
+template<class OBJECT,class RESULT,class...ARGUMENTS>
+    function<RESULT(ARGUMENTS...arguments)> bind_object
+(RESULT(OBJECT::*member)(ARGUMENTS...arguments) const,const OBJECT*object);
+template<class OBJECT,class RESULT,class...ARGUMENTS>
+    function<RESULT(ARGUMENTS...arguments)> bind_object
+(RESULT(OBJECT::*member)(ARGUMENTS...arguments),OBJECT*object);
+template<class...ARGUMENTS> string describe(ARGUMENTS&&...arguments);
+template<class LEAD,class...TRAILER> void describe_to_with
+(ostream&os,const string&separator,LEAD&lead,TRAILER&&...trailer);
+template<class ARGUMENT> void describe_to_with
+(ostream&os,const string&separator,const ARGUMENT&argument);
+template<class ARGUMENT> void describe_to_with
+(ostream&os,const string&separator,ARGUMENT&argument);
+template<class ARGUMENT> void describe_to_with
+(ostream&os,const string&separator,const ARGUMENT*argument);
+template<class ARGUMENT> void describe_to_with
+(ostream&os,const string&separator,ARGUMENT*argument);
+template<class...ARGUMENTS> string describe_with
+(const string&separator,ARGUMENTS&&...arguments);
+
+string chomp(const string&str,const char&ch);
+bool contain(const POINT&center,const LONG&squaredRadius,const POINT&pos);
+bool contain(const RECT&rect,const POINT&pos);
+POINT coordinates(LPARAM lParam);
+POINT cursor_pos(HWND window);
+void describe_to_with(ostream&os,const string&separator);
+void describe_to_with
+(ostream&os,const string&separator,const char*str);
+void describe_to_with
+(ostream&os,const string&separator,LPPOINT point);
+SIZE desktop_size();
+double floating_point_number(const string&str);
+vector<string> getlines(istream&is);
+LONG height(const RECT&rect);
+shared_ptr<istream> input_file
+(const string&name,const ios_base::openmode&mode);
+long integer(const string&str);
+bool operator!=(const POINT&lhs,const POINT&rhs);
+bool operator!=(const POINT_DOUBLE&lhs,const POINT_DOUBLE&rhs);
+bool operator!=(const RECT&lhs,const RECT&rhs);
+bool operator!=(const SIZE&lhs,const SIZE&rhs);
+POINT operator*(const POINT&lhs,const LONG&rhs);
+SIZE operator*(const SIZE&lhs,const LONG&rhs);
+POINT operator+(const POINT&lhs,const LONG&rhs);
+POINT operator+(const POINT&lhs,const POINT&rhs);
+POINT_DOUBLE operator+(const POINT_DOUBLE&lhs,const POINT_DOUBLE&rhs);
+POINT&operator+=(POINT&lhs,const POINT&rhs);
+POINT_DOUBLE&operator+=(POINT_DOUBLE&lhs,const POINT_DOUBLE&rhs);
+POINT operator-(const POINT&point);
+POINT operator-(const POINT&lhs,const POINT&rhs);
+SIZE operator-(const SIZE&lhs,const SIZE&rhs);
+POINT operator/(const POINT&lhs,const LONG&rhs);
+SIZE operator/(const SIZE&lhs,const LONG&rhs);
+ostream&operator<<(ostream&os,const POINT&point);
+ostream&operator<<(ostream&os,const POINT_DOUBLE&point);
+ostream&operator<<(ostream&os,const RECT&rect);
+ostream&operator<<(ostream&os,const SIZE&size);
+bool operator==(const POINT&lhs,const POINT&rhs);
+bool operator==(const POINT_DOUBLE&lhs,const POINT_DOUBLE&rhs);
+bool operator==(const RECT&lhs,const RECT&rhs);
+bool operator==(const SIZE&lhs,const SIZE&rhs);
+shared_ptr<ostream> output_file
+(const string&name,const ios_base::openmode&mode);
+POINT point(const POINT_DOUBLE&pointDouble);
+POINT point(const SIZE&size);
+POINT_DOUBLE point_double(const POINT&point);
+POINT pos(const RECT&rect);
+void putlines(ostream&os,const vector<string>&lines);
+RECT rect(const POINT&pos,const SIZE&size);
+SIZE size(LPARAM lParam);
+SIZE size(const POINT&pos);
+SIZE size(const RECT&rect);
+LONG squared_distance(const POINT&p,const POINT&q);
+vector<string> tokenize(const string&str,const string&dels);
+LONG width(const RECT&rect);
+
+//---- systemobject declaration ----
+
+class DeleteDC:public Finalizer
+{
+public:
+    DeleteDC(HDC handle);
+    HDC handle();
+protected:HDC handle_;
+};
+
+class DeleteObject:public Finalizer
+{
+public:
+    DeleteObject(HGDIOBJ handle);
+    HGDIOBJ handle();
+protected:HGDIOBJ handle_;
+};
+
+class Buffer
+{
+public:
+    HBITMAP bitmap();
+    static shared_ptr<Buffer> create(const SIZE&size,HDC destDC);
+    HDC dc();
+    static shared_ptr<Buffer> load
+    (HINSTANCE instance,LPCTSTR name,HDC destDC);
+    const SIZE&size();
+protected:
+    Buffer
+    (
+        const shared_ptr<DeleteObject>&bitmap,
+        const shared_ptr<DeleteDC>&dc,
+        const SIZE&size
+    );
+    shared_ptr<DeleteObject> bitmap_;
+    shared_ptr<DeleteDC> dc_;
+    SIZE size_;
+};
+
+class EndPaint:public Finalizer
+{
+public:
+    EndPaint(HWND window,PAINTSTRUCT*paint,HDC dc);
+    HDC handle();
+protected:HDC handle_;
+};
+
+class ReleaseDC:public Finalizer
+{
+public:
+    ReleaseDC(HWND window,HDC handle);
+    HDC handle();
+protected:HDC handle_;
+};
+
+class TimeEndPeriod:public Finalizer {public:TimeEndPeriod(UINT period);};
+
+class TimeKillEvent:public Finalizer {public:TimeKillEvent(UINT timerID);};
+
+class Timer
+{
+public:Timer(UINT delay,HWND dest);
+protected:
+    static void CALLBACK procedure
+    (
+        UINT timerID,
+        UINT message,
+        DWORD_PTR user,
+        DWORD_PTR reserved1,
+        DWORD_PTR reserved2
+    );
+    UINT delay_;
+    HWND dest_;
+    shared_ptr<TimeKillEvent> killEvent_;
+    static UINT period_;
+};
+
+shared_ptr<TimeEndPeriod> timeBeginPeriod(UINT period);
+void timeGetDevCaps(LPTIMECAPS caps,UINT sizeOfCaps);
+shared_ptr<TimeKillEvent> timeSetEvent
 (
-    HDC destDC,
-    int destX,
-    int destY,
-    int width,
-    int height,
-    HDC srcDC,
-    int srcX,
-    int srcY,
-    DWORD rop
+    UINT delay,
+    UINT resolution,
+    LPTIMECALLBACK procedure,
+    DWORD user,
+    UINT event
 );
-shared_ptr<DeleteObject> CreateCompatibleBitmap
-(HDC destDC,int width,int height);
-shared_ptr<DeleteDC> CreateCompatibleDC(HDC dc);
-shared_ptr<DeleteObject> CreateFont
-(
-    int height,
-    int width,
-    int escapement,
-    int orientation,
-    int weight,
-    DWORD italic,
-    DWORD underline,
-    DWORD strikeOut,
-    DWORD charSet,
-    DWORD outputPrecision,
-    DWORD clipPrecision,
-    DWORD quality,
-    DWORD pitchAndFamily,
-    LPCTSTR face
-);
-shared_ptr<DeleteObject> CreatePatternBrush(HBITMAP bitmap);
-shared_ptr<DeleteObject> CreatePen(int style,int width,COLORREF color);
-shared_ptr<DeleteObject> CreateSolidBrush(COLORREF color);
-HWND CreateWindowEx
-(
-    DWORD exStyle,
-    LPCTSTR className,
-    LPCTSTR windowName,
-    DWORD style,
-    int x,
-    int y,
-    int width,
-    int height,
-    HWND parent,
-    HMENU menu,
-    HINSTANCE instance,
-    LPVOID param
-);
-void DispatchMessage(CONST MSG*message);
-int DrawText(HDC dc,LPCTSTR str,int count,LPRECT rect,UINT format);
-void Ellipse(HDC dc,int left,int top,int right,int bottom);
-void FillRect(HDC dc,CONST RECT*rect,HBRUSH brush);
-void GetClientRect(HWND window,LPRECT rect);
-void GetCursorPos(LPPOINT point);
-shared_ptr<ReleaseDC> GetDC(HWND window);
-bool GetMessage(LPMSG msg,HWND window,UINT first,UINT last);
-int GetObject(HGDIOBJ object,int sizeOfBuffer,LPVOID buffer);
-int GetSystemMetrics(int index);
-void GetWindowPlacement(HWND window,WINDOWPLACEMENT*placement);
-shared_ptr<DeleteObject> LoadBitmap(HINSTANCE instance,LPCTSTR name);
-HCURSOR LoadCursor(HINSTANCE instance,LPCTSTR name);
-void RedrawWindow(HWND window,CONST RECT*rect,HRGN region,UINT flags);
-ATOM RegisterClassEx(CONST WNDCLASSEX*windowClass);
-void ReleaseCapture();
-void ScreenToClient(HWND window,LPPOINT point);
-int SetBkMode(HDC dc,int mode);
-void SetBrushOrgEx(HDC dc,int x,int y,LPPOINT oldPoint);
-void SetForegroundWindow(HWND window);
-void SetLayeredWindowAttributes
-(HWND window,COLORREF key,BYTE alpha,DWORD flags);
-int SetStretchBltMode(HDC dc,int mode);
-COLORREF SetTextColor(HDC dc,COLORREF color);
-void StretchBlt
-(
-    HDC destDC,
-    int destX,
-    int destY,
-    int destWidth,
-    int destHeight,
-    HDC srcDC,
-    int srcX,
-    int srcY,
-    int srcWidth,
-    int srcHeight,
-    DWORD rop
-);
+
+//---- window declaration ----
+
+class Window
+{
+public:HWND handle();
+protected:
+    Window();
+    LRESULT onReceive
+    (HWND handle,UINT message,WPARAM wParam,LPARAM lParam);
+    static LRESULT CALLBACK procedure
+    (HWND handle,UINT message,WPARAM wParam,LPARAM lParam);
+    HWND handle_;
+    map<UINT,function<LRESULT(UINT message,WPARAM wParam,LPARAM lParam)>>
+        handlerMap_;
+    static map<HWND,Window*> windowMap_;
+};
+
+class MainWindow:public Window
+{
+public:
+    MainWindow();
+    void onAlphaSliderChange();
+    void onCloseButtonClick();
+    LRESULT onCreate
+    (UINT message,WPARAM wParam,LPARAM lParam);
+    LRESULT onDestroy
+    (UINT message,WPARAM wParam,LPARAM lParam);
+    void onForegroundButtonClick();
+    LRESULT onGetMinMaxInfo
+    (UINT message,WPARAM wParam,LPARAM lParam);
+    void onHalftoneButtonChange();
+    void onHelpButtonClick();
+    void onHoleSliderChange();
+    LRESULT onLButtonDown
+    (UINT message,WPARAM wParam,LPARAM lParam);
+    LRESULT onLButtonUp
+    (UINT message,WPARAM wParam,LPARAM lParam);
+    void onMaximizeButtonChange();
+    void onMinimizeButtonClick();
+    LRESULT onMouseMove
+    (UINT message,WPARAM wParam,LPARAM lParam);
+    LRESULT onMouseWheel
+    (UINT message,WPARAM wParam,LPARAM lParam);
+    LRESULT onMove
+    (UINT message,WPARAM wParam,LPARAM lParam);
+    LRESULT onNCHitTest
+    (UINT message,WPARAM wParam,LPARAM lParam);
+    LRESULT onNCMouseMove
+    (UINT message,WPARAM wParam,LPARAM lParam);
+    LRESULT onNCRButtonDown
+    (UINT message,WPARAM wParam,LPARAM lParam);
+    LRESULT onPaint
+    (UINT message,WPARAM wParam,LPARAM lParam);
+    LRESULT onRButtonUp
+    (UINT message,WPARAM wParam,LPARAM lParam);
+    void onResetButtonClick();
+    void onScaleSliderChange();
+    LRESULT onSize
+    (UINT message,WPARAM wParam,LPARAM lParam);
+    LRESULT onUserTimer
+    (UINT message,WPARAM wParam,LPARAM lParam);
+protected:
+    void initializeBackBrush();
+    void initializeBuffers();
+    void initializeComponents();
+    void updateToolTip(const POINT&cursorPos);
+    Component*activeComponent_;
+    shared_ptr<Slider> alphaSlider_;
+    shared_ptr<DeleteObject> backBrush_;
+    shared_ptr<Buffer> buffer_;
+    shared_ptr<PushButton> closeButton_;
+    vector<Component*> components_;
+    shared_ptr<PushButton> foregroundButton_;
+    shared_ptr<RadioButton> halftoneButton_;
+    shared_ptr<PushButton> helpButton_;
+    shared_ptr<Slider> holeSlider_;
+    shared_ptr<RadioButton> lockButton_;
+    shared_ptr<RadioButton> maximizeButton_;
+    shared_ptr<PushButton> minimizeButton_;
+    shared_ptr<PushButton> resetButton_;
+    shared_ptr<Slider> scaleSlider_;
+    shared_ptr<Timer> timer_;
+    HWND toolTip_;
+    shared_ptr<Buffer> viewBuffer_;
+    bool viewSliding_;
+    POINT viewSlidingBase_;
+};
 
 //---- helper template definition ----
 

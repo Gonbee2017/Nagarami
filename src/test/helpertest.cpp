@@ -1,7 +1,8 @@
-#include<functional>
 #include"../nagarami.h"
+#include<functional>
 #include<memory>
 #include"nagaramitest.h"
+#include<sstream>
 #include<string>
 #include<CppUTest/TestHarness.h>
 #include<windows.h>
@@ -34,18 +35,6 @@ TEST(helper,describe_with)
     CHECK_EQUAL("fuga,1",describe_with(",","fuga",1));
 }
 
-TEST(helper,Initializer_constructor)
-{
-    {
-        history hist;
-        function<void()> initialize;
-        hist.set(NAMED_ADDRESS(initialize));
-        Initializer initializer(initialize);
-        CHECK_EQUAL(1,hist.calls().size());
-        CHECK_EQUAL(call("initialize"),hist.calls().at(0));
-    }
-}
-
 TEST(helper,Finalizer_destructor)
 {
     {
@@ -60,10 +49,21 @@ TEST(helper,Finalizer_destructor)
     }
 }
 
+TEST(helper,Initializer_constructor)
+{
+    {
+        history hist;
+        function<void()> initialize;
+        hist.set(NAMED_ADDRESS(initialize));
+        Initializer initializer(initialize);
+        CHECK_EQUAL(1,hist.calls().size());
+        CHECK_EQUAL(call("initialize"),hist.calls().at(0));
+    }
+}
+
 TEST(helper,api_error_constructor)
 {
     {
-        const auto cp=make_shared<ClearPort>();
         history hist;
         hist.setWithResult(NAMED_ADDRESS(pt().GetLastError),(DWORD)1);
         api_error error("hoge");
@@ -98,7 +98,6 @@ TEST(helper,coordinates)
 TEST(helper,cursor_pos)
 {
     {
-        const auto cp=make_shared<ClearPort>();
         history hist;
         hist.setWithBody(NAMED_ADDRESS(pt().GetCursorPos),
         [] (LPPOINT point)->BOOL
@@ -127,7 +126,6 @@ TEST(helper,cursor_pos)
 TEST(helper,desktop_size)
 {
     {
-        const auto cp=make_shared<ClearPort>();
         history hist;
         hist.setWithBody(NAMED_ADDRESS(pt().GetSystemMetrics),
         [&hist] (int index)->int
@@ -145,15 +143,41 @@ TEST(helper,floating_point_number)
 {
     try
     {
-        floating_point_number("a");
+        floating_point_number("hoge");
         FAIL("Do not pass here.");
     } catch(const shared_ptr<runtime_error>&error)
     {
         CHECK_EQUAL
-        ("'a' is an invalid floating-point number.",string(error->what()));
+        (
+            "'hoge' is an invalid floating-point number.",
+            string(error->what())
+        );
     }
     CHECK_EQUAL(1.5,floating_point_number("1.5"));
     CHECK_EQUAL(-2.25,floating_point_number("-2.25"));
+}
+
+TEST(helper,getlines)
+{
+    {
+        istringstream iss
+        (
+            "hoge\r\n"
+            "fuga\r\n"
+            "piyo\r\n"
+        );
+        const auto lines=getlines(iss);
+        CHECK_EQUAL(3,lines.size());
+        CHECK_EQUAL("hoge",lines.at(0));
+        CHECK_EQUAL("fuga",lines.at(1));
+        CHECK_EQUAL("piyo",lines.at(2));
+    }
+}
+
+TEST(helper,height)
+{
+    CHECK_EQUAL(3,height(RECT({1,2,3,5})));
+    CHECK_EQUAL(13,height(RECT({-34,-21,-13,-8})));
 }
 
 TEST(helper,squared_distance)

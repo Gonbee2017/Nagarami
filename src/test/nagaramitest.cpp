@@ -5,8 +5,6 @@
 namespace nm
 {
 
-ClearPort::ClearPort():Finalizer([] {pt().clear();}) {}
-
 string call::arguments() const {return arguments_;}
 
 string call::name() const {return name_;}
@@ -23,6 +21,8 @@ ostream&operator<<(ostream&os,const call&call_)
     if(!call_.arguments_.empty()) oss<<':'<<call_.arguments_;
     return os<<oss.str();
 }
+
+history::~history() {pt().clear();}
 
 const vector<call>&history::calls() const {return calls_;}
 
