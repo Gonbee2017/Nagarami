@@ -382,10 +382,10 @@ int execute
     try
     {
         ct().initialize(instance);
-        auto psIn=pt().input_file(psFile,ios_base::in);
-        if(*psIn)
+        auto psIS=pt().input_file(psFile,ios_base::in);
+        if(*psIS)
         {
-            auto lines=getlines(*psIn);
+            auto lines=getlines(*psIS);
             ct().ps.load(lines.begin(),lines.end());
         }
         auto arguments=tokenize(commandLine," ");
@@ -398,8 +398,8 @@ int execute
         MSG msg;
         while(nm::GetMessage(&msg,NULL,0,0)) nm::DispatchMessage(&msg);
         result=msg.wParam;
-        auto psOut=pt().output_file(psFile,ios_base::out|ios_base::trunc);
-        if(*psOut) putlines(*psOut,ct().ps.lines());
+        auto psOS=pt().output_file(psFile,ios_base::out|ios_base::trunc);
+        if(*psOS) putlines(*psOS,ct().ps.lines());
     } catch(const shared_ptr<runtime_error>&error)
     {
         pt().MessageBox

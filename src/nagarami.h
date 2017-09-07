@@ -33,19 +33,24 @@ constexpr COLORREF ALMOST_BLACK_COLOR=RGB(  1,  1,  1);
 constexpr COLORREF BLACK_COLOR       =RGB(  0,  0,  0);
 constexpr COLORREF WHITE_COLOR       =RGB(255,255,255);
 
-constexpr LONG UNIT_LENGTH          =16;
-constexpr LONG HALF_UNIT_LENGTH     =UNIT_LENGTH/2;
-constexpr SIZE UNIT_SIZE            =SIZE({UNIT_LENGTH,UNIT_LENGTH});
-constexpr RECT UNIT_RECT            =RECT({0,0,UNIT_SIZE.cx,UNIT_SIZE.cy});
-constexpr LONG FRAME_LENGTH         =UNIT_LENGTH;
-constexpr LONG MINIMUM_WINDOW_WIDTH =UNIT_LENGTH*8+FRAME_LENGTH*2;
-constexpr LONG MINIMUM_WINDOW_HEIGHT=UNIT_LENGTH*4+FRAME_LENGTH*2;
-constexpr SIZE MINIMUM_WINDOW_SIZE  =
+constexpr LONG  UNIT_LENGTH          =16;
+constexpr LONG  HALF_UNIT_LENGTH     =UNIT_LENGTH/2;
+constexpr SIZE  UNIT_SIZE            =SIZE({UNIT_LENGTH,UNIT_LENGTH});
+constexpr RECT  UNIT_RECT            =
+    RECT({0,0,UNIT_SIZE.cx,UNIT_SIZE.cy});
+constexpr LONG  FRAME_LENGTH         =UNIT_LENGTH;
+constexpr LONG  MINIMUM_WINDOW_WIDTH =UNIT_LENGTH*8+FRAME_LENGTH*2;
+constexpr LONG  MINIMUM_WINDOW_HEIGHT=UNIT_LENGTH*4+FRAME_LENGTH*2;
+constexpr SIZE  MINIMUM_WINDOW_SIZE  =
     SIZE({MINIMUM_WINDOW_WIDTH,MINIMUM_WINDOW_HEIGHT});
-constexpr LONG SLIDER_BAR_WIDTH     =UNIT_LENGTH/4;
-constexpr LONG HALF_SLIDER_BAR_WIDTH=SLIDER_BAR_WIDTH/2;
-constexpr LONG SLIDER_TEXT_WIDTH    =UNIT_LENGTH*2;
-constexpr SIZE SLIDER_TEXT_SIZE     =SIZE({SLIDER_TEXT_WIDTH,UNIT_LENGTH});
+constexpr LONG  SLIDER_BAR_WIDTH     =UNIT_LENGTH/4;
+constexpr LONG  HALF_SLIDER_BAR_WIDTH=SLIDER_BAR_WIDTH/2;
+constexpr LONG  SLIDER_TEXT_WIDTH    =UNIT_LENGTH*2;
+constexpr SIZE  SLIDER_TEXT_SIZE     =
+    SIZE({SLIDER_TEXT_WIDTH,UNIT_LENGTH});
+constexpr POINT ZERO_POS             =POINT({0,0});
+constexpr RECT  ZERO_RECT            =RECT({0,0,0,0});
+constexpr SIZE  ZERO_SIZE            =SIZE({0,0});
 
 constexpr POINT ALPHA_SLIDER_CELL_POS     =POINT({ 0,-1});
 constexpr POINT CLOSE_BUTTON_CELL_POS     =POINT({-1, 0});
@@ -120,23 +125,34 @@ template<class ARGUMENT> void describe_to_with
 (ostream&os,const string&separator,const ARGUMENT&argument);
 template<class ARGUMENT> void describe_to_with
 (ostream&os,const string&separator,ARGUMENT&argument);
+template<class ARGUMENT> void describe_to_with
+(ostream&os,const string&separator,const ARGUMENT*argument);
+template<class ARGUMENT> void describe_to_with
+(ostream&os,const string&separator,ARGUMENT*argument);
 template<class...ARGUMENTS> string describe_with
 (const string&separator,ARGUMENTS&&...arguments);
 
+string chomp(const string&str,const char&ch);
 bool contain(const POINT&center,const LONG&squaredRadius,const POINT&pos);
 bool contain(const RECT&rect,const POINT&pos);
 POINT coordinates(LPARAM lParam);
 POINT cursor_pos(HWND window);
-void describe_to_with
-(ostream&os,const string&separator,const char*argument);
 void describe_to_with(ostream&os,const string&separator);
+void describe_to_with
+(ostream&os,const string&separator,const char*str);
+void describe_to_with
+(ostream&os,const string&separator,LPPOINT point);
 SIZE desktop_size();
 double floating_point_number(const string&str);
-vector<string> getlines(istream&in);
+vector<string> getlines(istream&is);
 LONG height(const RECT&rect);
 shared_ptr<istream> input_file
 (const string&name,const ios_base::openmode&mode);
 long integer(const string&str);
+bool operator!=(const POINT&lhs,const POINT&rhs);
+bool operator!=(const POINT_DOUBLE&lhs,const POINT_DOUBLE&rhs);
+bool operator!=(const RECT&lhs,const RECT&rhs);
+bool operator!=(const SIZE&lhs,const SIZE&rhs);
 POINT operator*(const POINT&lhs,const LONG&rhs);
 SIZE operator*(const SIZE&lhs,const LONG&rhs);
 POINT operator+(const POINT&lhs,const LONG&rhs);
@@ -144,18 +160,26 @@ POINT operator+(const POINT&lhs,const POINT&rhs);
 POINT_DOUBLE operator+(const POINT_DOUBLE&lhs,const POINT_DOUBLE&rhs);
 POINT&operator+=(POINT&lhs,const POINT&rhs);
 POINT_DOUBLE&operator+=(POINT_DOUBLE&lhs,const POINT_DOUBLE&rhs);
-POINT operator/(const POINT&lhs,const LONG&rhs);
-SIZE operator/(const SIZE&lhs,const LONG&rhs);
 POINT operator-(const POINT&point);
 POINT operator-(const POINT&lhs,const POINT&rhs);
 SIZE operator-(const SIZE&lhs,const SIZE&rhs);
+POINT operator/(const POINT&lhs,const LONG&rhs);
+SIZE operator/(const SIZE&lhs,const LONG&rhs);
+ostream&operator<<(ostream&os,const POINT&point);
+ostream&operator<<(ostream&os,const POINT_DOUBLE&point);
+ostream&operator<<(ostream&os,const RECT&rect);
+ostream&operator<<(ostream&os,const SIZE&size);
+bool operator==(const POINT&lhs,const POINT&rhs);
+bool operator==(const POINT_DOUBLE&lhs,const POINT_DOUBLE&rhs);
+bool operator==(const RECT&lhs,const RECT&rhs);
+bool operator==(const SIZE&lhs,const SIZE&rhs);
 shared_ptr<ostream> output_file
 (const string&name,const ios_base::openmode&mode);
 POINT point(const POINT_DOUBLE&pointDouble);
 POINT point(const SIZE&size);
 POINT_DOUBLE point_double(const POINT&point);
 POINT pos(const RECT&rect);
-void putlines(ostream&out,const vector<string>&lines);
+void putlines(ostream&os,const vector<string>&lines);
 RECT rect(const POINT&pos,const SIZE&size);
 SIZE size(LPARAM lParam);
 SIZE size(const POINT&pos);
@@ -832,6 +856,22 @@ template<class ARGUMENT> void describe_to_with
 
 template<class ARGUMENT> void describe_to_with
 (ostream&os,const string&separator,ARGUMENT&argument) {os<<argument;}
+
+template<class ARGUMENT> void describe_to_with
+(ostream&os,const string&separator,const ARGUMENT*argument)
+{
+    ostringstream oss;
+    oss<<hex<<showbase<<(unsigned int)argument;
+    os<<oss.str();
+}
+
+template<class ARGUMENT> void describe_to_with
+(ostream&os,const string&separator,ARGUMENT*argument)
+{
+    ostringstream oss;
+    oss<<hex<<showbase<<(unsigned int)argument;
+    os<<oss.str();
+}
 
 template<class...ARGUMENTS> string describe_with
 (const string&separator,ARGUMENTS&&...arguments)

@@ -25,6 +25,17 @@ Finalizer::~Finalizer() {finalize_();}
 api_error::api_error(const string&name):
     runtime_error(describe(name," failed.(",pt().GetLastError(),")")) {}
 
+string chomp(const string&str,const char&ch)
+{
+    string result;
+    if(!str.empty())
+    {
+        if(str.back()==ch) result=str.substr(0,str.length()-1);
+        else result=str;
+    }
+    return result;
+}
+
 bool contain(const POINT&center,const LONG&squaredRadius,const POINT&pos)
 {return squared_distance(center,pos)<=squaredRadius;}
 
@@ -40,17 +51,20 @@ POINT coordinates(LPARAM lParam)
 
 POINT cursor_pos(HWND window)
 {
-    POINT pos;
+    POINT pos=ZERO_POS;
     nm::GetCursorPos(&pos);
     nm::ScreenToClient(window,&pos);
     return pos;
 }
 
-void describe_to_with
-(ostream&os,const string&separator,const char*argument)
-{if(argument!=nullptr) os<<argument;}
-
 void describe_to_with(ostream&os,const string&separator) {}
+
+void describe_to_with
+(ostream&os,const string&separator,const char*str)
+{if(str!=nullptr) os<<str;}
+
+void describe_to_with
+(ostream&os,const string&separator,LPPOINT point) {os<<*point;}
 
 SIZE desktop_size()
 {
@@ -71,16 +85,11 @@ double floating_point_number(const string&str)
     return number;
 }
 
-vector<string> getlines(istream&in)
+vector<string> getlines(istream&is)
 {
     vector<string> lines;
     string line;
-    while(getline(in,line))
-    {
-        if(!line.empty()&&line.back()=='\r')
-            line=line.substr(0,line.length()-1);
-        lines.push_back(line);
-    }
+    while(getline(is,line)) lines.push_back(chomp(line,'\r'));
     return lines;
 }
 
@@ -99,6 +108,15 @@ long integer(const string&str)
         ("'",str,"' is an invalid integer."));
     return number;
 }
+
+bool operator!=(const POINT&lhs,const POINT&rhs) {return !(lhs==rhs);}
+
+bool operator!=(const POINT_DOUBLE&lhs,const POINT_DOUBLE&rhs)
+{return !(lhs==rhs);}
+
+bool operator!=(const RECT&lhs,const RECT&rhs) {return !(lhs==rhs);}
+
+bool operator!=(const SIZE&lhs,const SIZE&rhs) {return !(lhs==rhs);}
 
 POINT operator*(const POINT&lhs,const LONG&rhs)
 {return POINT({lhs.x*rhs,lhs.y*rhs});}
@@ -120,12 +138,6 @@ POINT&operator+=(POINT&lhs,const POINT&rhs) {return lhs=lhs+rhs;}
 POINT_DOUBLE&operator+=(POINT_DOUBLE&lhs,const POINT_DOUBLE&rhs)
 {return lhs=lhs+rhs;}
 
-POINT operator/(const POINT&lhs,const LONG&rhs)
-{return POINT({lhs.x/rhs,lhs.y/rhs});}
-
-SIZE operator/(const SIZE&lhs,const LONG&rhs)
-{return SIZE({lhs.cx/rhs,lhs.cy/rhs});}
-
 POINT operator-(const POINT&point) {return POINT({-point.x,-point.y});}
 
 POINT operator-(const POINT&lhs,const POINT&rhs)
@@ -133,6 +145,47 @@ POINT operator-(const POINT&lhs,const POINT&rhs)
 
 SIZE operator-(const SIZE&lhs,const SIZE&rhs)
 {return SIZE({lhs.cx-rhs.cx,lhs.cy-rhs.cy});}
+
+POINT operator/(const POINT&lhs,const LONG&rhs)
+{return POINT({lhs.x/rhs,lhs.y/rhs});}
+
+SIZE operator/(const SIZE&lhs,const LONG&rhs)
+{return SIZE({lhs.cx/rhs,lhs.cy/rhs});}
+
+ostream&operator<<(ostream&os,const POINT&point)
+{return os<<describe("{",describe_with(",",point.x,point.y),"}");}
+
+ostream&operator<<(ostream&os,const POINT_DOUBLE&point)
+{return os<<describe("{",describe_with(",",point.x,point.y),"}");}
+
+ostream&operator<<(ostream&os,const RECT&rect)
+{
+    return os<<describe(
+    "{",describe_with
+        (",",rect.left,rect.top,rect.right,rect.bottom),
+    "}");
+}
+
+ostream&operator<<(ostream&os,const SIZE&size)
+{return os<<describe("{",describe_with(",",size.cx,size.cy),"}");}
+
+bool operator==(const POINT&lhs,const POINT&rhs)
+{return lhs.x==rhs.x&&lhs.y==rhs.y;}
+
+bool operator==(const POINT_DOUBLE&lhs,const POINT_DOUBLE&rhs)
+{return lhs.x==rhs.x&&lhs.y==rhs.y;}
+
+bool operator==(const RECT&lhs,const RECT&rhs)
+{
+    return
+        lhs.left==rhs.left&&
+        lhs.top==rhs.top&&
+        lhs.right==rhs.right&&
+        lhs.bottom==rhs.bottom;
+}
+
+bool operator==(const SIZE&lhs,const SIZE&rhs)
+{return lhs.cx==rhs.cx&&lhs.cy==rhs.cy;}
 
 shared_ptr<ostream> output_file
 (const string&name,const ios_base::openmode&mode)
@@ -148,8 +201,8 @@ POINT pos(const RECT&rect) {return POINT({rect.left,rect.top});}
 POINT_DOUBLE point_double(const POINT&point)
 {return POINT_DOUBLE({(double)point.x,(double)point.y});}
 
-void putlines(ostream&out,const vector<string>&lines)
-{for(const string&line:lines) out<<line<<endl;}
+void putlines(ostream&os,const vector<string>&lines)
+{for(const string&line:lines) os<<line<<endl;}
 
 RECT rect(const POINT&pos,const SIZE&size)
 {return RECT({pos.x,pos.y,pos.x+size.cx,pos.y+size.cy});}

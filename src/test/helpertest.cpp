@@ -2,7 +2,9 @@
 #include"../nagarami.h"
 #include<memory>
 #include"nagaramitest.h"
+#include<string>
 #include<CppUTest/TestHarness.h>
+#include<windows.h>
 
 namespace nm
 {
@@ -63,7 +65,7 @@ TEST(helper,api_error_constructor)
     {
         const auto cp=make_shared<ClearPort>();
         history hist;
-        hist.set(NAMED_ADDRESS(pt().GetLastError),(DWORD)1);
+        hist.setWithResult(NAMED_ADDRESS(pt().GetLastError),(DWORD)1);
         api_error error("hoge");
         CHECK_EQUAL("hoge failed.(1)",string(error.what()));
         CHECK_EQUAL(1,hist.calls().size());
@@ -73,10 +75,85 @@ TEST(helper,api_error_constructor)
 
 TEST(helper,contain_circle)
 {
-    CHECK(contain(POINT({0,0}),SQUARE(1),POINT({1,0})));
-    CHECK_FALSE(contain(POINT({0,0}),SQUARE(1),POINT({1,1})));
-    CHECK(contain(POINT({1,2}),SQUARE(2),POINT({0,1})));
-    CHECK_FALSE(contain(POINT({1,2}),SQUARE(2),POINT({-1,1})));
+    CHECK(contain(POINT({1,2}),SQUARE(1),POINT({2,2})));
+    CHECK_FALSE(contain(POINT({1,2}),SQUARE(1),POINT({2,3})));
+    CHECK(contain(POINT({-2,-4}),SQUARE(2),POINT({-3,-5})));
+    CHECK_FALSE(contain(POINT({-2,-4}),SQUARE(2),POINT({-4,-5})));
+}
+
+TEST(helper,contain_rect)
+{
+    CHECK(contain(RECT({-1,-1,1,1}),POINT({-1,-1})));
+    CHECK_FALSE(contain(RECT({-1,-1,1,1}),POINT({1,1})));
+    CHECK(contain(RECT({-2,-2,2,2}),POINT({1,1})));
+    CHECK_FALSE(contain(RECT({-2,-2,2,2}),POINT({-2,-3})));
+}
+
+TEST(helper,coordinates)
+{
+    CHECK_EQUAL(POINT({1,2}),coordinates(MAKELONG(1,2)));
+    CHECK_EQUAL(POINT({-2,-4}),coordinates(MAKELONG(-2,-4)));
+}
+
+TEST(helper,cursor_pos)
+{
+    {
+        const auto cp=make_shared<ClearPort>();
+        history hist;
+        hist.setWithBody(NAMED_ADDRESS(pt().GetCursorPos),
+        [] (LPPOINT point)->BOOL
+        {
+            *point=POINT({1,2});
+            return TRUE;
+        });
+        hist.setWithBody(NAMED_ADDRESS(pt().ScreenToClient),
+        [] (HWND window,LPPOINT point)->BOOL
+        {
+            *point=POINT({-2,-4});
+            return TRUE;
+        });
+        CHECK_EQUAL(POINT({-2,-4}),cursor_pos((HWND)0x10));
+        CHECK_EQUAL(2,hist.calls().size());
+        CHECK_EQUAL
+        (call("pt().GetCursorPos",POINT({0,0})),hist.calls().at(0));
+        CHECK_EQUAL
+        (
+            call("pt().ScreenToClient",(HWND)0x10,POINT({1,2})),
+            hist.calls().at(1)
+        );
+    }
+}
+
+TEST(helper,desktop_size)
+{
+    {
+        const auto cp=make_shared<ClearPort>();
+        history hist;
+        hist.setWithBody(NAMED_ADDRESS(pt().GetSystemMetrics),
+        [&hist] (int index)->int
+        {return hist.count("pt().GetSystemMetrics");});
+        CHECK_EQUAL(SIZE({1,2}),desktop_size());
+        CHECK_EQUAL(2,hist.calls().size());
+        CHECK_EQUAL
+        (call("pt().GetSystemMetrics",SM_CXSCREEN),hist.calls().at(0));
+        CHECK_EQUAL
+        (call("pt().GetSystemMetrics",SM_CYSCREEN),hist.calls().at(1));
+    }
+}
+
+TEST(helper,floating_point_number)
+{
+    try
+    {
+        floating_point_number("a");
+        FAIL("Do not pass here.");
+    } catch(const shared_ptr<runtime_error>&error)
+    {
+        CHECK_EQUAL
+        ("'a' is an invalid floating-point number.",string(error->what()));
+    }
+    CHECK_EQUAL(1.5,floating_point_number("1.5"));
+    CHECK_EQUAL(-2.25,floating_point_number("-2.25"));
 }
 
 TEST(helper,squared_distance)

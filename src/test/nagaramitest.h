@@ -45,21 +45,15 @@ class history
 public:
     template<class...ARGUMENTS> void set
     (const pair<string,function<void(ARGUMENTS...)>*>&namedFunc);
-    template<class BODY,class...ARGUMENTS> void set
+    template<class BODY,class RESULT,class...ARGUMENTS> void setWithBody
     (
-        const pair<string,function<void(ARGUMENTS...)>*>&namedFunc,
+        const pair<string,function<RESULT(ARGUMENTS...)>*>&namedFunc,
         const BODY&body
     );
-    template<class RESULT,class...ARGUMENTS> void set
+    template<class RESULT,class...ARGUMENTS> void setWithResult
     (
         const pair<string,function<RESULT(ARGUMENTS...)>*>&namedFunc,
         const RESULT&result
-    );
-    template<class BODY,class RESULT,class...ARGUMENTS> void set
-    (
-        const pair<string,function<RESULT(ARGUMENTS...)>*>&namedFunc,
-        const RESULT&result,
-        const BODY&body
     );
 
     const vector<call>&calls() const;
@@ -80,20 +74,22 @@ template<class...ARGUMENTS> void history::set
     {calls_.push_back(call(namedFunc.first,arguments...));};
 }
 
-template<class BODY,class...ARGUMENTS> void history::set
+template<class BODY,class RESULT,class...ARGUMENTS>
+    void history::setWithBody
 (
-    const pair<string,function<void(ARGUMENTS...)>*>&namedFunc,
+    const pair<string,function<RESULT(ARGUMENTS...)>*>&namedFunc,
     const BODY&body
 )
 {
-    *namedFunc.second=[this,namedFunc,body] (ARGUMENTS&&...arguments)
+    *namedFunc.second=
+    [this,namedFunc,body] (ARGUMENTS&&...arguments)->RESULT
     {
         calls_.push_back(call(namedFunc.first,arguments...));
-        body(arguments...);
+        return body(arguments...);
     };
 }
 
-template<class RESULT,class...ARGUMENTS> void history::set
+template<class RESULT,class...ARGUMENTS> void history::setWithResult
 (
     const pair<string,function<RESULT(ARGUMENTS...)>*>&namedFunc,
     const RESULT&result
@@ -103,22 +99,6 @@ template<class RESULT,class...ARGUMENTS> void history::set
     [this,namedFunc,result] (ARGUMENTS&&...arguments)->RESULT
     {
         calls_.push_back(call(namedFunc.first,arguments...));
-        return result;
-    };
-}
-
-template<class BODY,class RESULT,class...ARGUMENTS> void history::set
-(
-    const pair<string,function<RESULT(ARGUMENTS...)>*>&namedFunc,
-    const RESULT&result,
-    const BODY&body
-)
-{
-    *namedFunc.second=
-    [this,namedFunc,result,body] (ARGUMENTS&&...arguments)->RESULT
-    {
-        calls_.push_back(call(namedFunc.first,arguments...));
-        body(arguments...);
         return result;
     };
 }
