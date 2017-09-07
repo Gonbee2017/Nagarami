@@ -124,9 +124,6 @@ POINT operator*(const POINT&lhs,const LONG&rhs)
 SIZE operator*(const SIZE&lhs,const LONG&rhs)
 {return SIZE({lhs.cx*rhs,lhs.cy*rhs});}
 
-POINT operator+(const POINT&lhs,const LONG&rhs)
-{return POINT({lhs.x+rhs,lhs.y+rhs});}
-
 POINT operator+(const POINT&lhs,const POINT&rhs)
 {return POINT({lhs.x+rhs.x,lhs.y+rhs.y});}
 
@@ -196,10 +193,10 @@ POINT point(const POINT_DOUBLE&pointDouble)
 
 POINT point(const SIZE&size) {return POINT({size.cx,size.cy});}
 
-POINT pos(const RECT&rect) {return POINT({rect.left,rect.top});}
-
 POINT_DOUBLE point_double(const POINT&point)
 {return POINT_DOUBLE({(double)point.x,(double)point.y});}
+
+POINT pos(const RECT&rect) {return POINT({rect.left,rect.top});}
 
 void putlines(ostream&os,const vector<string>&lines)
 {for(const string&line:lines) os<<line<<endl;}

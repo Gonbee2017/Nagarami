@@ -78,11 +78,11 @@ vector<string> properties::lines() const
     return result;
 }
 
-void properties::load(const vector<string>&lines)
+void properties::load(const vector<string>&expressions)
 {
-    for(const string&line:lines)
+    for(const string&expression:expressions)
     {
-        const auto nameAndValue=parse(line);
+        const auto nameAndValue=parse(expression);
         set(nameAndValue.first,nameAndValue.second);
     }
 }

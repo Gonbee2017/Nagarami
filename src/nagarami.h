@@ -34,8 +34,10 @@ constexpr COLORREF BLACK_COLOR       =RGB(  0,  0,  0);
 constexpr COLORREF WHITE_COLOR       =RGB(255,255,255);
 
 constexpr LONG  UNIT_LENGTH          =16;
-constexpr LONG  HALF_UNIT_LENGTH     =UNIT_LENGTH/2;
 constexpr SIZE  UNIT_SIZE            =SIZE({UNIT_LENGTH,UNIT_LENGTH});
+constexpr LONG  HALF_UNIT_LENGTH     =UNIT_LENGTH/2;
+constexpr SIZE  HALF_UNIT_SIZE       =
+    SIZE({HALF_UNIT_LENGTH,HALF_UNIT_LENGTH});
 constexpr RECT  UNIT_RECT            =
     RECT({0,0,UNIT_SIZE.cx,UNIT_SIZE.cy});
 constexpr LONG  FRAME_LENGTH         =UNIT_LENGTH;
@@ -379,7 +381,7 @@ struct properties
     void adjust();
     void initialize();
     vector<string> lines() const;
-    void load(const vector<string>&lines);
+    void load(const vector<string>&expressions);
     BYTE alpha;
     COLORREF back_color1;
     COLORREF back_color2;
@@ -635,7 +637,6 @@ bool operator!=(const RECT&lhs,const RECT&rhs);
 bool operator!=(const SIZE&lhs,const SIZE&rhs);
 POINT operator*(const POINT&lhs,const LONG&rhs);
 SIZE operator*(const SIZE&lhs,const LONG&rhs);
-POINT operator+(const POINT&lhs,const LONG&rhs);
 POINT operator+(const POINT&lhs,const POINT&rhs);
 POINT_DOUBLE operator+(const POINT_DOUBLE&lhs,const POINT_DOUBLE&rhs);
 POINT&operator+=(POINT&lhs,const POINT&rhs);

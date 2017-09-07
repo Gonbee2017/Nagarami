@@ -1,5 +1,5 @@
-#ifndef NAGARAMI_TEST_H
-#define NAGARAMI_TEST_H
+#ifndef NAGARAMITEST_H
+#define NAGARAMITEST_H
 
 #include"../nagarami.h"
 #include<cstddef>

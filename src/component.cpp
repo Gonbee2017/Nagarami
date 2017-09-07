@@ -74,7 +74,8 @@ bool Button::hitTest(const POINT&cursorPos)
 {
     return
         contain(rect(pos_,UNIT_SIZE),cursorPos)&&
-        contain(pos_+HALF_UNIT_LENGTH,SQUARE(HALF_UNIT_LENGTH),cursorPos);
+        contain
+        (pos_+point(HALF_UNIT_SIZE),SQUARE(HALF_UNIT_LENGTH),cursorPos);
 }
 
 bool Button::hitTestTool(const POINT&cursorPos)
@@ -458,7 +459,7 @@ bool Slider::hitTestKnob(const POINT&cursorPos)
     return
         contain(rect(knobPos,UNIT_SIZE),cursorPos)&&
         contain
-        (knobPos+HALF_UNIT_LENGTH,SQUARE(HALF_UNIT_LENGTH),cursorPos);
+        (knobPos+point(HALF_UNIT_SIZE),SQUARE(HALF_UNIT_LENGTH),cursorPos);
 }
 
 bool Slider::hitTestText(const POINT&cursorPos)
