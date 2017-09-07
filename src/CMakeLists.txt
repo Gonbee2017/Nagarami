@@ -13,24 +13,25 @@ SET(NAGARAMI_SOURCE_FILES
     systemobject.cpp
     window.cpp
 )
+SET(NAGARAMI_TEST_DIRECTORY test)
 SET(NAGARAMI_TEST_SOURCE_FILES
-    helpertest.cpp
+    ${NAGARAMI_TEST_DIRECTORY}/helpertest.cpp
+    ${NAGARAMI_TEST_DIRECTORY}/nagaramitest.cpp
 )
 
 IF(CMAKE_BUILD_TYPE MATCHES Release)
     SET(CMAKE_EXE_LINKER_FLAGS "-static")
     ADD_EXECUTABLE(Nagarami WIN32
         ${NAGARAMI_SOURCE_FILES}
-        resource.rc
         main.cpp
+        resource.rc
     )
     TARGET_LINK_LIBRARIES(Nagarami WinMM)
 ELSEIF(CMAKE_BUILD_TYPE MATCHES Debug)
     ADD_EXECUTABLE(nagaramitest
         ${NAGARAMI_SOURCE_FILES}
         ${NAGARAMI_TEST_SOURCE_FILES}
-        maintest.cpp
-        nagaramitest.cpp
+        ${NAGARAMI_TEST_DIRECTORY}/maintest.cpp
     )
     TARGET_LINK_LIBRARIES(nagaramitest
         CppUTest
