@@ -39,8 +39,8 @@ TEST(helper,Initializer_constructor)
         function<void()> initialize;
         hist.set(NAMED_ADDRESS(initialize));
         Initializer initializer(initialize);
-        CHECK_EQUAL(1,hist.calls.size());
-        CHECK_EQUAL(call("initialize"),hist.calls.at(0));
+        CHECK_EQUAL(1,hist.calls().size());
+        CHECK_EQUAL(call("initialize"),hist.calls().at(0));
     }
 }
 
@@ -51,10 +51,10 @@ TEST(helper,Finalizer_destructor)
         function<void()> finalize;
         hist.set(NAMED_ADDRESS(finalize));
         auto finalizer=make_shared<Finalizer>(finalize);
-        CHECK_EQUAL(0,hist.calls.size());
+        CHECK_EQUAL(0,hist.calls().size());
         finalizer.reset();
-        CHECK_EQUAL(1,hist.calls.size());
-        CHECK_EQUAL(call("finalize"),hist.calls.at(0));
+        CHECK_EQUAL(1,hist.calls().size());
+        CHECK_EQUAL(call("finalize"),hist.calls().at(0));
     }
 }
 
@@ -63,13 +63,11 @@ TEST(helper,api_error_constructor)
     {
         const auto cp=make_shared<ClearPort>();
         history hist;
-        //const auto nameAndFunc=NAMED_ADDRESS(pt().GetLastError);
-        hist.set(NAMED_ADDRESS((pt().GetLastError)),(DWORD)1);
-        //hist.set(nameAndFunc,(DWORD)1);
+        hist.set(NAMED_ADDRESS(pt().GetLastError),(DWORD)1);
         api_error error("hoge");
         CHECK_EQUAL("hoge failed.(1)",string(error.what()));
-        CHECK_EQUAL(1,hist.calls.size());
-        CHECK_EQUAL(call("pt().GetLastError"),hist.calls.at(0));
+        CHECK_EQUAL(1,hist.calls().size());
+        CHECK_EQUAL(call("pt().GetLastError"),hist.calls().at(0));
     }
 }
 

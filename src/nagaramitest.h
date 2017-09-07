@@ -15,7 +15,7 @@
 #define DEBUG_PRINT(x) cout<<#x<<":'"<<(x)<<"'"<<endl
 #define DEBUG_PRINTF(x,...)\
     cout<<#x<<":'"<<describe(__VA_ARGS__,(x))<<"'"<<endl
-#define NAMED_ADDRESS(x) (make_pair(string(#x),&x))
+#define NAMED_ADDRESS(x) (make_pair(string(#x),&(x)))
 
 namespace nm
 {
@@ -30,6 +30,7 @@ public:
     template<class...ARGUMENTS>
         call(const string&name,ARGUMENTS&&...arguments);
 
+    call(const string&name);
     string arguments() const;
     string name() const;
     bool operator!=(const call&rhs) const;
@@ -62,21 +63,22 @@ public:
         const BODY&body
     );
 
+    const vector<call>&calls() const;
     size_t count(const string&callName) const;
-    vector<call> calls;
+protected:vector<call> calls_;
 };
 
 template<class VALUE> SimpleString StringFrom(const VALUE&value);
 
 template<class...ARGUMENTS>
-    call::call(const string&name_,ARGUMENTS&&...arguments):
-    name_(name_),arguments_(describe_with(",",arguments...)) {}
+    call::call(const string&name,ARGUMENTS&&...arguments):
+    name_(name),arguments_(describe_with(",",arguments...)) {}
 
 template<class...ARGUMENTS> void history::set
 (const pair<string,function<void(ARGUMENTS...)>*>&namedFunc)
 {
-    *namedFunc.second=[this,&namedFunc] (ARGUMENTS&&...arguments)
-    {calls.push_back(call(namedFunc.first,arguments...));};
+    *namedFunc.second=[this,namedFunc] (ARGUMENTS&&...arguments)
+    {calls_.push_back(call(namedFunc.first,arguments...));};
 }
 
 template<class BODY,class...ARGUMENTS> void history::set
@@ -85,10 +87,9 @@ template<class BODY,class...ARGUMENTS> void history::set
     const BODY&body
 )
 {
-    *namedFunc.second=
-    [this,&namedFunc,&body] (ARGUMENTS&&...arguments)
+    *namedFunc.second=[this,namedFunc,body] (ARGUMENTS&&...arguments)
     {
-        calls.push_back(call(namedFunc.first,arguments...));
+        calls_.push_back(call(namedFunc.first,arguments...));
         body(arguments...);
     };
 }
@@ -100,9 +101,9 @@ template<class RESULT,class...ARGUMENTS> void history::set
 )
 {
     *namedFunc.second=
-    [this,&namedFunc,&result] (ARGUMENTS&&...arguments)->RESULT
+    [this,namedFunc,result] (ARGUMENTS&&...arguments)->RESULT
     {
-        calls.push_back(call(namedFunc.first,arguments...));
+        calls_.push_back(call(namedFunc.first,arguments...));
         return result;
     };
 }
@@ -115,9 +116,9 @@ template<class BODY,class RESULT,class...ARGUMENTS> void history::set
 )
 {
     *namedFunc.second=
-    [this,&namedFunc,&result,&body] (ARGUMENTS&&...arguments)->RESULT
+    [this,namedFunc,result,body] (ARGUMENTS&&...arguments)->RESULT
     {
-        calls.push_back(call(namedFunc.first,arguments...));
+        calls_.push_back(call(namedFunc.first,arguments...));
         body(arguments...);
         return result;
     };

@@ -99,7 +99,7 @@ void properties::set(const string&name,const string&value)
             "alpha",
             [this] (const string&value)
             {
-                ignore_exception([this,&value]
+                ignore_exception([this,value]
                 {alpha=integer(value);});
             }
         },
@@ -107,7 +107,7 @@ void properties::set(const string&name,const string&value)
             "back_color1",
             [this] (const string&value)
             {
-                ignore_exception([this,&value]
+                ignore_exception([this,value]
                 {back_color1=integer(value);});
             }
         },
@@ -115,7 +115,7 @@ void properties::set(const string&name,const string&value)
             "back_color2",
             [this] (const string&value)
             {
-                ignore_exception([this,&value]
+                ignore_exception([this,value]
                 {back_color2=integer(value);});
             }
         },
@@ -123,7 +123,7 @@ void properties::set(const string&name,const string&value)
             "component_color1",
             [this] (const string&value)
             {
-                ignore_exception([this,&value]
+                ignore_exception([this,value]
                 {component_color1=integer(value);});
             }
         },
@@ -131,7 +131,7 @@ void properties::set(const string&name,const string&value)
             "component_color2",
             [this] (const string&value)
             {
-                ignore_exception([this,&value]
+                ignore_exception([this,value]
                 {component_color2=integer(value);});
             }
         },
@@ -139,7 +139,7 @@ void properties::set(const string&name,const string&value)
             "control_mode_alt",
             [this] (const string&value)
             {
-                ignore_exception([this,&value]
+                ignore_exception([this,value]
                 {control_mode_alt=integer(value);});
             }
         },
@@ -147,7 +147,7 @@ void properties::set(const string&name,const string&value)
             "control_mode_ctrl",
             [this] (const string&value)
             {
-                ignore_exception([this,&value]
+                ignore_exception([this,value]
                 {control_mode_ctrl=integer(value);});
             }
         },
@@ -155,7 +155,7 @@ void properties::set(const string&name,const string&value)
             "control_mode_shift",
             [this] (const string&value)
             {
-                ignore_exception([this,&value]
+                ignore_exception([this,value]
                 {control_mode_shift=integer(value);});
             }
         },
@@ -163,7 +163,7 @@ void properties::set(const string&name,const string&value)
             "fps",
             [this] (const string&value)
             {
-                ignore_exception([this,&value]
+                ignore_exception([this,value]
                 {fps=integer(value);});
             }
         },
@@ -171,7 +171,7 @@ void properties::set(const string&name,const string&value)
             "halftone",
             [this] (const string&value)
             {
-                ignore_exception([this,&value]
+                ignore_exception([this,value]
                 {halftone=integer(value);});
             }
         },
@@ -179,7 +179,7 @@ void properties::set(const string&name,const string&value)
             "hole",
             [this] (const string&value)
             {
-                ignore_exception([this,&value]
+                ignore_exception([this,value]
                 {hole=integer(value);});
             }
         },
@@ -187,7 +187,7 @@ void properties::set(const string&name,const string&value)
             "scale",
             [this] (const string&value)
             {
-                ignore_exception([this,&value]
+                ignore_exception([this,value]
                 {scale=integer(value);});
             }
         },
@@ -195,7 +195,7 @@ void properties::set(const string&name,const string&value)
             "view_base.x",
             [this] (const string&value)
             {
-                ignore_exception([this,&value]
+                ignore_exception([this,value]
                 {view_base.x=floating_point_number(value);});
             }
         },
@@ -203,7 +203,7 @@ void properties::set(const string&name,const string&value)
             "view_base.y",
             [this] (const string&value)
             {
-                ignore_exception([this,&value]
+                ignore_exception([this,value]
                 {view_base.y=floating_point_number(value);});
             }
         },
@@ -211,7 +211,7 @@ void properties::set(const string&name,const string&value)
             "window_pos.x",
             [this] (const string&value)
             {
-                ignore_exception([this,&value]
+                ignore_exception([this,value]
                 {window_pos.x=integer(value);});
             }
         },
@@ -219,7 +219,7 @@ void properties::set(const string&name,const string&value)
             "window_pos.y",
             [this] (const string&value)
             {
-                ignore_exception([this,&value]
+                ignore_exception([this,value]
                 {window_pos.y=integer(value);});
             }
         },
@@ -227,7 +227,7 @@ void properties::set(const string&name,const string&value)
             "window_size.cx",
             [this] (const string&value)
             {
-                ignore_exception([this,&value]
+                ignore_exception([this,value]
                 {window_size.cx=integer(value);});
             }
         },
@@ -235,7 +235,7 @@ void properties::set(const string&name,const string&value)
             "window_size.cy",
             [this] (const string&value)
             {
-                ignore_exception([this,&value]
+                ignore_exception([this,value]
                 {window_size.cy=integer(value);});
             }
         },

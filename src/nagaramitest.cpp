@@ -6,6 +6,8 @@ namespace nm
 
 ClearPort::ClearPort():Finalizer([] {pt().clear();}) {}
 
+call::call(const string&name):name_(name) {}
+
 string call::arguments() const {return arguments_;}
 
 string call::name() const {return name_;}
@@ -23,12 +25,14 @@ ostream&operator<<(ostream&os,const call&call_)
     return os<<oss.str();
 }
 
+const vector<call>&history::calls() const {return calls_;}
+
 size_t history::count(const string&name) const
 {
     return count_if
     (
-        calls.begin(),
-        calls.end(),
+        calls_.begin(),
+        calls_.end(),
         [&name] (const call&call_)->bool {return call_.name()==name;}
     );
 }
