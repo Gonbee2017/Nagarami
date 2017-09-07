@@ -376,11 +376,10 @@ protected:
 
 struct properties
 {
-    template<class INPUT> void load(INPUT begin,INPUT end);
-
     void adjust();
     void initialize();
     vector<string> lines() const;
+    void load(const vector<string>&lines);
     BYTE alpha;
     COLORREF back_color1;
     COLORREF back_color2;
@@ -902,17 +901,6 @@ template<class...ARGUMENTS> string describe_with
     ostringstream oss;
     describe_to_with(oss,separator,arguments...);
     return oss.str();
-}
-
-//---- execute template definition ----
-
-template<class INPUT> void properties::load(INPUT begin,INPUT end)
-{
-    for(INPUT it=begin;it!=end;it++)
-    {
-        const auto nameAndValue=parse(*it);
-        set(nameAndValue.first,nameAndValue.second);
-    }
 }
 
 }

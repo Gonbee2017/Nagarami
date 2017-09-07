@@ -78,6 +78,15 @@ vector<string> properties::lines() const
     return result;
 }
 
+void properties::load(const vector<string>&lines)
+{
+    for(const string&line:lines)
+    {
+        const auto nameAndValue=parse(line);
+        set(nameAndValue.first,nameAndValue.second);
+    }
+}
+
 pair<string,string> properties::parse(const string&expression)
 {
     const string::size_type pos=expression.find('=');
@@ -383,13 +392,8 @@ int execute
     {
         ct().initialize(instance);
         auto psIS=pt().input_file(psFile,ios_base::in);
-        if(*psIS)
-        {
-            auto lines=getlines(*psIS);
-            ct().ps.load(lines.begin(),lines.end());
-        }
-        auto arguments=tokenize(commandLine," ");
-        ct().ps.load(arguments.begin(),arguments.end());
+        if(*psIS) ct().ps.load(getlines(*psIS));
+        ct().ps.load(tokenize(commandLine," "));
         ct().ps.adjust();
         auto main_window=make_shared<MainWindow>();
         pt().ShowWindow(main_window->handle(),commandShow);
