@@ -6,8 +6,6 @@ namespace nm
 
 ClearPort::ClearPort():Finalizer([] {pt().clear();}) {}
 
-call::call(const string&name):name_(name) {}
-
 string call::arguments() const {return arguments_;}
 
 string call::name() const {return name_;}

@@ -30,7 +30,6 @@ public:
     template<class...ARGUMENTS>
         call(const string&name,ARGUMENTS&&...arguments);
 
-    call(const string&name);
     string arguments() const;
     string name() const;
     bool operator!=(const call&rhs) const;
