@@ -134,7 +134,6 @@ SIZE desktop_size();
 double floating_point_number(const string&str);
 vector<string> getlines(istream&in);
 LONG height(const RECT&rect);
-void ignore_exception(const function<void()>&procedure);
 shared_ptr<istream> input_file
 (const string&name,const ios_base::openmode&mode);
 long integer(const string&str);

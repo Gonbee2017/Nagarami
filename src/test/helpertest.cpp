@@ -71,4 +71,18 @@ TEST(helper,api_error_constructor)
     }
 }
 
+TEST(helper,contain_circle)
+{
+    CHECK(contain(POINT({0,0}),SQUARE(1),POINT({1,0})));
+    CHECK_FALSE(contain(POINT({0,0}),SQUARE(1),POINT({1,1})));
+    CHECK(contain(POINT({1,2}),SQUARE(2),POINT({0,1})));
+    CHECK_FALSE(contain(POINT({1,2}),SQUARE(2),POINT({-1,1})));
+}
+
+TEST(helper,squared_distance)
+{
+    CHECK_EQUAL(9,squared_distance(POINT({0,1}),POINT({0,-2})));
+    CHECK_EQUAL(45,squared_distance(POINT({-2,-3}),POINT({4,-6})));
+}
+
 }

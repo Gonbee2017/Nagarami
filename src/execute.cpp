@@ -98,146 +98,92 @@ void properties::set(const string&name,const string&value)
         {
             "alpha",
             [this] (const string&value)
-            {
-                ignore_exception([this,value]
-                {alpha=integer(value);});
-            }
+            {try {alpha=integer(value);} catch(...) {}}
         },
         {
             "back_color1",
             [this] (const string&value)
-            {
-                ignore_exception([this,value]
-                {back_color1=integer(value);});
-            }
+            {try {back_color1=integer(value);} catch(...) {}}
         },
         {
             "back_color2",
             [this] (const string&value)
-            {
-                ignore_exception([this,value]
-                {back_color2=integer(value);});
-            }
+            {try {back_color2=integer(value);} catch(...) {}}
         },
         {
             "component_color1",
             [this] (const string&value)
-            {
-                ignore_exception([this,value]
-                {component_color1=integer(value);});
-            }
+            {try {component_color1=integer(value);} catch(...) {}}
         },
         {
             "component_color2",
             [this] (const string&value)
-            {
-                ignore_exception([this,value]
-                {component_color2=integer(value);});
-            }
+            {try {component_color2=integer(value);} catch(...) {}}
         },
         {
             "control_mode_alt",
             [this] (const string&value)
-            {
-                ignore_exception([this,value]
-                {control_mode_alt=integer(value);});
-            }
+            {try {control_mode_alt=integer(value);} catch(...) {}}
         },
         {
             "control_mode_ctrl",
             [this] (const string&value)
-            {
-                ignore_exception([this,value]
-                {control_mode_ctrl=integer(value);});
-            }
+            {try {control_mode_ctrl=integer(value);} catch(...) {}}
         },
         {
             "control_mode_shift",
             [this] (const string&value)
-            {
-                ignore_exception([this,value]
-                {control_mode_shift=integer(value);});
-            }
+            {try {control_mode_shift=integer(value);} catch(...) {}}
         },
         {
             "fps",
             [this] (const string&value)
-            {
-                ignore_exception([this,value]
-                {fps=integer(value);});
-            }
+            {try {fps=integer(value);} catch(...) {}}
         },
         {
             "halftone",
             [this] (const string&value)
-            {
-                ignore_exception([this,value]
-                {halftone=integer(value);});
-            }
+            {try {halftone=integer(value);} catch(...) {}}
         },
         {
             "hole",
             [this] (const string&value)
-            {
-                ignore_exception([this,value]
-                {hole=integer(value);});
-            }
+            {try {hole=integer(value);} catch(...) {}}
         },
         {
             "scale",
             [this] (const string&value)
-            {
-                ignore_exception([this,value]
-                {scale=integer(value);});
-            }
+            {try {scale=integer(value);} catch(...) {}}
         },
         {
             "view_base.x",
             [this] (const string&value)
-            {
-                ignore_exception([this,value]
-                {view_base.x=floating_point_number(value);});
-            }
+            {try {view_base.x=floating_point_number(value);} catch(...) {}}
         },
         {
             "view_base.y",
             [this] (const string&value)
-            {
-                ignore_exception([this,value]
-                {view_base.y=floating_point_number(value);});
-            }
+            {try {view_base.y=floating_point_number(value);} catch(...) {}}
         },
         {
             "window_pos.x",
             [this] (const string&value)
-            {
-                ignore_exception([this,value]
-                {window_pos.x=integer(value);});
-            }
+            {try {window_pos.x=integer(value);} catch(...) {}}
         },
         {
             "window_pos.y",
             [this] (const string&value)
-            {
-                ignore_exception([this,value]
-                {window_pos.y=integer(value);});
-            }
+            {try {window_pos.y=integer(value);} catch(...) {}}
         },
         {
             "window_size.cx",
             [this] (const string&value)
-            {
-                ignore_exception([this,value]
-                {window_size.cx=integer(value);});
-            }
+            {try {window_size.cx=integer(value);} catch(...) {}}
         },
         {
             "window_size.cy",
             [this] (const string&value)
-            {
-                ignore_exception([this,value]
-                {window_size.cy=integer(value);});
-            }
+            {try {window_size.cy=integer(value);} catch(...) {}}
         },
     };
     if(setPropertyMap.find(name)!=setPropertyMap.end())

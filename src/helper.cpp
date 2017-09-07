@@ -26,7 +26,7 @@ api_error::api_error(const string&name):
     runtime_error(describe(name," failed.(",pt().GetLastError(),")")) {}
 
 bool contain(const POINT&center,const LONG&squaredRadius,const POINT&pos)
-{return squared_distance(pos,center)<=squaredRadius;}
+{return squared_distance(center,pos)<=squaredRadius;}
 
 bool contain(const RECT&rect,const POINT&pos)
 {
@@ -85,9 +85,6 @@ vector<string> getlines(istream&in)
 }
 
 LONG height(const RECT&rect) {return rect.bottom-rect.top;}
-
-void ignore_exception(const function<void()>&procedure)
-{try{procedure();} catch(...) {}}
 
 shared_ptr<istream> input_file
 (const string&name,const ios_base::openmode&mode)
