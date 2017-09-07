@@ -1,6 +1,8 @@
 #include"nagarami.h"
 #include<windows.h>
 
+using namespace nm;
+
 int WINAPI WinMain
 (
     HINSTANCE instance,
@@ -9,6 +11,6 @@ int WINAPI WinMain
     int commandShow
 )
 {
-    nm::import();
-    return nm::execute(instance,previousInstance,commandLine,commandShow);
+    pt().import();
+    return execute(instance,previousInstance,commandLine,commandShow);
 }

@@ -1,5 +1,7 @@
 #include<cmath>
 #include<cstdlib>
+#include<fstream>
+#include<ios>
 #include<istream>
 #include<memory>
 #include"nagarami.h"
@@ -84,8 +86,12 @@ vector<string> getlines(istream&in)
 
 LONG height(const RECT&rect) {return rect.bottom-rect.top;}
 
-void ignore_exception(const function<void()>&proc)
-{try{proc();} catch(...) {}}
+void ignore_exception(const function<void()>&procedure)
+{try{procedure();} catch(...) {}}
+
+shared_ptr<istream> input_file
+(const string&name,const ios_base::openmode&mode)
+{return make_shared<ifstream>(name,mode);}
 
 long integer(const string&str)
 {
@@ -128,11 +134,12 @@ POINT operator-(const POINT&point) {return POINT({-point.x,-point.y});}
 POINT operator-(const POINT&lhs,const POINT&rhs)
 {return POINT({lhs.x-rhs.x,lhs.y-rhs.y});}
 
-SIZE operator-(const SIZE&lhs,const LONG&rhs)
-{return SIZE({lhs.cx-rhs,lhs.cy-rhs});}
-
 SIZE operator-(const SIZE&lhs,const SIZE&rhs)
 {return SIZE({lhs.cx-rhs.cx,lhs.cy-rhs.cy});}
+
+shared_ptr<ostream> output_file
+(const string&name,const ios_base::openmode&mode)
+{return make_shared<ofstream>(name,mode);}
 
 POINT point(const POINT_DOUBLE&pointDouble)
 {return POINT({(LONG)round(pointDouble.x),(LONG)round(pointDouble.y)});}

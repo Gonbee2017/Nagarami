@@ -33,21 +33,19 @@ constexpr COLORREF ALMOST_BLACK_COLOR=RGB(  1,  1,  1);
 constexpr COLORREF BLACK_COLOR       =RGB(  0,  0,  0);
 constexpr COLORREF WHITE_COLOR       =RGB(255,255,255);
 
-constexpr LONG  UNIT_LENGTH             =16;
-constexpr LONG  HALF_UNIT_LENGTH        =UNIT_LENGTH/2;
-constexpr SIZE  UNIT_SIZE               =SIZE({UNIT_LENGTH,UNIT_LENGTH});
-constexpr RECT  UNIT_RECT               =
-    RECT({0,0,UNIT_SIZE.cx,UNIT_SIZE.cy});
-constexpr LONG  FRAME_LENGTH            =UNIT_LENGTH;
-constexpr LONG  MINIMUM_WINDOW_WIDTH    =UNIT_LENGTH*8+FRAME_LENGTH*2;
-constexpr LONG  MINIMUM_WINDOW_HEIGHT   =UNIT_LENGTH*4+FRAME_LENGTH*2;
-constexpr SIZE  MINIMUM_WINDOW_SIZE     =
+constexpr LONG UNIT_LENGTH          =16;
+constexpr LONG HALF_UNIT_LENGTH     =UNIT_LENGTH/2;
+constexpr SIZE UNIT_SIZE            =SIZE({UNIT_LENGTH,UNIT_LENGTH});
+constexpr RECT UNIT_RECT            =RECT({0,0,UNIT_SIZE.cx,UNIT_SIZE.cy});
+constexpr LONG FRAME_LENGTH         =UNIT_LENGTH;
+constexpr LONG MINIMUM_WINDOW_WIDTH =UNIT_LENGTH*8+FRAME_LENGTH*2;
+constexpr LONG MINIMUM_WINDOW_HEIGHT=UNIT_LENGTH*4+FRAME_LENGTH*2;
+constexpr SIZE MINIMUM_WINDOW_SIZE  =
     SIZE({MINIMUM_WINDOW_WIDTH,MINIMUM_WINDOW_HEIGHT});
-constexpr LONG  SLIDER_BAR_WIDTH        =UNIT_LENGTH/4;
-constexpr LONG  HALF_SLIDER_BAR_WIDTH   =SLIDER_BAR_WIDTH/2;
-constexpr LONG  SLIDER_TEXT_WIDTH       =UNIT_LENGTH*2;
-constexpr SIZE  SLIDER_TEXT_SIZE        =
-    SIZE({SLIDER_TEXT_WIDTH,UNIT_LENGTH});
+constexpr LONG SLIDER_BAR_WIDTH     =UNIT_LENGTH/4;
+constexpr LONG HALF_SLIDER_BAR_WIDTH=SLIDER_BAR_WIDTH/2;
+constexpr LONG SLIDER_TEXT_WIDTH    =UNIT_LENGTH*2;
+constexpr SIZE SLIDER_TEXT_SIZE     =SIZE({SLIDER_TEXT_WIDTH,UNIT_LENGTH});
 
 constexpr POINT ALPHA_SLIDER_CELL_POS     =POINT({ 0,-1});
 constexpr POINT CLOSE_BUTTON_CELL_POS     =POINT({-1, 0});
@@ -111,10 +109,15 @@ class api_error:public runtime_error
 
 template<class OBJECT,class RESULT,class...ARGUMENTS>
     function<RESULT(ARGUMENTS...arguments)> bind_object
+(RESULT(OBJECT::*member)(ARGUMENTS...arguments) const,const OBJECT*object);
+template<class OBJECT,class RESULT,class...ARGUMENTS>
+    function<RESULT(ARGUMENTS...arguments)> bind_object
 (RESULT(OBJECT::*member)(ARGUMENTS...arguments),OBJECT*object);
 template<class...ARGUMENTS> string describe(ARGUMENTS&&...arguments);
 template<class LEAD,class...TRAILER> void describe_to_with
 (ostream&os,const string&separator,LEAD&lead,TRAILER&&...trailer);
+template<class ARGUMENT> void describe_to_with
+(ostream&os,const string&separator,const ARGUMENT&argument);
 template<class ARGUMENT> void describe_to_with
 (ostream&os,const string&separator,ARGUMENT&argument);
 template<class...ARGUMENTS> string describe_with
@@ -131,7 +134,9 @@ SIZE desktop_size();
 double floating_point_number(const string&str);
 vector<string> getlines(istream&in);
 LONG height(const RECT&rect);
-void ignore_exception(const function<void()>&proc);
+void ignore_exception(const function<void()>&procedure);
+shared_ptr<istream> input_file
+(const string&name,const ios_base::openmode&mode);
 long integer(const string&str);
 POINT operator*(const POINT&lhs,const LONG&rhs);
 SIZE operator*(const SIZE&lhs,const LONG&rhs);
@@ -144,8 +149,9 @@ POINT operator/(const POINT&lhs,const LONG&rhs);
 SIZE operator/(const SIZE&lhs,const LONG&rhs);
 POINT operator-(const POINT&point);
 POINT operator-(const POINT&lhs,const POINT&rhs);
-SIZE operator-(const SIZE&lhs,const LONG&rhs);
 SIZE operator-(const SIZE&lhs,const SIZE&rhs);
+shared_ptr<ostream> output_file
+(const string&name,const ios_base::openmode&mode);
 POINT point(const POINT_DOUBLE&pointDouble);
 POINT point(const SIZE&size);
 POINT_DOUBLE point_double(const POINT&point);
@@ -177,6 +183,27 @@ public:
 protected:HGDIOBJ handle_;
 };
 
+class Buffer
+{
+public:
+    HBITMAP bitmap();
+    static shared_ptr<Buffer> create(const SIZE&size,HDC destDC);
+    HDC dc();
+    static shared_ptr<Buffer> load
+    (HINSTANCE instance,LPCTSTR name,HDC destDC);
+    const SIZE&size();
+protected:
+    Buffer
+    (
+        const shared_ptr<DeleteObject>&bitmap,
+        const shared_ptr<DeleteDC>&dc,
+        const SIZE&size
+    );
+    shared_ptr<DeleteObject> bitmap_;
+    shared_ptr<DeleteDC> dc_;
+    SIZE size_;
+};
+
 class EndPaint:public Finalizer
 {
 public:
@@ -201,7 +228,7 @@ class Timer
 {
 public:Timer(UINT delay,HWND dest);
 protected:
-    static void CALLBACK proc
+    static void CALLBACK procedure
     (
         UINT timerID,
         UINT message,
@@ -215,34 +242,13 @@ protected:
     static UINT period_;
 };
 
-class Buffer
-{
-public:
-    HBITMAP bitmap();
-    static shared_ptr<Buffer> create(const SIZE&size,HDC destDC);
-    HDC dc();
-    static shared_ptr<Buffer> load
-    (HINSTANCE instance,LPCTSTR name,HDC destDC);
-    const SIZE&size();
-protected:
-    Buffer
-    (
-        const shared_ptr<DeleteObject>&bitmap,
-        const shared_ptr<DeleteDC>&dc,
-        const SIZE&size
-    );
-    shared_ptr<DeleteObject> bitmap_;
-    shared_ptr<DeleteDC> dc_;
-    SIZE size_;
-};
-
 shared_ptr<TimeEndPeriod> timeBeginPeriod(UINT period);
 void timeGetDevCaps(LPTIMECAPS caps,UINT sizeOfCaps);
 shared_ptr<TimeKillEvent> timeSetEvent
 (
     UINT delay,
     UINT resolution,
-    LPTIMECALLBACK proc,
+    LPTIMECALLBACK procedure,
     DWORD user,
     UINT event
 );
@@ -416,7 +422,7 @@ protected:
     Window();
     LRESULT onReceive
     (HWND handle,UINT message,WPARAM wParam,LPARAM lParam);
-    static LRESULT CALLBACK proc
+    static LRESULT CALLBACK procedure
     (HWND handle,UINT message,WPARAM wParam,LPARAM lParam);
     HWND handle_;
     map<UINT,function<LRESULT(UINT message,WPARAM wParam,LPARAM lParam)>>
@@ -546,6 +552,8 @@ struct context
 
 struct port
 {
+    void clear();
+    void import();
     function<HDC(HWND window,PAINTSTRUCT*paint)> BeginPaint;
     function<BOOL
     (
@@ -682,7 +690,7 @@ struct port
     (
         UINT delay,
         UINT resolution,
-        LPTIMECALLBACK proc,
+        LPTIMECALLBACK procedure,
         DWORD user,
         UINT event
     )> timeSetEvent;
@@ -698,14 +706,6 @@ int execute
     int commandShow
 );
 port&pt();
-
-//---- import declaration ----
-
-void import();
-shared_ptr<istream> input_file
-(const string&name,const ios_base::openmode&mode);
-shared_ptr<ostream> output_file
-(const string&name,const ios_base::openmode&mode);
 
 //---- apiwrapper declaration ----
 
@@ -803,9 +803,17 @@ void StretchBlt
 
 template<class OBJECT,class RESULT,class...ARGUMENTS>
     function<RESULT(ARGUMENTS...arguments)> bind_object
+(RESULT(OBJECT::*member)(ARGUMENTS...arguments) const,const OBJECT*object)
+{
+    return [object,member] (ARGUMENTS&&...arguments)->RESULT
+    {return (object->*member)(arguments...);};
+}
+
+template<class OBJECT,class RESULT,class...ARGUMENTS>
+    function<RESULT(ARGUMENTS...arguments)> bind_object
 (RESULT(OBJECT::*member)(ARGUMENTS...arguments),OBJECT*object)
 {
-    return [object,member] (ARGUMENTS...arguments)->RESULT
+    return [object,member] (ARGUMENTS&&...arguments)->RESULT
     {return (object->*member)(arguments...);};
 }
 
@@ -819,6 +827,9 @@ template<class LEAD,class... TRAILER> void describe_to_with
     if(!separator.empty()) os<<separator;
     describe_to_with(os,separator,trailer...);
 }
+
+template<class ARGUMENT> void describe_to_with
+(ostream&os,const string&separator,const ARGUMENT&argument) {os<<argument;}
 
 template<class ARGUMENT> void describe_to_with
 (ostream&os,const string&separator,ARGUMENT&argument) {os<<argument;}

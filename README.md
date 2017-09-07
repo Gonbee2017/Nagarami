@@ -135,5 +135,5 @@ NagaramiはMITライセンスです。
 
 ### <a name="3-2">3-2 フィードバック</a>
 もしバグ、不具合、改善要望などがありましたら
-[Gonbee](<mailto:gonbee2017@outlook.jp>)までメールをください。  
-できる限り対応させていただきます。  
+[gonbee2017@outlook.jp](<mailto:gonbee2017@outlook.jp>)
+までメールをいただければ、できる限り対応させていただきます。  

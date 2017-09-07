@@ -12,13 +12,13 @@ HWND Window::handle() {return handle_;}
 
 Window::Window()
 {
-    static const auto registerClass=make_shared<Initializer>([] ()
+    static const auto registerClass=make_shared<Initializer>([]
     {
         WNDCLASSEX clazz;
         clazz.cbClsExtra=0;
         clazz.cbSize=sizeof(WNDCLASSEX);
         clazz.cbWndExtra=0;
-        clazz.lpfnWndProc=&proc;
+        clazz.lpfnWndProc=&procedure;
         clazz.lpszClassName=TEXT(APPLICATION_NAME);
         clazz.lpszMenuName=NULL;
         clazz.hCursor=NULL;
@@ -56,7 +56,7 @@ LRESULT Window::onReceive
     return result;
 }
 
-LRESULT CALLBACK Window::proc
+LRESULT CALLBACK Window::procedure
 (HWND handle,UINT message,WPARAM wParam,LPARAM lParam)
 {
     LRESULT result;
@@ -264,7 +264,7 @@ LRESULT MainWindow::onNCHitTest
         const RECT captionRect=rect
         (
             POINT({FRAME_LENGTH,FRAME_LENGTH}),
-            ct().ps.window_size-FRAME_LENGTH*2
+            ct().ps.window_size-SIZE({FRAME_LENGTH*2,FRAME_LENGTH*2})
         );
         POINT cursorPos=coordinates(lParam);
         nm::ScreenToClient(handle_,&cursorPos);
@@ -351,13 +351,19 @@ LRESULT MainWindow::onPaint
             min(paint.rcPaint.right,viewEndPos.x),
             min(paint.rcPaint.bottom,viewEndPos.y)
         })-size(destPos);
-        const RECT destRect=nm::rect(destPos,destSize);
+        const RECT destRect=rect(destPos,destSize);
         POINT srcPos=-viewPos*100/ct().ps.scale;
         srcPos.x=max(srcPos.x,(LONG)0);
         srcPos.y=max(srcPos.y,(LONG)0);
         const SIZE srcSize=destSize*100/ct().ps.scale;
         if(destSize.cx>0&&destSize.cy>0&&srcSize.cx>0&&srcSize.cy>0)
         {
+            nm::FillRect
+            (
+                buffer_->dc(),
+                &destRect,
+                (HBRUSH)ct().almost_black_brush->handle()
+            );
             auto targetDC=nm::GetDC(ct().target);
             nm::StretchBlt
             (
@@ -372,12 +378,6 @@ LRESULT MainWindow::onPaint
                 srcSize.cx,
                 srcSize.cy,
                 SRCCOPY
-            );
-            nm::FillRect
-            (
-                buffer_->dc(),
-                &destRect,
-                (HBRUSH)ct().almost_black_brush->handle()
             );
             nm::BitBlt
             (
@@ -427,12 +427,14 @@ LRESULT MainWindow::onPaint
         0,
         SRCCOPY
     );
-    if(control_mode()&&!alphaSlider_->active())
-        nm::SetLayeredWindowAttributes
-        (handle_,BLACK_COLOR,0,LWA_COLORKEY);
-    else
-        nm::SetLayeredWindowAttributes
-        (handle_,BLACK_COLOR,ct().ps.alpha,LWA_ALPHA|LWA_COLORKEY);
+    BYTE lwaAlpha=0;
+    DWORD lwaFlags=LWA_COLORKEY;
+    if(!control_mode()||alphaSlider_->active())
+    {
+        lwaAlpha=ct().ps.alpha;
+        lwaFlags|=LWA_ALPHA;
+    }
+    nm::SetLayeredWindowAttributes(handle_,BLACK_COLOR,lwaAlpha,lwaFlags);
     return 0;
 }
 

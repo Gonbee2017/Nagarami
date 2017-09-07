@@ -7,32 +7,32 @@ namespace nm
 {
 
 DeleteDC::DeleteDC(HDC handle):
-    Finalizer([handle] () {pt().DeleteDC(handle);}),handle_(handle) {}
+    Finalizer([handle] {pt().DeleteDC(handle);}),handle_(handle) {}
 
 HDC DeleteDC::handle() {return handle_;}
 
 DeleteObject::DeleteObject(HGDIOBJ handle):
-    Finalizer([handle] () {pt().DeleteObject(handle);}),handle_(handle) {}
+    Finalizer([handle] {pt().DeleteObject(handle);}),handle_(handle) {}
 
 HGDIOBJ DeleteObject::handle() {return handle_;}
 
 EndPaint::EndPaint(HWND window,PAINTSTRUCT*paint,HDC handle):
-    Finalizer([window,paint] () {pt().EndPaint(window,paint);}),
+    Finalizer([window,paint] {pt().EndPaint(window,paint);}),
     handle_(handle) {}
 
 HDC EndPaint::handle() {return handle_;}
 
 ReleaseDC::ReleaseDC(HWND window,HDC handle):
-    Finalizer([window,handle] () {pt().ReleaseDC(window,handle);}),
+    Finalizer([window,handle] {pt().ReleaseDC(window,handle);}),
     handle_(handle) {}
 
 HDC ReleaseDC::handle() {return handle_;}
 
 TimeEndPeriod::TimeEndPeriod(UINT period):
-    Finalizer([period] () {pt().timeEndPeriod(period);}) {}
+    Finalizer([period] {pt().timeEndPeriod(period);}) {}
 
 TimeKillEvent::TimeKillEvent(UINT timerID):
-    Finalizer([timerID] () {pt().timeKillEvent(timerID);}) {}
+    Finalizer([timerID] {pt().timeKillEvent(timerID);}) {}
 
 HBITMAP Buffer::bitmap() {return (HBITMAP)bitmap_->handle();}
 
@@ -68,7 +68,7 @@ Buffer::Buffer
 
 Timer::Timer(UINT delay,HWND dest):delay_(delay),dest_(dest)
 {
-    static const auto beginPeriod=make_shared<Initializer>([] ()
+    static const auto beginPeriod=make_shared<Initializer>([]
     {
         TIMECAPS caps;
         nm::timeGetDevCaps(&caps,sizeof(TIMECAPS));
@@ -79,13 +79,13 @@ Timer::Timer(UINT delay,HWND dest):delay_(delay),dest_(dest)
     (
         delay_,
         period_,
-        &proc,
+        &procedure,
         (DWORD)dest_,
         TIME_CALLBACK_FUNCTION|TIME_KILL_SYNCHRONOUS|TIME_PERIODIC
     );
 }
 
-void CALLBACK Timer::proc
+void CALLBACK Timer::procedure
 (
     UINT timerID,
     UINT message,
@@ -115,12 +115,12 @@ shared_ptr<TimeKillEvent> timeSetEvent
 (
     UINT delay,
     UINT resolution,
-    LPTIMECALLBACK proc,
+    LPTIMECALLBACK procedure,
     DWORD user,
     UINT event
 )
 {
-    UINT timer=pt().timeSetEvent(delay,resolution,proc,user,event);
+    UINT timer=pt().timeSetEvent(delay,resolution,procedure,user,event);
     if(timer==0) throw runtime_error(describe("timeSetEvent failed."));
     return make_shared<TimeKillEvent>(timer);
 }

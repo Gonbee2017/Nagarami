@@ -99,7 +99,7 @@ void properties::set(const string&name,const string&value)
             "alpha",
             [this] (const string&value)
             {
-                ignore_exception([this,&value] () 
+                ignore_exception([this,&value]
                 {alpha=integer(value);});
             }
         },
@@ -107,7 +107,7 @@ void properties::set(const string&name,const string&value)
             "back_color1",
             [this] (const string&value)
             {
-                ignore_exception([this,&value] () 
+                ignore_exception([this,&value]
                 {back_color1=integer(value);});
             }
         },
@@ -115,7 +115,7 @@ void properties::set(const string&name,const string&value)
             "back_color2",
             [this] (const string&value)
             {
-                ignore_exception([this,&value] () 
+                ignore_exception([this,&value]
                 {back_color2=integer(value);});
             }
         },
@@ -123,7 +123,7 @@ void properties::set(const string&name,const string&value)
             "component_color1",
             [this] (const string&value)
             {
-                ignore_exception([this,&value] () 
+                ignore_exception([this,&value]
                 {component_color1=integer(value);});
             }
         },
@@ -131,7 +131,7 @@ void properties::set(const string&name,const string&value)
             "component_color2",
             [this] (const string&value)
             {
-                ignore_exception([this,&value] () 
+                ignore_exception([this,&value]
                 {component_color2=integer(value);});
             }
         },
@@ -139,7 +139,7 @@ void properties::set(const string&name,const string&value)
             "control_mode_alt",
             [this] (const string&value)
             {
-                ignore_exception([this,&value] () 
+                ignore_exception([this,&value]
                 {control_mode_alt=integer(value);});
             }
         },
@@ -147,7 +147,7 @@ void properties::set(const string&name,const string&value)
             "control_mode_ctrl",
             [this] (const string&value)
             {
-                ignore_exception([this,&value] () 
+                ignore_exception([this,&value]
                 {control_mode_ctrl=integer(value);});
             }
         },
@@ -155,7 +155,7 @@ void properties::set(const string&name,const string&value)
             "control_mode_shift",
             [this] (const string&value)
             {
-                ignore_exception([this,&value] () 
+                ignore_exception([this,&value]
                 {control_mode_shift=integer(value);});
             }
         },
@@ -163,7 +163,7 @@ void properties::set(const string&name,const string&value)
             "fps",
             [this] (const string&value)
             {
-                ignore_exception([this,&value] () 
+                ignore_exception([this,&value]
                 {fps=integer(value);});
             }
         },
@@ -171,7 +171,7 @@ void properties::set(const string&name,const string&value)
             "halftone",
             [this] (const string&value)
             {
-                ignore_exception([this,&value] () 
+                ignore_exception([this,&value]
                 {halftone=integer(value);});
             }
         },
@@ -179,7 +179,7 @@ void properties::set(const string&name,const string&value)
             "hole",
             [this] (const string&value)
             {
-                ignore_exception([this,&value] () 
+                ignore_exception([this,&value]
                 {hole=integer(value);});
             }
         },
@@ -187,7 +187,7 @@ void properties::set(const string&name,const string&value)
             "scale",
             [this] (const string&value)
             {
-                ignore_exception([this,&value] () 
+                ignore_exception([this,&value]
                 {scale=integer(value);});
             }
         },
@@ -195,7 +195,7 @@ void properties::set(const string&name,const string&value)
             "view_base.x",
             [this] (const string&value)
             {
-                ignore_exception([this,&value] () 
+                ignore_exception([this,&value]
                 {view_base.x=floating_point_number(value);});
             }
         },
@@ -203,7 +203,7 @@ void properties::set(const string&name,const string&value)
             "view_base.y",
             [this] (const string&value)
             {
-                ignore_exception([this,&value] () 
+                ignore_exception([this,&value]
                 {view_base.y=floating_point_number(value);});
             }
         },
@@ -211,7 +211,7 @@ void properties::set(const string&name,const string&value)
             "window_pos.x",
             [this] (const string&value)
             {
-                ignore_exception([this,&value] () 
+                ignore_exception([this,&value]
                 {window_pos.x=integer(value);});
             }
         },
@@ -219,7 +219,7 @@ void properties::set(const string&name,const string&value)
             "window_pos.y",
             [this] (const string&value)
             {
-                ignore_exception([this,&value] () 
+                ignore_exception([this,&value]
                 {window_pos.y=integer(value);});
             }
         },
@@ -227,7 +227,7 @@ void properties::set(const string&name,const string&value)
             "window_size.cx",
             [this] (const string&value)
             {
-                ignore_exception([this,&value] () 
+                ignore_exception([this,&value]
                 {window_size.cx=integer(value);});
             }
         },
@@ -235,7 +235,7 @@ void properties::set(const string&name,const string&value)
             "window_size.cy",
             [this] (const string&value)
             {
-                ignore_exception([this,&value] () 
+                ignore_exception([this,&value]
                 {window_size.cy=integer(value);});
             }
         },
@@ -276,6 +276,136 @@ void context::initialize(HINSTANCE instance)
     this->instance=instance;
     target=NULL;
     white_brush=nm::CreateSolidBrush(WHITE_COLOR);
+}
+
+void port::clear()
+{
+    BeginPaint=nullptr;
+    BitBlt=nullptr;
+    CreateCompatibleBitmap=nullptr;
+    CreateCompatibleDC=nullptr;
+    CreateFont=nullptr;
+    CreatePatternBrush=nullptr;
+    CreatePen=nullptr;
+    CreateSolidBrush=nullptr;
+    CreateWindowEx=nullptr;
+    DefWindowProc=nullptr;
+    DeleteDC=nullptr;
+    DeleteObject=nullptr;
+    DestroyWindow=nullptr;
+    DispatchMessage=nullptr;
+    DrawText=nullptr;
+    Ellipse=nullptr;
+    EndPaint=nullptr;
+    FillRect=nullptr;
+    GetClientRect=nullptr;
+    GetCursorPos=nullptr;
+    GetDC=nullptr;
+    GetForegroundWindow=nullptr;
+    GetKeyState=nullptr;
+    GetLastError=nullptr;
+    GetMessage=nullptr;
+    GetObject=nullptr;
+    GetSystemMetrics=nullptr;
+    GetWindowPlacement=nullptr;
+    IsIconic=nullptr;
+    IsWindow=nullptr;
+    IsWindowVisible=nullptr;
+    IsZoomed=nullptr;
+    LoadBitmap=nullptr;
+    LoadCursor=nullptr;
+    MessageBox=nullptr;
+    PostQuitMessage=nullptr;
+    RedrawWindow=nullptr;
+    ReleaseDC=nullptr;
+    RegisterClassEx=nullptr;
+    ReleaseCapture=nullptr;
+    ScreenToClient=nullptr;
+    SelectObject=nullptr;
+    SendMessageW=nullptr;
+    SetBkMode=nullptr;
+    SetBrushOrgEx=nullptr;
+    SetCapture=nullptr;
+    SetCursor=nullptr;
+    SetForegroundWindow=nullptr;
+    SetLayeredWindowAttributes=nullptr;
+    SetStretchBltMode=nullptr;
+    SetTextColor=nullptr;
+    ShellExecute=nullptr;
+    ShowWindow=nullptr;
+    StretchBlt=nullptr;
+    input_file=nullptr;
+    output_file=nullptr;
+    timeBeginPeriod=nullptr;
+    timeEndPeriod=nullptr;
+    timeGetDevCaps=nullptr;
+    timeKillEvent=nullptr;
+    timeSetEvent=nullptr;
+}
+
+void port::import()
+{
+    BeginPaint=&::BeginPaint;
+    BitBlt=&::BitBlt;
+    CreateCompatibleBitmap=&::CreateCompatibleBitmap;
+    CreateCompatibleDC=&::CreateCompatibleDC;
+    CreateFont=&::CreateFont;
+    CreatePatternBrush=&::CreatePatternBrush;
+    CreatePen=&::CreatePen;
+    CreateSolidBrush=&::CreateSolidBrush;
+    CreateWindowEx=&::CreateWindowEx;
+    DefWindowProc=&::DefWindowProc;
+    DeleteDC=&::DeleteDC;
+    DeleteObject=&::DeleteObject;
+    DestroyWindow=&::DestroyWindow;
+    DispatchMessage=&::DispatchMessage;
+    DrawText=&::DrawText;
+    Ellipse=&::Ellipse;
+    EndPaint=&::EndPaint;
+    FillRect=&::FillRect;
+    GetClientRect=&::GetClientRect;
+    GetCursorPos=&::GetCursorPos;
+    GetDC=&::GetDC;
+    GetForegroundWindow=&::GetForegroundWindow;
+    GetKeyState=&::GetKeyState;
+    GetLastError=&::GetLastError;
+    GetMessage=&::GetMessage;
+    GetObject=&::GetObject;
+    GetSystemMetrics=&::GetSystemMetrics;
+    GetWindowPlacement=&::GetWindowPlacement;
+    IsIconic=&::IsIconic;
+    IsWindow=&::IsWindow;
+    IsWindowVisible=&::IsWindowVisible;
+    IsZoomed=&::IsZoomed;
+    LoadBitmap=&::LoadBitmap;
+    LoadCursor=&::LoadCursor;
+    MessageBox=&::MessageBox;
+    PostQuitMessage=&::PostQuitMessage;
+    RedrawWindow=&::RedrawWindow;
+    ReleaseDC=&::ReleaseDC;
+    RegisterClassEx=&::RegisterClassEx;
+    ReleaseCapture=&::ReleaseCapture;
+    ScreenToClient=&::ScreenToClient;
+    SelectObject=&::SelectObject;
+    SendMessageW=&::SendMessageW;
+    SetBkMode=&::SetBkMode;
+    SetBrushOrgEx=&::SetBrushOrgEx;
+    SetCapture=&::SetCapture;
+    SetCursor=&::SetCursor;
+    SetForegroundWindow=&::SetForegroundWindow;
+    SetLayeredWindowAttributes=&::SetLayeredWindowAttributes;
+    SetStretchBltMode=&::SetStretchBltMode;
+    SetTextColor=&::SetTextColor;
+    ShellExecute=&::ShellExecute;
+    ShowWindow=&::ShowWindow;
+    StretchBlt=&::StretchBlt;
+    input_file=&nm::input_file;
+    output_file=&nm::output_file;
+    timeBeginPeriod=&::timeBeginPeriod;
+    timeEndPeriod=&::timeEndPeriod;
+    timeGetDevCaps=&::timeGetDevCaps;
+    timeKillEvent=&::timeKillEvent;
+    timeSetEvent=&::timeSetEvent;
 }
 
 context&ct()
