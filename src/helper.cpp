@@ -51,7 +51,8 @@ POINT coordinates(LPARAM lParam)
 
 POINT cursor_pos(HWND window)
 {
-    POINT pos=ZERO_POS;
+    POINT pos;
+    fill(&pos,0);
     nm::GetCursorPos(&pos);
     nm::ScreenToClient(window,&pos);
     return pos;
@@ -148,6 +149,22 @@ POINT operator/(const POINT&lhs,const LONG&rhs)
 
 SIZE operator/(const SIZE&lhs,const LONG&rhs)
 {return SIZE({lhs.cx/rhs,lhs.cy/rhs});}
+
+ostream&operator<<(ostream&os,const PAINTSTRUCT&paint)
+{
+    return os<<describe(
+    "{",
+        describe_with
+        (
+            ",",
+            paint.hdc,
+            paint.fErase,
+            paint.rcPaint,
+            paint.fRestore,
+            paint.fIncUpdate
+        ),
+    "}");
+}
 
 ostream&operator<<(ostream&os,const POINT&point)
 {return os<<describe("{",describe_with(",",point.x,point.y),"}");}

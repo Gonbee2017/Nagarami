@@ -1,6 +1,7 @@
 #ifndef NAGARAMI_H
 #define NAGARAMI_H
 
+#include<cstring>
 #include<functional>
 #include<ios>
 #include<istream>
@@ -51,9 +52,6 @@ constexpr LONG  HALF_SLIDER_BAR_WIDTH=SLIDER_BAR_WIDTH/2;
 constexpr LONG  SLIDER_TEXT_WIDTH    =UNIT_LENGTH*2;
 constexpr SIZE  SLIDER_TEXT_SIZE     =
     SIZE({SLIDER_TEXT_WIDTH,UNIT_LENGTH});
-constexpr POINT ZERO_POS             =POINT({0,0});
-constexpr RECT  ZERO_RECT            =RECT({0,0,0,0});
-constexpr SIZE  ZERO_SIZE            =SIZE({0,0});
 
 constexpr POINT ALPHA_SLIDER_CELL_POS     =POINT({ 0,-1});
 constexpr POINT CLOSE_BUTTON_CELL_POS     =POINT({-1, 0});
@@ -615,6 +613,7 @@ template<class ARGUMENT> void describe_to_with
 (ostream&os,const string&separator,ARGUMENT*argument);
 template<class...ARGUMENTS> string describe_with
 (const string&separator,ARGUMENTS&&...arguments);
+template<class DATA> void fill(DATA*data,const unsigned char&byte);
 template<class FIRST,class SECOND>
     void set(const pair<FIRST,SECOND>&pair_,FIRST*first,SECOND*second);
 
@@ -650,6 +649,7 @@ POINT operator-(const POINT&lhs,const POINT&rhs);
 SIZE operator-(const SIZE&lhs,const SIZE&rhs);
 POINT operator/(const POINT&lhs,const LONG&rhs);
 SIZE operator/(const SIZE&lhs,const LONG&rhs);
+ostream&operator<<(ostream&os,const PAINTSTRUCT&paint);
 ostream&operator<<(ostream&os,const POINT&point);
 ostream&operator<<(ostream&os,const POINT_DOUBLE&point);
 ostream&operator<<(ostream&os,const RECT&rect);
@@ -907,6 +907,9 @@ template<class...ARGUMENTS> string describe_with
     describe_to_with(oss,separator,arguments...);
     return oss.str();
 }
+
+template<class DATA> void fill(DATA*data,const unsigned char&byte)
+{memset(data,byte,sizeof(DATA));}
 
 template<class FIRST,class SECOND>
     void set(const pair<FIRST,SECOND>&pair_,FIRST*first,SECOND*second)
