@@ -72,13 +72,17 @@ TEST(helper,Initializer_constructor)
     }
 }
 
-TEST(helper,api_error_constructor)
+TEST(helper,api_error)
 {
     {
         history hist;
         hist.setWithResult(NAMED_ADDRESS(pt().GetLastError),(DWORD)1);
-        api_error error("hoge");
-        CHECK_EQUAL("hoge failed.(1)",string(error.what()));
+        try
+        {
+            api_error("hoge");
+            FAIL("Do not pass here.");
+        } catch(const shared_ptr<runtime_error>&error)
+        {CHECK_EQUAL("hoge failed.(1)",string(error->what()));}
         CHECK_EQUAL(1,hist.calls().size());
         CHECK_EQUAL(call("pt().GetLastError"),hist.calls().at(0));
     }
@@ -314,6 +318,28 @@ TEST(helper,operator_divide_SIZE_LONG)
 {
     CHECK_EQUAL(SIZE({2,-4}),SIZE({5,-8})/2);
     CHECK_EQUAL(SIZE({-4,7}),SIZE({-13,21})/3);
+}
+
+TEST(helper,operator_output_char_pointer)
+{
+    {
+        ostringstream oss;
+        oss<<"hoge"<<((const char*)nullptr)<<"fuga";
+        CHECK_EQUAL("hogefuga",oss.str());
+    }
+}
+
+TEST(helper,operator_output_PAINTSTRUCT)
+{
+    {
+        ostringstream oss;
+        oss<<
+            PAINTSTRUCT({(HDC)0x10,TRUE,RECT({1,-2,-3,5}),FALSE,TRUE})<<
+            ","<<
+            PAINTSTRUCT({(HDC)0x20,FALSE,RECT({-8,13,21,-34}),TRUE,FALSE});
+        CHECK_EQUAL
+        ("{0x10,1,{1,-2,-3,5},0,1},{0x20,0,{-8,13,21,-34},1,0}",oss.str());
+    }
 }
 
 TEST(helper,operator_output_POINT)

@@ -591,9 +591,6 @@ protected:function<void()> finalize_;
 
 class Initializer {public:Initializer(const function<void()>&initialize);};
 
-class api_error:public runtime_error
-{public:api_error(const string&name);};
-
 template<class OBJECT,class RESULT,class...ARGUMENTS>
     function<RESULT(ARGUMENTS...arguments)> bind_object
 (RESULT(OBJECT::*member)(ARGUMENTS...arguments) const,const OBJECT*object);
@@ -617,16 +614,13 @@ template<class DATA> void fill(DATA*data,const unsigned char&byte);
 template<class FIRST,class SECOND>
     void set(const pair<FIRST,SECOND>&pair_,FIRST*first,SECOND*second);
 
+void api_error(const string&func);
 string chomp(const string&str,const char&ch);
 bool contain(const POINT&center,const LONG&squaredRadius,const POINT&pos);
 bool contain(const RECT&rect,const POINT&pos);
 POINT coordinates(LPARAM lParam);
 POINT cursor_pos(HWND window);
 void describe_to_with(ostream&os,const string&separator);
-void describe_to_with
-(ostream&os,const string&separator,const char*str);
-void describe_to_with
-(ostream&os,const string&separator,LPPOINT point);
 SIZE desktop_size();
 double floating_point_number(const string&str);
 vector<string> getlines(istream&is);
@@ -649,8 +643,11 @@ POINT operator-(const POINT&lhs,const POINT&rhs);
 SIZE operator-(const SIZE&lhs,const SIZE&rhs);
 POINT operator/(const POINT&lhs,const LONG&rhs);
 SIZE operator/(const SIZE&lhs,const LONG&rhs);
+ostream&operator<<(ostream&os,const char*ascii);
 ostream&operator<<(ostream&os,const PAINTSTRUCT&paint);
+ostream&operator<<(ostream&os,const PAINTSTRUCT*paint);
 ostream&operator<<(ostream&os,const POINT&point);
+ostream&operator<<(ostream&os,const POINT*point);
 ostream&operator<<(ostream&os,const POINT_DOUBLE&point);
 ostream&operator<<(ostream&os,const RECT&rect);
 ostream&operator<<(ostream&os,const SIZE&size);
@@ -885,20 +882,10 @@ template<class ARGUMENT> void describe_to_with
 (ostream&os,const string&separator,ARGUMENT&argument) {os<<argument;}
 
 template<class ARGUMENT> void describe_to_with
-(ostream&os,const string&separator,const ARGUMENT*argument)
-{
-    ostringstream oss;
-    oss<<hex<<showbase<<(unsigned int)argument;
-    os<<oss.str();
-}
+(ostream&os,const string&separator,const ARGUMENT*argument) {os<<argument;}
 
 template<class ARGUMENT> void describe_to_with
-(ostream&os,const string&separator,ARGUMENT*argument)
-{
-    ostringstream oss;
-    oss<<hex<<showbase<<(unsigned int)argument;
-    os<<oss.str();
-}
+(ostream&os,const string&separator,ARGUMENT*argument) {os<<argument;}
 
 template<class...ARGUMENTS> string describe_with
 (const string&separator,ARGUMENTS&&...arguments)
