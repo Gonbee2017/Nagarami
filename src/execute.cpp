@@ -13,6 +13,47 @@
 
 namespace nm
 {
+
+properties::properties()
+{
+    set_value_map_["alpha"]=[this] (const string&value)
+    {try {alpha=integer(value);} catch(...) {}};
+    set_value_map_["back_color1"]=[this] (const string&value)
+    {try {back_color1=integer(value);} catch(...) {}};
+    set_value_map_["back_color2"]=[this] (const string&value)
+    {try {back_color2=integer(value);} catch(...) {}};
+    set_value_map_["component_color1"]=[this] (const string&value)
+    {try {component_color1=integer(value);} catch(...) {}};
+    set_value_map_["component_color2"]=[this] (const string&value)
+    {try {component_color2=integer(value);} catch(...) {}};
+    set_value_map_["control_mode_alt"]=[this] (const string&value)
+    {try {control_mode_alt=integer(value);} catch(...) {}};
+    set_value_map_["control_mode_ctrl"]=[this] (const string&value)
+    {try {control_mode_ctrl=integer(value);} catch(...) {}};
+    set_value_map_["control_mode_shift"]=[this] (const string&value)
+    {try {control_mode_shift=integer(value);} catch(...) {}};
+    set_value_map_["fps"]=[this] (const string&value)
+    {try {fps=integer(value);} catch(...) {}};
+    set_value_map_["halftone"]=[this] (const string&value)
+    {try {halftone=integer(value);} catch(...) {}};
+    set_value_map_["hole"]=[this] (const string&value)
+    {try {hole=integer(value);} catch(...) {}};
+    set_value_map_["scale"]=[this] (const string&value)
+    {try {scale=integer(value);} catch(...) {}};
+    set_value_map_["view_base.x"]=[this] (const string&value)
+    {try {view_base.x=floating_point_number(value);} catch(...) {}};
+    set_value_map_["view_base.y"]=[this] (const string&value)
+    {try {view_base.y=floating_point_number(value);} catch(...) {}};
+    set_value_map_["window_pos.x"]=[this] (const string&value)
+    {try {window_pos.x=integer(value);} catch(...) {}};
+    set_value_map_["window_pos.y"]=[this] (const string&value)
+    {try {window_pos.y=integer(value);} catch(...) {}};
+    set_value_map_["window_size.cx"]=[this] (const string&value)
+    {try {window_size.cx=integer(value);} catch(...) {}};
+    set_value_map_["window_size.cy"]=[this] (const string&value)
+    {try {window_size.cy=integer(value);} catch(...) {}};
+}
+
 void properties::adjust()
 {
     fps=min(max(fps,(UINT)1),(UINT)60);
@@ -101,102 +142,8 @@ pair<string,string> properties::parse(const string&expression)
 
 void properties::set(const string&name,const string&value)
 {
-    using SET_PROPERTY=function<void(const string&value)>;
-    static const map<string,SET_PROPERTY> setPropertyMap=
-    {
-        {
-            "alpha",
-            [this] (const string&value)
-            {try {alpha=integer(value);} catch(...) {}}
-        },
-        {
-            "back_color1",
-            [this] (const string&value)
-            {try {back_color1=integer(value);} catch(...) {}}
-        },
-        {
-            "back_color2",
-            [this] (const string&value)
-            {try {back_color2=integer(value);} catch(...) {}}
-        },
-        {
-            "component_color1",
-            [this] (const string&value)
-            {try {component_color1=integer(value);} catch(...) {}}
-        },
-        {
-            "component_color2",
-            [this] (const string&value)
-            {try {component_color2=integer(value);} catch(...) {}}
-        },
-        {
-            "control_mode_alt",
-            [this] (const string&value)
-            {try {control_mode_alt=integer(value);} catch(...) {}}
-        },
-        {
-            "control_mode_ctrl",
-            [this] (const string&value)
-            {try {control_mode_ctrl=integer(value);} catch(...) {}}
-        },
-        {
-            "control_mode_shift",
-            [this] (const string&value)
-            {try {control_mode_shift=integer(value);} catch(...) {}}
-        },
-        {
-            "fps",
-            [this] (const string&value)
-            {try {fps=integer(value);} catch(...) {}}
-        },
-        {
-            "halftone",
-            [this] (const string&value)
-            {try {halftone=integer(value);} catch(...) {}}
-        },
-        {
-            "hole",
-            [this] (const string&value)
-            {try {hole=integer(value);} catch(...) {}}
-        },
-        {
-            "scale",
-            [this] (const string&value)
-            {try {scale=integer(value);} catch(...) {}}
-        },
-        {
-            "view_base.x",
-            [this] (const string&value)
-            {try {view_base.x=floating_point_number(value);} catch(...) {}}
-        },
-        {
-            "view_base.y",
-            [this] (const string&value)
-            {try {view_base.y=floating_point_number(value);} catch(...) {}}
-        },
-        {
-            "window_pos.x",
-            [this] (const string&value)
-            {try {window_pos.x=integer(value);} catch(...) {}}
-        },
-        {
-            "window_pos.y",
-            [this] (const string&value)
-            {try {window_pos.y=integer(value);} catch(...) {}}
-        },
-        {
-            "window_size.cx",
-            [this] (const string&value)
-            {try {window_size.cx=integer(value);} catch(...) {}}
-        },
-        {
-            "window_size.cy",
-            [this] (const string&value)
-            {try {window_size.cy=integer(value);} catch(...) {}}
-        },
-    };
-    if(setPropertyMap.find(name)!=setPropertyMap.end())
-        setPropertyMap.at(name)(value);
+    if(set_value_map_.find(name)!=set_value_map_.end())
+        set_value_map_.at(name)(value);
 }
 
 void context::initialize(HINSTANCE instance)

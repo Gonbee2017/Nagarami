@@ -378,6 +378,7 @@ protected:
 
 struct properties
 {
+    properties();
     void adjust();
     void initialize();
     vector<string> lines() const;
@@ -400,6 +401,7 @@ struct properties
 protected:
     static pair<string,string> parse(const string&expression);
     void set(const string&name,const string&value);
+    map<string,function<void(const string&value)>> set_value_map_;
 };
 
 struct context
