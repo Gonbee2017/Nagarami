@@ -69,8 +69,11 @@ template<class...ARGUMENTS>
 template<class...ARGUMENTS> void history::set
 (const pair<string,function<void(ARGUMENTS...)>*>&namedFunc)
 {
-    *namedFunc.second=[this,namedFunc] (ARGUMENTS&&...arguments)
-    {calls_.push_back(call(namedFunc.first,arguments...));};
+    string name;
+    function<void(ARGUMENTS...)>*func;
+    nm::set(namedFunc,&name,&func);
+    *func=[this,name] (ARGUMENTS&&...arguments)
+    {calls_.push_back(call(name,arguments...));};
 }
 
 template<class BODY,class RESULT,class...ARGUMENTS>
@@ -80,10 +83,12 @@ template<class BODY,class RESULT,class...ARGUMENTS>
     const BODY&body
 )
 {
-    *namedFunc.second=
-    [this,namedFunc,body] (ARGUMENTS&&...arguments)->RESULT
+    string name;
+    function<RESULT(ARGUMENTS...)>*func;
+    nm::set(namedFunc,&name,&func);
+    *func=[this,name,body] (ARGUMENTS&&...arguments)->RESULT
     {
-        calls_.push_back(call(namedFunc.first,arguments...));
+        calls_.push_back(call(name,arguments...));
         return body(arguments...);
     };
 }
@@ -94,10 +99,12 @@ template<class RESULT,class...ARGUMENTS> void history::setWithResult
     const RESULT&result
 )
 {
-    *namedFunc.second=
-    [this,namedFunc,result] (ARGUMENTS&&...arguments)->RESULT
+    string name;
+    function<RESULT(ARGUMENTS...)>*func;
+    nm::set(namedFunc,&name,&func);
+    *func=[this,name,result] (ARGUMENTS&&...arguments)->RESULT
     {
-        calls_.push_back(call(namedFunc.first,arguments...));
+        calls_.push_back(call(name,arguments...));
         return result;
     };
 }

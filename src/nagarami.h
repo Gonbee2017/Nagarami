@@ -10,6 +10,7 @@
 #include<sstream>
 #include<stdexcept>
 #include<string>
+#include<utility>
 #include<vector>
 #include<windows.h>
 #include<commctrl.h>
@@ -400,8 +401,7 @@ struct properties
     SIZE window_size;
 protected:
     static pair<string,string> parse(const string&expression);
-    void set(const string&name,const string&value);
-    map<string,function<void(const string&value)>> set_value_map_;
+    map<string,function<void(const string&value)>> value_setter_map_;
 };
 
 struct context
@@ -615,6 +615,8 @@ template<class ARGUMENT> void describe_to_with
 (ostream&os,const string&separator,ARGUMENT*argument);
 template<class...ARGUMENTS> string describe_with
 (const string&separator,ARGUMENTS&&...arguments);
+template<class FIRST,class SECOND>
+    void set(const pair<FIRST,SECOND>&pair_,FIRST*first,SECOND*second);
 
 string chomp(const string&str,const char&ch);
 bool contain(const POINT&center,const LONG&squaredRadius,const POINT&pos);
@@ -904,6 +906,13 @@ template<class...ARGUMENTS> string describe_with
     ostringstream oss;
     describe_to_with(oss,separator,arguments...);
     return oss.str();
+}
+
+template<class FIRST,class SECOND>
+    void set(const pair<FIRST,SECOND>&pair_,FIRST*first,SECOND*second)
+{
+    *first=pair_.first;
+    *second=pair_.second;
 }
 
 }

@@ -35,6 +35,17 @@ TEST(helper,describe_with)
     CHECK_EQUAL("fuga,1",describe_with(",","fuga",1));
 }
 
+TEST(helper,set)
+{
+    {
+        string name;
+        int number;
+        set(make_pair(string("hoge"),1),&name,&number);
+        CHECK_EQUAL("hoge",name);
+        CHECK_EQUAL(1,number);
+    }
+}
+
 TEST(helper,Finalizer_destructor)
 {
     {

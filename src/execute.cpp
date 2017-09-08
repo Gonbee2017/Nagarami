@@ -16,41 +16,41 @@ namespace nm
 
 properties::properties()
 {
-    set_value_map_["alpha"]=[this] (const string&value)
+    value_setter_map_["alpha"]=[this] (const string&value)
     {try {alpha=integer(value);} catch(...) {}};
-    set_value_map_["back_color1"]=[this] (const string&value)
+    value_setter_map_["back_color1"]=[this] (const string&value)
     {try {back_color1=integer(value);} catch(...) {}};
-    set_value_map_["back_color2"]=[this] (const string&value)
+    value_setter_map_["back_color2"]=[this] (const string&value)
     {try {back_color2=integer(value);} catch(...) {}};
-    set_value_map_["component_color1"]=[this] (const string&value)
+    value_setter_map_["component_color1"]=[this] (const string&value)
     {try {component_color1=integer(value);} catch(...) {}};
-    set_value_map_["component_color2"]=[this] (const string&value)
+    value_setter_map_["component_color2"]=[this] (const string&value)
     {try {component_color2=integer(value);} catch(...) {}};
-    set_value_map_["control_mode_alt"]=[this] (const string&value)
+    value_setter_map_["control_mode_alt"]=[this] (const string&value)
     {try {control_mode_alt=integer(value);} catch(...) {}};
-    set_value_map_["control_mode_ctrl"]=[this] (const string&value)
+    value_setter_map_["control_mode_ctrl"]=[this] (const string&value)
     {try {control_mode_ctrl=integer(value);} catch(...) {}};
-    set_value_map_["control_mode_shift"]=[this] (const string&value)
+    value_setter_map_["control_mode_shift"]=[this] (const string&value)
     {try {control_mode_shift=integer(value);} catch(...) {}};
-    set_value_map_["fps"]=[this] (const string&value)
+    value_setter_map_["fps"]=[this] (const string&value)
     {try {fps=integer(value);} catch(...) {}};
-    set_value_map_["halftone"]=[this] (const string&value)
+    value_setter_map_["halftone"]=[this] (const string&value)
     {try {halftone=integer(value);} catch(...) {}};
-    set_value_map_["hole"]=[this] (const string&value)
+    value_setter_map_["hole"]=[this] (const string&value)
     {try {hole=integer(value);} catch(...) {}};
-    set_value_map_["scale"]=[this] (const string&value)
+    value_setter_map_["scale"]=[this] (const string&value)
     {try {scale=integer(value);} catch(...) {}};
-    set_value_map_["view_base.x"]=[this] (const string&value)
+    value_setter_map_["view_base.x"]=[this] (const string&value)
     {try {view_base.x=floating_point_number(value);} catch(...) {}};
-    set_value_map_["view_base.y"]=[this] (const string&value)
+    value_setter_map_["view_base.y"]=[this] (const string&value)
     {try {view_base.y=floating_point_number(value);} catch(...) {}};
-    set_value_map_["window_pos.x"]=[this] (const string&value)
+    value_setter_map_["window_pos.x"]=[this] (const string&value)
     {try {window_pos.x=integer(value);} catch(...) {}};
-    set_value_map_["window_pos.y"]=[this] (const string&value)
+    value_setter_map_["window_pos.y"]=[this] (const string&value)
     {try {window_pos.y=integer(value);} catch(...) {}};
-    set_value_map_["window_size.cx"]=[this] (const string&value)
+    value_setter_map_["window_size.cx"]=[this] (const string&value)
     {try {window_size.cx=integer(value);} catch(...) {}};
-    set_value_map_["window_size.cy"]=[this] (const string&value)
+    value_setter_map_["window_size.cy"]=[this] (const string&value)
     {try {window_size.cy=integer(value);} catch(...) {}};
 }
 
@@ -123,8 +123,10 @@ void properties::load(const vector<string>&expressions)
 {
     for(const string&expression:expressions)
     {
-        const auto nameAndValue=parse(expression);
-        set(nameAndValue.first,nameAndValue.second);
+        string name,value;
+        set(parse(expression),&name,&value);
+        if(value_setter_map_.find(name)!=value_setter_map_.end())
+            value_setter_map_.at(name)(value);
     }
 }
 
@@ -138,12 +140,6 @@ pair<string,string> properties::parse(const string&expression)
         value=expression.substr(pos+1);
     } else name=expression;
     return make_pair(name,value);
-}
-
-void properties::set(const string&name,const string&value)
-{
-    if(set_value_map_.find(name)!=set_value_map_.end())
-        set_value_map_.at(name)(value);
 }
 
 void context::initialize(HINSTANCE instance)
