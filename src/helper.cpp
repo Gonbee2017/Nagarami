@@ -143,7 +143,7 @@ POINT operator/(const POINT&lhs,const LONG&rhs)
 SIZE operator/(const SIZE&lhs,const LONG&rhs)
 {return SIZE({lhs.cx/rhs,lhs.cy/rhs});}
 
-ostream&operator<<(ostream&os,const char*ascii)
+ostream&operator<<(ostream&os,const char*const ascii)
 {
     if(ascii) os<<string(ascii);
     return os;
@@ -165,12 +165,14 @@ ostream&operator<<(ostream&os,const PAINTSTRUCT&paint)
     "}");
 }
 
-ostream&operator<<(ostream&os,const PAINTSTRUCT*paint) {return os<<*paint;}
+ostream&operator<<(ostream&os,const PAINTSTRUCT*const paint)
+{return os<<*paint;}
 
 ostream&operator<<(ostream&os,const POINT&point)
 {return os<<describe("{",describe_with(",",point.x,point.y),"}");}
 
-ostream&operator<<(ostream&os,const POINT*point) {return os<<*point;}
+ostream&operator<<(ostream&os,const POINT*const point)
+{return os<<*point;}
 
 ostream&operator<<(ostream&os,const POINT_DOUBLE&point)
 {return os<<describe("{",describe_with(",",point.x,point.y),"}");}

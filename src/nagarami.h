@@ -597,10 +597,16 @@ class api_error:public runtime_error
 
 template<class OBJECT,class RESULT,class...ARGUMENTS>
     function<RESULT(ARGUMENTS...arguments)> bind_object
-(RESULT(OBJECT::*member)(ARGUMENTS...arguments) const,const OBJECT*object);
+(
+    RESULT(OBJECT::*const member)(ARGUMENTS...arguments) const,
+    const OBJECT*const object
+);
 template<class OBJECT,class RESULT,class...ARGUMENTS>
     function<RESULT(ARGUMENTS...arguments)> bind_object
-(RESULT(OBJECT::*member)(ARGUMENTS...arguments),OBJECT*object);
+(
+    RESULT(OBJECT::*const member)(ARGUMENTS...arguments),
+    OBJECT*const object
+);
 template<class...ARGUMENTS> string describe(ARGUMENTS&&...arguments);
 template<class LEAD,class...TRAILER> void describe_to_with
 (ostream&os,const string&separator,LEAD&lead,TRAILER&&...trailer);
@@ -609,14 +615,18 @@ template<class ARGUMENT> void describe_to_with
 template<class ARGUMENT> void describe_to_with
 (ostream&os,const string&separator,ARGUMENT&argument);
 template<class ARGUMENT> void describe_to_with
-(ostream&os,const string&separator,const ARGUMENT*argument);
+(ostream&os,const string&separator,const ARGUMENT*const argument);
 template<class ARGUMENT> void describe_to_with
-(ostream&os,const string&separator,ARGUMENT*argument);
+(ostream&os,const string&separator,ARGUMENT*const argument);
 template<class...ARGUMENTS> string describe_with
 (const string&separator,ARGUMENTS&&...arguments);
-template<class DATA> void fill(DATA*data,const unsigned char&byte);
-template<class FIRST,class SECOND>
-    void set(const pair<FIRST,SECOND>&pair_,FIRST*first,SECOND*second);
+template<class DATA> void fill(DATA*const data,const unsigned char&byte);
+template<class FIRST,class SECOND> void set
+(
+    const pair<FIRST,SECOND>&pair_,
+    FIRST*const first,
+    SECOND*const second
+);
 
 string chomp(const string&str,const char&ch);
 bool contain(const POINT&center,const LONG&squaredRadius,const POINT&pos);
@@ -646,11 +656,11 @@ POINT operator-(const POINT&lhs,const POINT&rhs);
 SIZE operator-(const SIZE&lhs,const SIZE&rhs);
 POINT operator/(const POINT&lhs,const LONG&rhs);
 SIZE operator/(const SIZE&lhs,const LONG&rhs);
-ostream&operator<<(ostream&os,const char*ascii);
+ostream&operator<<(ostream&os,const char*const ascii);
 ostream&operator<<(ostream&os,const PAINTSTRUCT&paint);
-ostream&operator<<(ostream&os,const PAINTSTRUCT*paint);
+ostream&operator<<(ostream&os,const PAINTSTRUCT*const paint);
 ostream&operator<<(ostream&os,const POINT&point);
-ostream&operator<<(ostream&os,const POINT*point);
+ostream&operator<<(ostream&os,const POINT*const point);
 ostream&operator<<(ostream&os,const POINT_DOUBLE&point);
 ostream&operator<<(ostream&os,const RECT&rect);
 ostream&operator<<(ostream&os,const SIZE&size);
@@ -853,7 +863,10 @@ protected:
 
 template<class OBJECT,class RESULT,class...ARGUMENTS>
     function<RESULT(ARGUMENTS...arguments)> bind_object
-(RESULT(OBJECT::*member)(ARGUMENTS...arguments) const,const OBJECT*object)
+(
+    RESULT(OBJECT::*const member)(ARGUMENTS...arguments) const,
+    const OBJECT*const object
+)
 {
     return [object,member] (ARGUMENTS&&...arguments)->RESULT
     {return (object->*member)(arguments...);};
@@ -861,7 +874,10 @@ template<class OBJECT,class RESULT,class...ARGUMENTS>
 
 template<class OBJECT,class RESULT,class...ARGUMENTS>
     function<RESULT(ARGUMENTS...arguments)> bind_object
-(RESULT(OBJECT::*member)(ARGUMENTS...arguments),OBJECT*object)
+(
+    RESULT(OBJECT::*const member)(ARGUMENTS...arguments),
+    OBJECT*const object
+)
 {
     return [object,member] (ARGUMENTS&&...arguments)->RESULT
     {return (object->*member)(arguments...);};
@@ -885,10 +901,12 @@ template<class ARGUMENT> void describe_to_with
 (ostream&os,const string&separator,ARGUMENT&argument) {os<<argument;}
 
 template<class ARGUMENT> void describe_to_with
-(ostream&os,const string&separator,const ARGUMENT*argument) {os<<argument;}
+(ostream&os,const string&separator,const ARGUMENT*const argument)
+{os<<argument;}
 
 template<class ARGUMENT> void describe_to_with
-(ostream&os,const string&separator,ARGUMENT*argument) {os<<argument;}
+(ostream&os,const string&separator,ARGUMENT*const argument)
+{os<<argument;}
 
 template<class...ARGUMENTS> string describe_with
 (const string&separator,ARGUMENTS&&...arguments)
@@ -898,11 +916,11 @@ template<class...ARGUMENTS> string describe_with
     return oss.str();
 }
 
-template<class DATA> void fill(DATA*data,const unsigned char&byte)
+template<class DATA> void fill(DATA*const data,const unsigned char&byte)
 {memset(data,byte,sizeof(DATA));}
 
-template<class FIRST,class SECOND>
-    void set(const pair<FIRST,SECOND>&pair_,FIRST*first,SECOND*second)
+template<class FIRST,class SECOND> void set
+(const pair<FIRST,SECOND>&pair_,FIRST*const first,SECOND*const second)
 {
     *first=pair_.first;
     *second=pair_.second;
