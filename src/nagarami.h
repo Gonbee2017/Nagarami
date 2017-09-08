@@ -404,6 +404,7 @@ protected:
 
 struct context
 {
+    context();
     void initialize(HINSTANCE instance);
     shared_ptr<DeleteObject> almost_black_brush;
     shared_ptr<DeleteObject> back_brush1;
@@ -414,7 +415,7 @@ struct context
     shared_ptr<DeleteObject> component_brush2;
     shared_ptr<DeleteObject> component_pen1;
     shared_ptr<DeleteObject> component_pen2;
-    shared_ptr<runtime_error> error;
+    runtime_error error;
     shared_ptr<DeleteObject> font;
     HINSTANCE instance;
     properties ps;
@@ -591,6 +592,9 @@ protected:function<void()> finalize_;
 
 class Initializer {public:Initializer(const function<void()>&initialize);};
 
+class api_error:public runtime_error
+{public:api_error(const string&functionName);};
+
 template<class OBJECT,class RESULT,class...ARGUMENTS>
     function<RESULT(ARGUMENTS...arguments)> bind_object
 (RESULT(OBJECT::*member)(ARGUMENTS...arguments) const,const OBJECT*object);
@@ -614,7 +618,6 @@ template<class DATA> void fill(DATA*data,const unsigned char&byte);
 template<class FIRST,class SECOND>
     void set(const pair<FIRST,SECOND>&pair_,FIRST*first,SECOND*second);
 
-void api_error(const string&func);
 string chomp(const string&str,const char&ch);
 bool contain(const POINT&center,const LONG&squaredRadius,const POINT&pos);
 bool contain(const RECT&rect,const POINT&pos);

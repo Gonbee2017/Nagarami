@@ -41,7 +41,7 @@ LRESULT Window::onReceive
         if(handlerMap_.find(message)!=handlerMap_.end())
             result=handlerMap_.at(message)(message,wParam,lParam);
         else result=pt().DefWindowProc(handle,message,wParam,lParam);
-    } catch(const shared_ptr<runtime_error>&error)
+    } catch(const runtime_error&error)
     {
         ct().error=error;
         if(message==WM_NCCREATE) result=FALSE;
@@ -135,7 +135,7 @@ LRESULT MainWindow::onDestroy
     ct().ps.window_pos=pos(placement.rcNormalPosition);
     ct().ps.window_size=size(placement.rcNormalPosition);
     if(toolTip_!=NULL) pt().DestroyWindow(toolTip_);
-    if(!ct().error.get()) pt().PostQuitMessage(0);
+    if(!*ct().error.what()) pt().PostQuitMessage(0);
     return 0;
 }
 
@@ -167,7 +167,7 @@ void MainWindow::onHelpButtonClick()
     int errorCode=(int)pt().ShellExecute
     (handle_,TEXT("open"),TEXT(HELP_URL),NULL,NULL,SW_SHOWNORMAL);
     if(errorCode<=32)
-        throw make_shared<runtime_error>(describe
+        throw runtime_error(describe
         ("ShellExecute failed.(",errorCode,")"));
 }
 

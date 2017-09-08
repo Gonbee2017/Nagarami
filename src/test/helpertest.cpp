@@ -3,6 +3,7 @@
 #include<memory>
 #include"nagaramitest.h"
 #include<sstream>
+#include<stdexcept>
 #include<string>
 #include<CppUTest/TestHarness.h>
 #include<windows.h>
@@ -79,10 +80,10 @@ TEST(helper,api_error)
         hist.setWithResult(NAMED_ADDRESS(pt().GetLastError),(DWORD)1);
         try
         {
-            api_error("hoge");
+            throw api_error("hoge");
             FAIL("Do not pass here.");
-        } catch(const shared_ptr<runtime_error>&error)
-        {CHECK_EQUAL("hoge failed.(1)",string(error->what()));}
+        } catch(const runtime_error&error)
+        {CHECK_EQUAL("hoge failed.(1)",string(error.what()));}
         CHECK_EQUAL(1,hist.calls().size());
         CHECK_EQUAL(call("pt().GetLastError"),hist.calls().at(0));
     }
@@ -160,12 +161,12 @@ TEST(helper,floating_point_number)
     {
         floating_point_number("hoge");
         FAIL("Do not pass here.");
-    } catch(const shared_ptr<runtime_error>&error)
+    } catch(const runtime_error&error)
     {
         CHECK_EQUAL
         (
             "'hoge' is an invalid floating-point number.",
-            string(error->what())
+            string(error.what())
         );
     }
     CHECK_EQUAL(1.5,floating_point_number("1.5"));
@@ -201,8 +202,8 @@ TEST(helper,integer)
     {
         integer("hoge");
         FAIL("Do not pass here.");
-    } catch(const shared_ptr<runtime_error>&error)
-    {CHECK_EQUAL("'hoge' is an invalid integer.",string(error->what()));}
+    } catch(const runtime_error&error)
+    {CHECK_EQUAL("'hoge' is an invalid integer.",string(error.what()));}
     CHECK_EQUAL(1,integer("1"));
     CHECK_EQUAL(-2,integer("-2"));
     CHECK_EQUAL(3,integer("0x3"));

@@ -51,7 +51,7 @@ Component::Component
     toolInfo_.lpszText=(LPWSTR)TEXT(toolText.c_str());
     if
     (pt().SendMessageW(toolTip_,TTM_ADDTOOLW,0,(LPARAM)&toolInfo_)==FALSE)
-        throw make_shared<runtime_error>(describe
+        throw runtime_error(describe
         ("SendMessageW with TTM_ADDTOOLW is failed."));
     deactivateTool();
 }

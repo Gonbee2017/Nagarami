@@ -22,11 +22,9 @@ Finalizer::Finalizer(const function<void()>&finalize):
 
 Finalizer::~Finalizer() {finalize_();}
 
-void api_error(const string&functionName)
-{
-    throw make_shared<runtime_error>
-    (describe(functionName," failed.(",pt().GetLastError(),")"));
-}
+api_error::api_error(const string&functionName):
+    runtime_error
+    (describe(functionName," failed.(",pt().GetLastError(),")")) {}
 
 string chomp(const string&str,const char&ch)
 {
@@ -77,7 +75,7 @@ double floating_point_number(const string&str)
     char*end;
     double number=strtod(str.c_str(),&end);
     if(*end!='\0')
-        throw make_shared<runtime_error>(describe
+        throw runtime_error(describe
         ("'",str,"' is an invalid floating-point number."));
     return number;
 }
@@ -101,8 +99,7 @@ long integer(const string&str)
     char*end;
     long number=strtol(str.c_str(),&end,0);
     if(*end!='\0')
-        throw make_shared<runtime_error>(describe
-        ("'",str,"' is an invalid integer."));
+        throw runtime_error(describe("'",str,"' is an invalid integer."));
     return number;
 }
 

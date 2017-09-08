@@ -142,6 +142,8 @@ pair<string,string> properties::parse(const string&expression)
     return make_pair(name,value);
 }
 
+context::context():error("") {}
+
 void context::initialize(HINSTANCE instance)
 {
     ps.initialize();
@@ -347,7 +349,7 @@ int execute
         result=msg.wParam;
         auto psOS=pt().output_file(psFile,ios_base::out|ios_base::trunc);
         if(*psOS) putlines(*psOS,ct().ps.lines());
-    } catch(const shared_ptr<runtime_error>&error)
+    } catch(const runtime_error&error)
     {
         pt().MessageBox
         (
@@ -355,7 +357,7 @@ int execute
             TEXT(describe
             (
                 "An unexpected error occured.\n",
-                error->what()
+                error.what()
             ).c_str()),
             TEXT(APPLICATION_NAME),
             MB_ICONERROR|MB_OK
