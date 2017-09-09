@@ -7,7 +7,8 @@ namespace nm
 
 shared_ptr<EndPaint> BeginPaint(HWND window,PAINTSTRUCT*paint)
 {
-    HDC dc=pt().BeginPaint(window,paint);
+    fill(paint,0);
+    const HDC dc=pt().BeginPaint(window,paint);
     if(dc==NULL) throw api_error("BeginPaint");
     return make_shared<EndPaint>(window,paint,dc);
 }
@@ -35,14 +36,14 @@ void BitBlt
 shared_ptr<DeleteObject> CreateCompatibleBitmap
 (HDC destDC,int width,int height)
 {
-    HBITMAP bitmap=pt().CreateCompatibleBitmap(destDC,width,height);
+    const HBITMAP bitmap=pt().CreateCompatibleBitmap(destDC,width,height);
     if(bitmap==NULL) throw api_error("CreateCompatibleBitmap");
     return make_shared<DeleteObject>((HGDIOBJ)bitmap);
 }
 
 shared_ptr<DeleteDC> CreateCompatibleDC(HDC dc)
 {
-    HDC compatibleDC=pt().CreateCompatibleDC(dc);
+    const HDC compatibleDC=pt().CreateCompatibleDC(dc);
     if(compatibleDC==NULL) throw api_error("CreateCompatibleDC");
     return make_shared<DeleteDC>(compatibleDC);
 }
@@ -65,7 +66,7 @@ shared_ptr<DeleteObject> CreateFont
     LPCTSTR face
 )
 {
-    HFONT font=pt().CreateFont
+    const HFONT font=pt().CreateFont
     (
         height,
         width,
@@ -88,21 +89,21 @@ shared_ptr<DeleteObject> CreateFont
 
 shared_ptr<DeleteObject> CreatePatternBrush(HBITMAP bitmap)
 {
-    HBRUSH brush=pt().CreatePatternBrush(bitmap);
-    if(brush==NULL) throw api_error("CreatePetternBrush");
+    const HBRUSH brush=pt().CreatePatternBrush(bitmap);
+    if(brush==NULL) throw api_error("CreatePatternBrush");
     return make_shared<DeleteObject>((HGDIOBJ)brush);
 }
 
 shared_ptr<DeleteObject> CreatePen(int style,int width,COLORREF color)
 {
-    HPEN pen=pt().CreatePen(style,width,color);
+    const HPEN pen=pt().CreatePen(style,width,color);
     if(pen==NULL) throw api_error("CreatePen");
     return make_shared<DeleteObject>((HGDIOBJ)pen);
 }
 
 shared_ptr<DeleteObject> CreateSolidBrush(COLORREF color)
 {
-    HBRUSH brush=pt().CreateSolidBrush(color);
+    const HBRUSH brush=pt().CreateSolidBrush(color);
     if(brush==NULL) throw api_error("CreateSolidBrush");
     return make_shared<DeleteObject>((HGDIOBJ)brush);
 }
@@ -123,7 +124,7 @@ HWND CreateWindowEx
     LPVOID param
 )
 {
-    HWND handle=pt().CreateWindowEx
+    const HWND window=pt().CreateWindowEx
     (
         exStyle,
         className,
@@ -139,19 +140,20 @@ HWND CreateWindowEx
         param
     );
     if(*ct().error.what()) throw ct().error;
-    if(handle==NULL) throw api_error("CreateWindowEx");
-    return handle;
+    if(window==NULL) throw api_error("CreateWindowEx");
+    return window;
 }
 
-void DispatchMessage(CONST MSG*message)
+LRESULT DispatchMessage(CONST MSG*message)
 {
-    pt().DispatchMessage(message);
+    const LRESULT result=pt().DispatchMessage(message);
     if(*ct().error.what()) throw ct().error;
+    return result;
 }
 
 int DrawText(HDC dc,LPCTSTR str,int count,LPRECT rect,UINT format)
 {
-    int height=pt().DrawText(dc,str,count,rect,format);
+    const int height=pt().DrawText(dc,str,count,rect,format);
     if(height==0) throw api_error("DrawText");
     return height;
 }
@@ -167,57 +169,64 @@ void FillRect(HDC dc,CONST RECT*rect,HBRUSH brush)
 
 void GetClientRect(HWND window,LPRECT rect)
 {
+    fill(rect,0);
     if(pt().GetClientRect(window,rect)==FALSE)
-    throw api_error("GetClientRect");
+        throw api_error("GetClientRect");
 }
 
-void GetCursorPos(LPPOINT point)
-{if(pt().GetCursorPos(point)==FALSE) throw api_error("GetCursorPos");}
+void GetCursorPos(LPPOINT pos)
+{
+    fill(pos,0);
+    if(pt().GetCursorPos(pos)==FALSE) throw api_error("GetCursorPos");
+}
 
 shared_ptr<ReleaseDC> GetDC(HWND window)
 {
-    HDC dc=pt().GetDC(window);
+    const HDC dc=pt().GetDC(window);
     if(dc==NULL) throw api_error("GetDC");
     return make_shared<ReleaseDC>(window,dc);
 }
 
-bool GetMessage(LPMSG msg,HWND window,UINT first,UINT last)
+bool GetMessage(LPMSG message,HWND window,UINT first,UINT last)
 {
-    int result=pt().GetMessage(msg,window,first,last);
+    fill(message,0);
+    int result=pt().GetMessage(message,window,first,last);
     if(result==-1) throw api_error("GetMessage");
     return result!=0;
 }
 
 int GetObject(HGDIOBJ object,int sizeOfBuffer,LPVOID buffer)
 {
-    int read=pt().GetObject(object,sizeOfBuffer,buffer);
-    if(read==0) throw api_error("GetObject");
-    return read;
+    const int got=pt().GetObject(object,sizeOfBuffer,buffer);
+    if(got==0) throw api_error("GetObject");
+    return got;
 }
 
 int GetSystemMetrics(int index)
 {
-    int result=pt().GetSystemMetrics(index);
-    if(result==0) throw api_error("GetSystemMetrics");
-    return result;
+    const int metrics=pt().GetSystemMetrics(index);
+    if(metrics==0) throw api_error("GetSystemMetrics");
+    return metrics;
 }
 
 void GetWindowPlacement(HWND window,WINDOWPLACEMENT*placement)
 {
+    fill(placement,0);
+    placement->length=sizeof(WINDOWPLACEMENT);
     if(pt().GetWindowPlacement(window,placement)==FALSE)
         throw api_error("GetWindowPlacement");
 }
 
 shared_ptr<DeleteObject> LoadBitmap(HINSTANCE instance,LPCTSTR name)
 {
-    HBITMAP bitmap=pt().LoadBitmap(instance,name);
+    const HBITMAP bitmap=pt().LoadBitmap(instance,name);
     if(bitmap==NULL) throw api_error("LoadBitmap");
     return make_shared<DeleteObject>((HGDIOBJ)bitmap);
 }
 
 HCURSOR LoadCursor(HINSTANCE instance,LPCTSTR name)
 {
-    HCURSOR cursor=pt().LoadCursor(instance,name);
+    const HCURSOR cursor=pt().LoadCursor(instance,name);
     if(cursor==NULL) throw api_error("LoadCursor");
     return cursor;
 }
@@ -230,7 +239,7 @@ void RedrawWindow(HWND window,CONST RECT*rect,HRGN region,UINT flags)
 
 ATOM RegisterClassEx(CONST WNDCLASSEX*windowClass)
 {
-    ATOM atom=pt().RegisterClassEx(windowClass);
+    const ATOM atom=pt().RegisterClassEx(windowClass);
     if(atom==0) throw api_error("RegisterClassEx");
     return atom;
 }
@@ -238,22 +247,23 @@ ATOM RegisterClassEx(CONST WNDCLASSEX*windowClass)
 void ReleaseCapture()
 {if(pt().ReleaseCapture()==FALSE) throw api_error("ReleaseCapture");}
 
-void ScreenToClient(HWND window,LPPOINT point)
+void ScreenToClient(HWND window,LPPOINT pos)
 {
-    if(pt().ScreenToClient(window,point)==FALSE)
+    if(pt().ScreenToClient(window,pos)==FALSE)
         throw api_error("ScreenToClient");
 }
 
 int SetBkMode(HDC dc,int mode)
 {
-    int oldMode=pt().SetBkMode(dc,mode);
+    const int oldMode=pt().SetBkMode(dc,mode);
     if(oldMode==0) throw api_error("SetBkMode");
     return oldMode;
 }
 
-void SetBrushOrgEx(HDC dc,int x,int y,LPPOINT oldPoint)
+void SetBrushOrgEx(HDC dc,int x,int y,LPPOINT oldPos)
 {
-    if(pt().SetBrushOrgEx(dc,x,y,oldPoint)==FALSE)
+    if(oldPos) fill(oldPos,0);
+    if(pt().SetBrushOrgEx(dc,x,y,oldPos)==FALSE)
         throw api_error("SetBrushOrgEx");
 }
 
@@ -272,14 +282,14 @@ void SetLayeredWindowAttributes
 
 int SetStretchBltMode(HDC dc,int mode)
 {
-    int oldMode=pt().SetStretchBltMode(dc,mode);
+    const int oldMode=pt().SetStretchBltMode(dc,mode);
     if(oldMode==0) throw api_error("SetStretchBltMode");
     return oldMode;
 }
 
 COLORREF SetTextColor(HDC dc,COLORREF color)
 {
-    COLORREF oldColor=pt().SetTextColor(dc,color);
+    const COLORREF oldColor=pt().SetTextColor(dc,color);
     if(oldColor==CLR_INVALID) throw api_error("SetTextColor");
     return oldColor;
 }

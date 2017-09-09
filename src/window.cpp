@@ -261,27 +261,35 @@ LRESULT MainWindow::onNCHitTest
     LRESULT result=HTCAPTION;
     if(pt().GetKeyState(VK_LBUTTON)>=0&&pt().GetKeyState(VK_RBUTTON)>=0)
     {
-        const RECT captionRect=rect
-        (
-            POINT({FRAME_LENGTH,FRAME_LENGTH}),
-            ct().ps.window_size-SIZE({FRAME_LENGTH*2,FRAME_LENGTH*2})
-        );
         POINT cursorPos=coordinates(lParam);
         nm::ScreenToClient(handle_,&cursorPos);
-        const bool zoomed=pt().IsZoomed(handle_);
-        if(!zoomed&&cursorPos.x<captionRect.left)
+        if(!pt().IsZoomed(handle_))
         {
-            if(cursorPos.y<captionRect.top) result=HTTOPLEFT;
-            else if(cursorPos.y>=captionRect.bottom) result=HTBOTTOMLEFT;
-            else result=HTLEFT;
-        } else if(!zoomed&&cursorPos.x>=captionRect.right)
-        {
-            if(cursorPos.y<captionRect.top) result=HTTOPRIGHT;
-            else if(cursorPos.y>=captionRect.bottom) result=HTBOTTOMRIGHT;
-            else result=HTRIGHT;
-        } else if(!zoomed&&cursorPos.y<captionRect.top) result=HTTOP;
-        else if(!zoomed&&cursorPos.y>=captionRect.bottom) result=HTBOTTOM;
-        else if(control_mode())
+            const RECT captionRect=rect
+            (
+                POINT({FRAME_LENGTH,FRAME_LENGTH}),
+                ct().ps.window_size-SIZE({FRAME_LENGTH*2,FRAME_LENGTH*2})
+            );
+            if(cursorPos.x<captionRect.left)
+            {
+                if(cursorPos.y<captionRect.top)
+                    result=HTTOPLEFT;
+                else if(cursorPos.y>=captionRect.bottom)
+                    result=HTBOTTOMLEFT;
+                else result=HTLEFT;
+            } else if(cursorPos.x>=captionRect.right)
+            {
+                if(cursorPos.y<captionRect.top)
+                    result=HTTOPRIGHT;
+                else if(cursorPos.y>=captionRect.bottom)
+                    result=HTBOTTOMRIGHT;
+                else result=HTRIGHT;
+            } else if(cursorPos.y<captionRect.top)
+                result=HTTOP;
+            else if(cursorPos.y>=captionRect.bottom)
+                result=HTBOTTOM;
+        }
+        if(result==HTCAPTION&&control_mode())
         {
             for(Component*component:components_)
             {
@@ -299,20 +307,23 @@ LRESULT MainWindow::onNCHitTest
 LRESULT MainWindow::onNCMouseMove
 (UINT message,WPARAM wParam,LPARAM lParam)
 {
-    if(viewSliding_) pt().SetCursor(nm::LoadCursor(NULL,IDC_ARROW));
     POINT cursorPos=coordinates(lParam);
     nm::ScreenToClient(handle_,&cursorPos);
     updateToolTip(cursorPos);
-    nm::RedrawWindow(handle_,NULL,NULL,RDW_INVALIDATE|RDW_UPDATENOW);
+    if(ct().ps.hole>0)
+        nm::RedrawWindow(handle_,NULL,NULL,RDW_INVALIDATE|RDW_UPDATENOW);
     return 0;
 }
 
 LRESULT MainWindow::onNCRButtonDown
 (UINT message,WPARAM wParam,LPARAM lParam)
 {
-    viewSliding_=true;
-    viewSlidingBase_=cursor_pos(handle_);
-    pt().SetCapture(handle_);
+    if(ct().target!=NULL)
+    {
+        viewSliding_=true;
+        viewSlidingBase_=cursor_pos(handle_);
+        pt().SetCapture(handle_);
+    }
     return 0;
 }
 
@@ -352,9 +363,11 @@ LRESULT MainWindow::onPaint
             min(paint.rcPaint.bottom,viewEndPos.y)
         })-size(destPos);
         const RECT destRect=rect(destPos,destSize);
-        POINT srcPos=-viewPos*100/ct().ps.scale;
-        srcPos.x=max(srcPos.x,(LONG)0);
-        srcPos.y=max(srcPos.y,(LONG)0);
+        const POINT srcPos=POINT(
+        {
+            max(-viewPos.x,(LONG)0),
+            max(-viewPos.y,(LONG)0)
+        })*100/ct().ps.scale;
         const SIZE srcSize=destSize*100/ct().ps.scale;
         if(destSize.cx>0&&destSize.cy>0&&srcSize.cx>0&&srcSize.cy>0)
         {
@@ -364,7 +377,6 @@ LRESULT MainWindow::onPaint
                 &destRect,
                 (HBRUSH)ct().almost_black_brush->handle()
             );
-            auto targetDC=nm::GetDC(ct().target);
             nm::StretchBlt
             (
                 viewBuffer_->dc(),
@@ -372,7 +384,7 @@ LRESULT MainWindow::onPaint
                 0,
                 destSize.cx,
                 destSize.cy,
-                targetDC->handle(),
+                nm::GetDC(ct().target)->handle(),
                 srcPos.x,
                 srcPos.y,
                 srcSize.cx,
@@ -450,11 +462,11 @@ LRESULT MainWindow::onRButtonUp
 void MainWindow::onResetButtonClick()
 {
     ct().ps.view_base=POINT_DOUBLE({0,0});
-    halftoneButton_->value(DEFAULT_HALFTONE);
     scaleSlider_->value(DEFAULT_SCALE/SCALE_DIVISOR);
+    holeSlider_->value(DEFAULT_HOLE/UNIT_LENGTH);
     alphaSlider_->value
     (ALPHA_DIVISOR-(int)round(DEFAULT_ALPHA*ALPHA_DIVISOR/(double)255));
-    holeSlider_->value(DEFAULT_HOLE/UNIT_LENGTH);
+    halftoneButton_->value(DEFAULT_HALFTONE);
     nm::RedrawWindow(handle_,NULL,NULL,RDW_INVALIDATE|RDW_UPDATENOW);
 }
 
@@ -465,10 +477,9 @@ void MainWindow::onScaleSliderChange()
     ct().ps.scale=newScale;
     oldScale=max(oldScale,(LONG)1);
     newScale=max(newScale,(LONG)1);
-    if(ct().ps.view_base.x<0)
-        ct().ps.view_base.x=ct().ps.view_base.x*newScale/oldScale;
-    if(ct().ps.view_base.y<0)
-        ct().ps.view_base.y=ct().ps.view_base.y*newScale/oldScale;
+    const double ratio=(double)newScale/oldScale;
+    if(ct().ps.view_base.x<0) ct().ps.view_base.x*=ratio;
+    if(ct().ps.view_base.y<0) ct().ps.view_base.y*=ratio;
 }
 
 LRESULT MainWindow::onSize
@@ -482,8 +493,7 @@ LRESULT MainWindow::onSize
         const bool maximized=wParam==SIZE_MAXIMIZED;
         if(maximized!=maximizeButton_->value())
             maximizeButton_->value(maximized);
-        nm::RedrawWindow
-        (handle_,NULL,NULL,RDW_INVALIDATE|RDW_UPDATENOW);
+        nm::RedrawWindow(handle_,NULL,NULL,RDW_INVALIDATE|RDW_UPDATENOW);
     }
     return 0;
 }
@@ -747,7 +757,13 @@ void MainWindow::initializeComponents()
 void MainWindow::updateToolTip(const POINT&cursorPos)
 {
     Component*toolActiveComponent=nullptr;
-    if(control_mode()&&!viewSliding_)
+    if
+    (
+        pt().GetKeyState(VK_LBUTTON)>=0&&
+        pt().GetKeyState(VK_RBUTTON)>=0&&
+        control_mode()&&
+        !viewSliding_
+    )
     {
         for(Component*component:components_)
         {

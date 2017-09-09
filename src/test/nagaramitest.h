@@ -7,6 +7,7 @@
 #include<iomanip>
 #include<iostream>
 #include<ostream>
+#include<stdexcept>
 #include<string>
 #include<utility>
 #include<vector>
@@ -16,6 +17,13 @@
 #define DEBUG_PRINTF(x,...)\
     cout<<#x<<":'"<<describe(__VA_ARGS__,(x))<<"'"<<endl
 #define NAMED_ADDRESS(x) (make_pair(string(#x),&(x)))
+#define CHECK_THROWS_RUNTIME_ERROR(expected_what,expression)\
+    try\
+    {\
+        expression;\
+        FAIL("Do not pass here.");\
+    } catch(const runtime_error&error)\
+    {CHECK_EQUAL((expected_what),string(error.what()));}
 
 namespace nm
 {
@@ -38,46 +46,68 @@ private:
     string name_;
 };
 
-class history
+class logger
 {
 public:
-    template<class...ARGUMENTS> void set
+    template<class...ARGUMENTS> void setPut
     (const pair<string,function<void(ARGUMENTS...)>*>&namedFunc);
-    template<class BODY,class RESULT,class...ARGUMENTS> void setWithBody
+    template<class BODY,class RESULT,class...ARGUMENTS> void setPutWithBody
     (
         const pair<string,function<RESULT(ARGUMENTS...)>*>&namedFunc,
         const BODY&body
     );
-    template<class RESULT,class...ARGUMENTS> void setWithResult
+    template<class RESULT,class...ARGUMENTS> void setPutWithResult
     (
         const pair<string,function<RESULT(ARGUMENTS...)>*>&namedFunc,
         const RESULT&result
     );
 
-    ~history();
-    const vector<call>&calls() const;
+    ~logger();
+    const vector<call>&history() const;
     size_t count(const string&callName) const;
-protected:vector<call> calls_;
+protected:vector<call> history_;
 };
 
 template<class VALUE> SimpleString StringFrom(const VALUE&value);
+bool operator!=(const POINT&lhs,const POINT&rhs);
+bool operator!=(const POINT_DOUBLE&lhs,const POINT_DOUBLE&rhs);
+bool operator!=(const RECT&lhs,const RECT&rhs);
+bool operator!=(const SIZE&lhs,const SIZE&rhs);
+ostream&operator<<(ostream&os,const MSG&message);
+ostream&operator<<(ostream&os,const MSG*const message);
+ostream&operator<<(ostream&os,const PAINTSTRUCT&paint);
+ostream&operator<<(ostream&os,const PAINTSTRUCT*const paint);
+ostream&operator<<(ostream&os,const POINT&point);
+ostream&operator<<(ostream&os,const POINT*const point);
+ostream&operator<<(ostream&os,const POINT_DOUBLE&point);
+ostream&operator<<(ostream&os,const RECT&rect);
+ostream&operator<<(ostream&os,const RECT*rect);
+ostream&operator<<(ostream&os,const SIZE&size);
+ostream&operator<<(ostream&os,const WNDCLASSEX&clazz);
+ostream&operator<<(ostream&os,const WNDCLASSEX*clazz);
+ostream&operator<<(ostream&os,const WINDOWPLACEMENT&placement);
+ostream&operator<<(ostream&os,const WINDOWPLACEMENT*const placement);
+bool operator==(const POINT&lhs,const POINT&rhs);
+bool operator==(const POINT_DOUBLE&lhs,const POINT_DOUBLE&rhs);
+bool operator==(const RECT&lhs,const RECT&rhs);
+bool operator==(const SIZE&lhs,const SIZE&rhs);
 
 template<class...ARGUMENTS>
     call::call(const string&name,ARGUMENTS&&...arguments):
     name_(name),arguments_(describe_with(",",arguments...)) {}
 
-template<class...ARGUMENTS> void history::set
+template<class...ARGUMENTS> void logger::setPut
 (const pair<string,function<void(ARGUMENTS...)>*>&namedFunc)
 {
     string name;
     function<void(ARGUMENTS...)>*func;
-    nm::set(namedFunc,&name,&func);
+    decompose(namedFunc,&name,&func);
     *func=[this,name] (ARGUMENTS&&...arguments)
-    {calls_.push_back(call(name,arguments...));};
+    {history_.push_back(call(name,arguments...));};
 }
 
 template<class BODY,class RESULT,class...ARGUMENTS>
-    void history::setWithBody
+    void logger::setPutWithBody
 (
     const pair<string,function<RESULT(ARGUMENTS...)>*>&namedFunc,
     const BODY&body
@@ -85,15 +115,15 @@ template<class BODY,class RESULT,class...ARGUMENTS>
 {
     string name;
     function<RESULT(ARGUMENTS...)>*func;
-    nm::set(namedFunc,&name,&func);
+    decompose(namedFunc,&name,&func);
     *func=[this,name,body] (ARGUMENTS&&...arguments)->RESULT
     {
-        calls_.push_back(call(name,arguments...));
+        history_.push_back(call(name,arguments...));
         return body(arguments...);
     };
 }
 
-template<class RESULT,class...ARGUMENTS> void history::setWithResult
+template<class RESULT,class...ARGUMENTS> void logger::setPutWithResult
 (
     const pair<string,function<RESULT(ARGUMENTS...)>*>&namedFunc,
     const RESULT&result
@@ -101,10 +131,10 @@ template<class RESULT,class...ARGUMENTS> void history::setWithResult
 {
     string name;
     function<RESULT(ARGUMENTS...)>*func;
-    nm::set(namedFunc,&name,&func);
+    decompose(namedFunc,&name,&func);
     *func=[this,name,result] (ARGUMENTS&&...arguments)->RESULT
     {
-        calls_.push_back(call(name,arguments...));
+        history_.push_back(call(name,arguments...));
         return result;
     };
 }

@@ -124,7 +124,7 @@ void properties::load(const vector<string>&expressions)
     for(const string&expression:expressions)
     {
         string name,value;
-        set(parse(expression),&name,&value);
+        decompose(parse(expression),&name,&value);
         if(value_setter_map_.find(name)!=value_setter_map_.end())
             value_setter_map_.at(name)(value);
     }

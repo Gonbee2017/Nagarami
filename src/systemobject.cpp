@@ -98,17 +98,19 @@ UINT Timer::period_;
 
 shared_ptr<TimeEndPeriod> timeBeginPeriod(UINT period)
 {
-    MMRESULT mmr;
-    if((mmr=pt().timeBeginPeriod(period))!=TIMERR_NOERROR)
-        throw runtime_error(describe("timeBeginPeriod failed.(",mmr,")"));
+    const MMRESULT result=pt().timeBeginPeriod(period);
+    if(result!=TIMERR_NOERROR)
+        throw runtime_error(describe
+        ("timeBeginPeriod failed.(",result,")"));
     return make_shared<TimeEndPeriod>(period);
 }
 
 void timeGetDevCaps(LPTIMECAPS caps,UINT sizeOfCaps)
 {
-    MMRESULT mmr;
-    if((mmr=pt().timeGetDevCaps(caps,sizeOfCaps)!=TIMERR_NOERROR))
-        throw runtime_error(describe("timeGetDevCaps failed.(",mmr,")"));
+    const MMRESULT result=pt().timeGetDevCaps(caps,sizeOfCaps);
+    if(result!=TIMERR_NOERROR)
+        throw runtime_error(describe
+        ("timeGetDevCaps failed.(",result,")"));
 }
 
 shared_ptr<TimeKillEvent> timeSetEvent
@@ -120,9 +122,10 @@ shared_ptr<TimeKillEvent> timeSetEvent
     UINT event
 )
 {
-    UINT timer=pt().timeSetEvent(delay,resolution,procedure,user,event);
-    if(timer==0) throw runtime_error(describe("timeSetEvent failed."));
-    return make_shared<TimeKillEvent>(timer);
+    const UINT timerID=
+        pt().timeSetEvent(delay,resolution,procedure,user,event);
+    if(timerID==0) throw runtime_error(describe("timeSetEvent failed."));
+    return make_shared<TimeKillEvent>(timerID);
 }
 
 }

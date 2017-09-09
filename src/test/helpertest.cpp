@@ -3,7 +3,6 @@
 #include<memory>
 #include"nagaramitest.h"
 #include<sstream>
-#include<stdexcept>
 #include<string>
 #include<CppUTest/TestHarness.h>
 #include<windows.h>
@@ -24,6 +23,17 @@ TEST(helper,bind_object)
     }
 }
 
+TEST(helper,decompose)
+{
+    {
+        string name;
+        int number;
+        decompose(make_pair(string("hoge"),1),&name,&number);
+        CHECK_EQUAL("hoge",name);
+        CHECK_EQUAL(1,number);
+    }
+}
+
 TEST(helper,describe)
 {
     CHECK_EQUAL("hoge",describe("hoge"));
@@ -36,56 +46,51 @@ TEST(helper,describe_with)
     CHECK_EQUAL("fuga,1",describe_with(",","fuga",1));
 }
 
-TEST(helper,set)
+TEST(helper,fill)
 {
     {
-        string name;
-        int number;
-        set(make_pair(string("hoge"),1),&name,&number);
-        CHECK_EQUAL("hoge",name);
-        CHECK_EQUAL(1,number);
+        POINT p;
+        fill(&p,0);
+        CHECK_EQUAL(0,p.x);
+        CHECK_EQUAL(0,p.y);
     }
 }
 
 TEST(helper,Finalizer_destructor)
 {
     {
-        history hist;
+        logger lg;
         function<void()> finalize;
-        hist.set(NAMED_ADDRESS(finalize));
+        lg.setPut(NAMED_ADDRESS(finalize));
         auto finalizer=make_shared<Finalizer>(finalize);
-        CHECK_EQUAL(0,hist.calls().size());
+        CHECK_EQUAL(0,lg.history().size());
         finalizer.reset();
-        CHECK_EQUAL(1,hist.calls().size());
-        CHECK_EQUAL(call("finalize"),hist.calls().at(0));
+        CHECK_EQUAL(1,lg.history().size());
+        CHECK_EQUAL(call("finalize"),lg.history().at(0));
     }
 }
 
 TEST(helper,Initializer_constructor)
 {
     {
-        history hist;
+        logger lg;
         function<void()> initialize;
-        hist.set(NAMED_ADDRESS(initialize));
+        lg.setPut(NAMED_ADDRESS(initialize));
         Initializer initializer(initialize);
-        CHECK_EQUAL(1,hist.calls().size());
-        CHECK_EQUAL(call("initialize"),hist.calls().at(0));
+        CHECK_EQUAL(1,lg.history().size());
+        CHECK_EQUAL(call("initialize"),lg.history().at(0));
     }
 }
 
 TEST(helper,api_error)
 {
     {
-        history hist;
-        hist.setWithResult(NAMED_ADDRESS(pt().GetLastError),(DWORD)1);
-        try
-        {
-            throw api_error("hoge");
-            FAIL("Do not pass here.");
-        } catch(const runtime_error&error)
-        {CHECK_EQUAL("hoge failed.(1)",string(error.what()));}
-        CHECK_EQUAL(1,hist.calls().size());
-        CHECK_EQUAL(call("pt().GetLastError"),hist.calls().at(0));
+        logger lg;
+        lg.setPutWithResult(NAMED_ADDRESS(pt().GetLastError),(DWORD)1);
+        CHECK_THROWS_RUNTIME_ERROR
+        ("hoge failed.(1)",throw api_error("hoge"));
+        CHECK_EQUAL(1,lg.history().size());
+        CHECK_EQUAL(call("pt().GetLastError"),lg.history().at(0));
     }
 }
 
@@ -114,27 +119,27 @@ TEST(helper,coordinates)
 TEST(helper,cursor_pos)
 {
     {
-        history hist;
-        hist.setWithBody(NAMED_ADDRESS(pt().GetCursorPos),
+        logger lg;
+        lg.setPutWithBody(NAMED_ADDRESS(pt().GetCursorPos),
         [] (LPPOINT point)->BOOL
         {
             *point=POINT({1,2});
             return TRUE;
         });
-        hist.setWithBody(NAMED_ADDRESS(pt().ScreenToClient),
+        lg.setPutWithBody(NAMED_ADDRESS(pt().ScreenToClient),
         [] (HWND window,LPPOINT point)->BOOL
         {
             *point=POINT({-2,-4});
             return TRUE;
         });
         CHECK_EQUAL(POINT({-2,-4}),cursor_pos((HWND)0x10));
-        CHECK_EQUAL(2,hist.calls().size());
+        CHECK_EQUAL(2,lg.history().size());
         CHECK_EQUAL
-        (call("pt().GetCursorPos",POINT({0,0})),hist.calls().at(0));
+        (call("pt().GetCursorPos",POINT({0,0})),lg.history().at(0));
         CHECK_EQUAL
         (
             call("pt().ScreenToClient",(HWND)0x10,POINT({1,2})),
-            hist.calls().at(1)
+            lg.history().at(1)
         );
     }
 }
@@ -142,33 +147,26 @@ TEST(helper,cursor_pos)
 TEST(helper,desktop_size)
 {
     {
-        history hist;
-        hist.setWithBody(NAMED_ADDRESS(pt().GetSystemMetrics),
-        [&hist] (int index)->int
-        {return hist.count("pt().GetSystemMetrics");});
+        logger lg;
+        lg.setPutWithBody(NAMED_ADDRESS(pt().GetSystemMetrics),
+        [&lg] (int index)->int
+        {return lg.count("pt().GetSystemMetrics");});
         CHECK_EQUAL(SIZE({1,2}),desktop_size());
-        CHECK_EQUAL(2,hist.calls().size());
+        CHECK_EQUAL(2,lg.history().size());
         CHECK_EQUAL
-        (call("pt().GetSystemMetrics",SM_CXSCREEN),hist.calls().at(0));
+        (call("pt().GetSystemMetrics",SM_CXSCREEN),lg.history().at(0));
         CHECK_EQUAL
-        (call("pt().GetSystemMetrics",SM_CYSCREEN),hist.calls().at(1));
+        (call("pt().GetSystemMetrics",SM_CYSCREEN),lg.history().at(1));
     }
 }
 
 TEST(helper,floating_point_number)
 {
-    try
-    {
-        floating_point_number("hoge");
-        FAIL("Do not pass here.");
-    } catch(const runtime_error&error)
-    {
-        CHECK_EQUAL
-        (
-            "'hoge' is an invalid floating-point number.",
-            string(error.what())
-        );
-    }
+    CHECK_THROWS_RUNTIME_ERROR
+    (
+        "'hoge' is an invalid floating-point number.",
+        floating_point_number("hoge")
+    );
     CHECK_EQUAL(1.5,floating_point_number("1.5"));
     CHECK_EQUAL(-2.25,floating_point_number("-2.25"));
 }
@@ -198,39 +196,11 @@ TEST(helper,height)
 
 TEST(helper,integer)
 {
-    try
-    {
-        integer("hoge");
-        FAIL("Do not pass here.");
-    } catch(const runtime_error&error)
-    {CHECK_EQUAL("'hoge' is an invalid integer.",string(error.what()));}
+    CHECK_THROWS_RUNTIME_ERROR
+    ("'hoge' is an invalid integer.",integer("hoge"));
     CHECK_EQUAL(1,integer("1"));
     CHECK_EQUAL(-2,integer("-2"));
     CHECK_EQUAL(3,integer("0x3"));
-}
-
-TEST(helper,operator_not_equal_POINT)
-{
-    CHECK(POINT({1,-2})!=POINT({2,-1}));
-    CHECK_FALSE(POINT({-3,5})!=POINT({-3,5}));
-}
-
-TEST(helper,operator_not_equal_POINT_DOUBLE)
-{
-    CHECK(POINT_DOUBLE({1.5,-2.25})!=POINT_DOUBLE({2.5,-1.25}));
-    CHECK_FALSE(POINT_DOUBLE({-3.125,5.0})!=POINT_DOUBLE({-3.125,5.0}));
-}
-
-TEST(helper,operator_not_equal_RECT)
-{
-    CHECK(RECT({1,-2,3,-5})!=RECT({-1,2,-3,5}));
-    CHECK_FALSE(RECT({-8,13,-21,34})!=RECT({-8,13,-21,34}));
-}
-
-TEST(helper,operator_not_equal_SIZE)
-{
-    CHECK(SIZE({1,-2})!=SIZE({2,-1}));
-    CHECK_FALSE(SIZE({-3,5})!=SIZE({-3,5}));
 }
 
 TEST(helper,operator_multiply_POINT_LONG)
@@ -291,12 +261,6 @@ TEST(helper,operator_add_assign_POINT_DOUBLE_POINT_DOUBLE)
     }
 }
 
-TEST(helper,operator_negate_POINT)
-{
-    CHECK_EQUAL(POINT({-1,2}),-POINT({1,-2}));
-    CHECK_EQUAL(POINT({3,-5}),-POINT({-3,5}));
-}
-
 TEST(helper,operator_subtract_POINT_POINT)
 {
     CHECK_EQUAL(POINT({4,-7}),POINT({1,-2})-POINT({-3,5}));
@@ -328,79 +292,6 @@ TEST(helper,operator_output_char_pointer)
         oss<<"hoge"<<((const char*)nullptr)<<"fuga";
         CHECK_EQUAL("hogefuga",oss.str());
     }
-}
-
-TEST(helper,operator_output_PAINTSTRUCT)
-{
-    {
-        ostringstream oss;
-        oss<<
-            PAINTSTRUCT({(HDC)0x10,TRUE,RECT({1,-2,-3,5}),FALSE,TRUE})<<
-            ","<<
-            PAINTSTRUCT({(HDC)0x20,FALSE,RECT({-8,13,21,-34}),TRUE,FALSE});
-        CHECK_EQUAL
-        ("{0x10,1,{1,-2,-3,5},0,1},{0x20,0,{-8,13,21,-34},1,0}",oss.str());
-    }
-}
-
-TEST(helper,operator_output_POINT)
-{
-    {
-        ostringstream oss;
-        oss<<POINT({1,-2})<<","<<POINT({-3,5});
-        CHECK_EQUAL("{1,-2},{-3,5}",oss.str());
-    }
-}
-
-TEST(helper,operator_output_POINT_DOUBLE)
-{
-    {
-        ostringstream oss;
-        oss<<POINT_DOUBLE({1.5,-2.25})<<","<<POINT_DOUBLE({-3.125,5.0});
-        CHECK_EQUAL("{1.5,-2.25},{-3.125,5}",oss.str());
-    }
-}
-
-TEST(helper,operator_output_RECT)
-{
-    {
-        ostringstream oss;
-        oss<<RECT({1,-2,-3,5})<<","<<RECT({-8,13,21,-34});
-        CHECK_EQUAL("{1,-2,-3,5},{-8,13,21,-34}",oss.str());
-    }
-}
-
-TEST(helper,operator_output_SIZE)
-{
-    {
-        ostringstream oss;
-        oss<<SIZE({1,-2})<<","<<SIZE({-3,5});
-        CHECK_EQUAL("{1,-2},{-3,5}",oss.str());
-    }
-}
-
-TEST(helper,operator_equal_POINT)
-{
-    CHECK_FALSE(POINT({1,-2})==POINT({2,-1}));
-    CHECK(POINT({-3,5})==POINT({-3,5}));
-}
-
-TEST(helper,operator_equal_POINT_DOUBLE)
-{
-    CHECK_FALSE(POINT_DOUBLE({1.5,-2.25})==POINT_DOUBLE({2.5,-1.25}));
-    CHECK(POINT_DOUBLE({-3.125,5.0})==POINT_DOUBLE({-3.125,5.0}));
-}
-
-TEST(helper,operator_equal_RECT)
-{
-    CHECK_FALSE(RECT({1,-2,3,-5})==RECT({-1,2,-3,5}));
-    CHECK(RECT({-8,13,-21,34})==RECT({-8,13,-21,34}));
-}
-
-TEST(helper,operator_equal_SIZE)
-{
-    CHECK_FALSE(SIZE({1,-2})==SIZE({2,-1}));
-    CHECK(SIZE({-3,5})==SIZE({-3,5}));
 }
 
 TEST(helper,point_POINT_DOUBLE)

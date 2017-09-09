@@ -53,7 +53,6 @@ POINT coordinates(LPARAM lParam)
 POINT cursor_pos(HWND window)
 {
     POINT pos;
-    fill(&pos,0);
     nm::GetCursorPos(&pos);
     nm::ScreenToClient(window,&pos);
     return pos;
@@ -103,15 +102,6 @@ long integer(const string&str)
     return number;
 }
 
-bool operator!=(const POINT&lhs,const POINT&rhs) {return !(lhs==rhs);}
-
-bool operator!=(const POINT_DOUBLE&lhs,const POINT_DOUBLE&rhs)
-{return !(lhs==rhs);}
-
-bool operator!=(const RECT&lhs,const RECT&rhs) {return !(lhs==rhs);}
-
-bool operator!=(const SIZE&lhs,const SIZE&rhs) {return !(lhs==rhs);}
-
 POINT operator*(const POINT&lhs,const LONG&rhs)
 {return POINT({lhs.x*rhs,lhs.y*rhs});}
 
@@ -128,8 +118,6 @@ POINT&operator+=(POINT&lhs,const POINT&rhs) {return lhs=lhs+rhs;}
 
 POINT_DOUBLE&operator+=(POINT_DOUBLE&lhs,const POINT_DOUBLE&rhs)
 {return lhs=lhs+rhs;}
-
-POINT operator-(const POINT&point) {return POINT({-point.x,-point.y});}
 
 POINT operator-(const POINT&lhs,const POINT&rhs)
 {return POINT({lhs.x-rhs.x,lhs.y-rhs.y});}
@@ -148,63 +136,6 @@ ostream&operator<<(ostream&os,const char*const ascii)
     if(ascii) os<<string(ascii);
     return os;
 }
-
-ostream&operator<<(ostream&os,const PAINTSTRUCT&paint)
-{
-    return os<<describe(
-    "{",
-        describe_with
-        (
-            ",",
-            paint.hdc,
-            paint.fErase,
-            paint.rcPaint,
-            paint.fRestore,
-            paint.fIncUpdate
-        ),
-    "}");
-}
-
-ostream&operator<<(ostream&os,const PAINTSTRUCT*const paint)
-{return os<<*paint;}
-
-ostream&operator<<(ostream&os,const POINT&point)
-{return os<<describe("{",describe_with(",",point.x,point.y),"}");}
-
-ostream&operator<<(ostream&os,const POINT*const point)
-{return os<<*point;}
-
-ostream&operator<<(ostream&os,const POINT_DOUBLE&point)
-{return os<<describe("{",describe_with(",",point.x,point.y),"}");}
-
-ostream&operator<<(ostream&os,const RECT&rect)
-{
-    return os<<describe(
-    "{",describe_with
-        (",",rect.left,rect.top,rect.right,rect.bottom),
-    "}");
-}
-
-ostream&operator<<(ostream&os,const SIZE&size)
-{return os<<describe("{",describe_with(",",size.cx,size.cy),"}");}
-
-bool operator==(const POINT&lhs,const POINT&rhs)
-{return lhs.x==rhs.x&&lhs.y==rhs.y;}
-
-bool operator==(const POINT_DOUBLE&lhs,const POINT_DOUBLE&rhs)
-{return lhs.x==rhs.x&&lhs.y==rhs.y;}
-
-bool operator==(const RECT&lhs,const RECT&rhs)
-{
-    return
-        lhs.left==rhs.left&&
-        lhs.top==rhs.top&&
-        lhs.right==rhs.right&&
-        lhs.bottom==rhs.bottom;
-}
-
-bool operator==(const SIZE&lhs,const SIZE&rhs)
-{return lhs.cx==rhs.cx&&lhs.cy==rhs.cy;}
 
 shared_ptr<ostream> output_file
 (const string&name,const ios_base::openmode&mode)

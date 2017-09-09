@@ -174,14 +174,14 @@ HWND CreateWindowEx
     HINSTANCE instance,
     LPVOID param
 );
-void DispatchMessage(CONST MSG*message);
+LRESULT DispatchMessage(CONST MSG*message);
 int DrawText(HDC dc,LPCTSTR str,int count,LPRECT rect,UINT format);
 void Ellipse(HDC dc,int left,int top,int right,int bottom);
 void FillRect(HDC dc,CONST RECT*rect,HBRUSH brush);
 void GetClientRect(HWND window,LPRECT rect);
-void GetCursorPos(LPPOINT point);
+void GetCursorPos(LPPOINT pos);
 shared_ptr<ReleaseDC> GetDC(HWND window);
-bool GetMessage(LPMSG msg,HWND window,UINT first,UINT last);
+bool GetMessage(LPMSG message,HWND window,UINT first,UINT last);
 int GetObject(HGDIOBJ object,int sizeOfBuffer,LPVOID buffer);
 int GetSystemMetrics(int index);
 void GetWindowPlacement(HWND window,WINDOWPLACEMENT*placement);
@@ -190,9 +190,9 @@ HCURSOR LoadCursor(HINSTANCE instance,LPCTSTR name);
 void RedrawWindow(HWND window,CONST RECT*rect,HRGN region,UINT flags);
 ATOM RegisterClassEx(CONST WNDCLASSEX*windowClass);
 void ReleaseCapture();
-void ScreenToClient(HWND window,LPPOINT point);
+void ScreenToClient(HWND window,LPPOINT pos);
 int SetBkMode(HDC dc,int mode);
-void SetBrushOrgEx(HDC dc,int x,int y,LPPOINT oldPoint);
+void SetBrushOrgEx(HDC dc,int x,int y,LPPOINT oldPos);
 void SetForegroundWindow(HWND window);
 void SetLayeredWindowAttributes
 (HWND window,COLORREF key,BYTE alpha,DWORD flags);
@@ -490,12 +490,13 @@ struct port
     function<BOOL(HWND window,CONST PAINTSTRUCT*paint)> EndPaint;
     function<BOOL(HDC dc,CONST RECT*rect,HBRUSH brush)> FillRect;
     function<BOOL(HWND window,LPRECT rect)> GetClientRect;
-    function<BOOL(LPPOINT point)> GetCursorPos;
+    function<BOOL(LPPOINT pos)> GetCursorPos;
     function<HDC(HWND window)> GetDC;
     function<HWND()> GetForegroundWindow;
     function<SHORT(int key)> GetKeyState;
     function<DWORD()> GetLastError;
-    function<int(LPMSG msg,HWND window,UINT first,UINT last)> GetMessage;
+    function<int(LPMSG message,HWND window,UINT first,UINT last)>
+        GetMessage;
     function<int(HGDIOBJ object,int sizeOfBuffer,LPVOID buffer)> GetObject;
     function<int(int index)> GetSystemMetrics;
     function<BOOL(HWND window,WINDOWPLACEMENT*placement)>
@@ -514,12 +515,12 @@ struct port
     function<ATOM(CONST WNDCLASSEX*windowClass)> RegisterClassEx;
     function<BOOL()> ReleaseCapture;
     function<int(HWND window,HDC dc)> ReleaseDC;
-    function<BOOL(HWND window,LPPOINT point)> ScreenToClient;
+    function<BOOL(HWND window,LPPOINT pos)> ScreenToClient;
     function<HGDIOBJ(HDC dc,HGDIOBJ object)> SelectObject;
     function<LRESULT(HWND window,UINT message,WPARAM wParam,LPARAM lParam)>
         SendMessageW;
     function<int(HDC dc,int mode)> SetBkMode;
-    function<BOOL(HDC dc,int x,int y,LPPOINT oldPoint)> SetBrushOrgEx;
+    function<BOOL(HDC dc,int x,int y,LPPOINT oldPos)> SetBrushOrgEx;
     function<HWND(HWND window)> SetCapture;
     function<HCURSOR(HCURSOR cursor)> SetCursor;
     function<BOOL(HWND window)> SetForegroundWindow;
@@ -607,6 +608,12 @@ template<class OBJECT,class RESULT,class...ARGUMENTS>
     RESULT(OBJECT::*const member)(ARGUMENTS...arguments),
     OBJECT*const object
 );
+template<class FIRST,class SECOND> void decompose
+(
+    const pair<FIRST,SECOND>&pair_,
+    FIRST*const first,
+    SECOND*const second
+);
 template<class...ARGUMENTS> string describe(ARGUMENTS&&...arguments);
 template<class LEAD,class...TRAILER> void describe_to_with
 (ostream&os,const string&separator,LEAD&lead,TRAILER&&...trailer);
@@ -621,12 +628,6 @@ template<class ARGUMENT> void describe_to_with
 template<class...ARGUMENTS> string describe_with
 (const string&separator,ARGUMENTS&&...arguments);
 template<class DATA> void fill(DATA*const data,const unsigned char&byte);
-template<class FIRST,class SECOND> void set
-(
-    const pair<FIRST,SECOND>&pair_,
-    FIRST*const first,
-    SECOND*const second
-);
 
 string chomp(const string&str,const char&ch);
 bool contain(const POINT&center,const LONG&squaredRadius,const POINT&pos);
@@ -641,33 +642,17 @@ LONG height(const RECT&rect);
 shared_ptr<istream> input_file
 (const string&name,const ios_base::openmode&mode);
 long integer(const string&str);
-bool operator!=(const POINT&lhs,const POINT&rhs);
-bool operator!=(const POINT_DOUBLE&lhs,const POINT_DOUBLE&rhs);
-bool operator!=(const RECT&lhs,const RECT&rhs);
-bool operator!=(const SIZE&lhs,const SIZE&rhs);
 POINT operator*(const POINT&lhs,const LONG&rhs);
 SIZE operator*(const SIZE&lhs,const LONG&rhs);
 POINT operator+(const POINT&lhs,const POINT&rhs);
 POINT_DOUBLE operator+(const POINT_DOUBLE&lhs,const POINT_DOUBLE&rhs);
 POINT&operator+=(POINT&lhs,const POINT&rhs);
 POINT_DOUBLE&operator+=(POINT_DOUBLE&lhs,const POINT_DOUBLE&rhs);
-POINT operator-(const POINT&point);
 POINT operator-(const POINT&lhs,const POINT&rhs);
 SIZE operator-(const SIZE&lhs,const SIZE&rhs);
 POINT operator/(const POINT&lhs,const LONG&rhs);
 SIZE operator/(const SIZE&lhs,const LONG&rhs);
 ostream&operator<<(ostream&os,const char*const ascii);
-ostream&operator<<(ostream&os,const PAINTSTRUCT&paint);
-ostream&operator<<(ostream&os,const PAINTSTRUCT*const paint);
-ostream&operator<<(ostream&os,const POINT&point);
-ostream&operator<<(ostream&os,const POINT*const point);
-ostream&operator<<(ostream&os,const POINT_DOUBLE&point);
-ostream&operator<<(ostream&os,const RECT&rect);
-ostream&operator<<(ostream&os,const SIZE&size);
-bool operator==(const POINT&lhs,const POINT&rhs);
-bool operator==(const POINT_DOUBLE&lhs,const POINT_DOUBLE&rhs);
-bool operator==(const RECT&lhs,const RECT&rhs);
-bool operator==(const SIZE&lhs,const SIZE&rhs);
 shared_ptr<ostream> output_file
 (const string&name,const ios_base::openmode&mode);
 POINT point(const POINT_DOUBLE&pointDouble);
@@ -883,6 +868,13 @@ template<class OBJECT,class RESULT,class...ARGUMENTS>
     {return (object->*member)(arguments...);};
 }
 
+template<class FIRST,class SECOND> void decompose
+(const pair<FIRST,SECOND>&pair_,FIRST*const first,SECOND*const second)
+{
+    *first=pair_.first;
+    *second=pair_.second;
+}
+
 template<class...ARGUMENTS> string describe(ARGUMENTS&&...arguments)
 {return describe_with("",arguments...);}
 
@@ -918,13 +910,6 @@ template<class...ARGUMENTS> string describe_with
 
 template<class DATA> void fill(DATA*const data,const unsigned char&byte)
 {memset(data,byte,sizeof(DATA));}
-
-template<class FIRST,class SECOND> void set
-(const pair<FIRST,SECOND>&pair_,FIRST*const first,SECOND*const second)
-{
-    *first=pair_.first;
-    *second=pair_.second;
-}
 
 }
 
