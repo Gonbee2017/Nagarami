@@ -32,11 +32,12 @@ LRESULT Window::onReceive
 (HWND handle,UINT message,WPARAM wParam,LPARAM lParam)
 {
     LRESULT result;
+    if(message==WM_NCCREATE) handle_=handle;
     try
     {
-        if(message==WM_NCCREATE) handle_=handle;
-        if(handlerMap_.find(message)!=handlerMap_.end())
-            result=handlerMap_.at(message)(message,wParam,lParam);
+        const auto handler=handlerMap_.find(message);
+        if(handler!=handlerMap_.end())
+            result=handler->second(message,wParam,lParam);
         else result=pt.DefWindowProc(handle,message,wParam,lParam);
     } catch(const runtime_error&error)
     {
@@ -45,6 +46,7 @@ LRESULT Window::onReceive
         else if(message==WM_CREATE) result=-1;
         else if(message==WM_DESTROY) result=0;
         else if(message==WM_NCDESTROY) result=0;
+        else
         {
             result=pt.DefWindowProc(handle,message,wParam,lParam);
             pt.DestroyWindow(handle);
@@ -228,7 +230,6 @@ LRESULT MainWindow::onMouseMove
         (handle_,NULL,NULL,RDW_INVALIDATE|RDW_UPDATENOW);
     }
     pt.SetCursor(nm::LoadCursor(NULL,cursorName));
-    updateToolTip(cursorPos);
     return 0;
 }
 
@@ -302,9 +303,6 @@ LRESULT MainWindow::onNCHitTest
 LRESULT MainWindow::onNCMouseMove
 (UINT message,WPARAM wParam,LPARAM lParam)
 {
-    POINT cursorPos=coordinates(lParam);
-    nm::ScreenToClient(handle_,&cursorPos);
-    updateToolTip(cursorPos);
     if(ct.ps.hole>0)
         nm::RedrawWindow(handle_,NULL,NULL,RDW_INVALIDATE|RDW_UPDATENOW);
     return 0;
@@ -347,7 +345,7 @@ LRESULT MainWindow::onPaint
         POINT viewPos=point(ct.ps.view_base);
         if(viewSliding_) viewPos+=cursor_pos(handle_)-viewSlidingBase_;
         const POINT viewEndPos=viewPos+point(viewSize);
-        const POINT destPos=POINT(
+        const POINT destPos(
         {
             max(paint.rcPaint.left,viewPos.x),
             max(paint.rcPaint.top,viewPos.y)
@@ -506,6 +504,7 @@ LRESULT MainWindow::onUserTimer
     }
     if(!pt.IsIconic(handle_))
         nm::RedrawWindow(handle_,NULL,NULL,RDW_INVALIDATE);
+    updateToolTip(cursor_pos(handle_));
     return 0;
 }
 

@@ -300,7 +300,7 @@ COLORREF SetTextColor(HDC dc,COLORREF color)
     return oldColor;
 }
 
-DWORD ShellExecute
+HINSTANCE ShellExecute
 (
     HWND parent,
     LPCTSTR verb,
@@ -310,10 +310,11 @@ DWORD ShellExecute
     INT showCommand
 )
 {
-    const DWORD errorCode=(DWORD)pt.ShellExecute
+    const HINSTANCE instance=pt.ShellExecute
     (parent,verb,file,parameters,directory,showCommand);
+    const DWORD errorCode=(DWORD)instance;
     if(errorCode<=32) throw api_error("ShellExecute",errorCode);
-    return errorCode;
+    return instance;
 }
 
 void StretchBlt

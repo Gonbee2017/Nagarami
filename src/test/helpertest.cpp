@@ -236,11 +236,11 @@ TEST(helper,operator_add_POINT_DOUBLE_POINT_DOUBLE)
 TEST(helper,operator_add_assign_POINT_POINT)
 {
     {
-        POINT p=POINT({1,-2});
+        POINT p({1,-2});
         CHECK_EQUAL(POINT({-2,3}),p+=POINT({-3,5}));
     }
     {
-        POINT p=POINT({-8,13});
+        POINT p({-8,13});
         CHECK_EQUAL(POINT({13,-21}),p+=POINT({21,-34}));
     }
 }
@@ -248,12 +248,12 @@ TEST(helper,operator_add_assign_POINT_POINT)
 TEST(helper,operator_add_assign_POINT_DOUBLE_POINT_DOUBLE)
 {
     {
-        POINT_DOUBLE p=POINT_DOUBLE({1.5,-2.25});
+        POINT_DOUBLE p({1.5,-2.25});
         CHECK_EQUAL
         (POINT_DOUBLE({-1.625,2.75}),p+=POINT_DOUBLE({-3.125,5.0}));
     }
     {
-        POINT_DOUBLE p=POINT_DOUBLE({-8.5,13.25});
+        POINT_DOUBLE p({-8.5,13.25});
         CHECK_EQUAL
         (POINT_DOUBLE({12.625,-20.75}),p+=POINT_DOUBLE({21.125,-34.0}));
     }

@@ -92,7 +92,7 @@ vector<string> getlines(istream&is)
 LONG height(const RECT&rect) {return rect.bottom-rect.top;}
 
 shared_ptr<istream> input_file
-(const string&name,const ios_base::openmode&mode)
+(const string&name,const ios::openmode&mode)
 {return make_shared<ifstream>(name,mode);}
 
 long integer(const string&str)
@@ -140,7 +140,7 @@ ostream&operator<<(ostream&os,const char*const ascii)
 }
 
 shared_ptr<ostream> output_file
-(const string&name,const ios_base::openmode&mode)
+(const string&name,const ios::openmode&mode)
 {return make_shared<ofstream>(name,mode);}
 
 POINT point(const POINT_DOUBLE&pointDouble)

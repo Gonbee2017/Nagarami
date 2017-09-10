@@ -36,7 +36,7 @@ constexpr COLORREF BLACK_COLOR       =RGB(  0,  0,  0);
 constexpr COLORREF WHITE_COLOR       =RGB(255,255,255);
 
 constexpr LONG  UNIT_LENGTH          =16;
-constexpr SIZE  UNIT_SIZE            =SIZE({UNIT_LENGTH,UNIT_LENGTH});
+constexpr SIZE  UNIT_SIZE            ({UNIT_LENGTH,UNIT_LENGTH});
 constexpr LONG  HALF_UNIT_LENGTH     =UNIT_LENGTH/2;
 constexpr SIZE  HALF_UNIT_SIZE       =
     SIZE({HALF_UNIT_LENGTH,HALF_UNIT_LENGTH});
@@ -53,17 +53,17 @@ constexpr LONG  SLIDER_TEXT_WIDTH    =UNIT_LENGTH*2;
 constexpr SIZE  SLIDER_TEXT_SIZE     =
     SIZE({SLIDER_TEXT_WIDTH,UNIT_LENGTH});
 
-constexpr POINT ALPHA_SLIDER_CELL_POS     =POINT({ 0,-1});
-constexpr POINT CLOSE_BUTTON_CELL_POS     =POINT({-1, 0});
-constexpr POINT FOREGROUND_BUTTON_CELL_POS=POINT({ 1, 0});
-constexpr POINT HALFTONE_BUTTON_CELL_POS  =POINT({ 2, 0});
-constexpr POINT HELP_BUTTON_CELL_POS      =POINT({-4, 0});
-constexpr POINT HOLE_SLIDER_CELL_POS      =POINT({ 0,-2});
-constexpr POINT LOCK_BUTTON_CELL_POS      =POINT({ 0, 0});
-constexpr POINT MAXIMIZE_BUTTON_CELL_POS  =POINT({-2, 0});
-constexpr POINT MINIMIZE_BUTTON_CELL_POS  =POINT({-3, 0});
-constexpr POINT RESET_BUTTON_CELL_POS     =POINT({ 3, 0});
-constexpr POINT SCALE_SLIDER_CELL_POS     =POINT({ 0,-3});
+constexpr POINT ALPHA_SLIDER_CELL_POS     ({ 0,-1});
+constexpr POINT CLOSE_BUTTON_CELL_POS     ({-1, 0});
+constexpr POINT FOREGROUND_BUTTON_CELL_POS({ 1, 0});
+constexpr POINT HALFTONE_BUTTON_CELL_POS  ({ 2, 0});
+constexpr POINT HELP_BUTTON_CELL_POS      ({-4, 0});
+constexpr POINT HOLE_SLIDER_CELL_POS      ({ 0,-2});
+constexpr POINT LOCK_BUTTON_CELL_POS      ({ 0, 0});
+constexpr POINT MAXIMIZE_BUTTON_CELL_POS  ({-2, 0});
+constexpr POINT MINIMIZE_BUTTON_CELL_POS  ({-3, 0});
+constexpr POINT RESET_BUTTON_CELL_POS     ({ 3, 0});
+constexpr POINT SCALE_SLIDER_CELL_POS     ({ 0,-3});
 
 constexpr int  ALPHA_DIVISOR=20;
 constexpr LONG MAXIMUM_HOLE =UNIT_LENGTH*20;
@@ -198,7 +198,7 @@ void SetLayeredWindowAttributes
 (HWND window,COLORREF key,BYTE alpha,DWORD flags);
 int SetStretchBltMode(HDC dc,int mode);
 COLORREF SetTextColor(HDC dc,COLORREF color);
-DWORD ShellExecute
+HINSTANCE ShellExecute
 (
     HWND parent,
     LPCTSTR verb,
@@ -574,9 +574,9 @@ struct port
         DWORD rop
     )> StretchBlt;
     function<shared_ptr<istream>
-    (const string&name,const ios_base::openmode&mode)> input_file;
+    (const string&name,const ios::openmode&mode)> input_file;
     function<shared_ptr<ostream>
-    (const string&name,const ios_base::openmode&mode)> output_file;
+    (const string&name,const ios::openmode&mode)> output_file;
     function<MMRESULT(UINT period)> timeBeginPeriod;
     function<MMRESULT(UINT period)> timeEndPeriod;
     function<MMRESULT(LPTIMECAPS caps,UINT sizeOfCaps)> timeGetDevCaps;
@@ -665,8 +665,7 @@ SIZE desktop_size();
 double floating_point_number(const string&str);
 vector<string> getlines(istream&is);
 LONG height(const RECT&rect);
-shared_ptr<istream> input_file
-(const string&name,const ios_base::openmode&mode);
+shared_ptr<istream> input_file(const string&name,const ios::openmode&mode);
 long integer(const string&str);
 POINT operator*(const POINT&lhs,const LONG&rhs);
 SIZE operator*(const SIZE&lhs,const LONG&rhs);
@@ -680,7 +679,7 @@ POINT operator/(const POINT&lhs,const LONG&rhs);
 SIZE operator/(const SIZE&lhs,const LONG&rhs);
 ostream&operator<<(ostream&os,const char*const ascii);
 shared_ptr<ostream> output_file
-(const string&name,const ios_base::openmode&mode);
+(const string&name,const ios::openmode&mode);
 POINT point(const POINT_DOUBLE&pointDouble);
 POINT point(const SIZE&size);
 POINT_DOUBLE point_double(const POINT&point);

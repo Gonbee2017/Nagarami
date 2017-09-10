@@ -1485,7 +1485,7 @@ TEST(apiwrapper,ShellExecute)
         lg.setPutWithResult(NAMED_ADDRESS(pt.ShellExecute),(HINSTANCE)33);
         CHECK_EQUAL
         (
-            33,
+            (HINSTANCE)33,
             nm::ShellExecute
             (
                 (HWND)0x10,

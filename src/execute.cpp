@@ -125,8 +125,8 @@ void properties::load(const vector<string>&expressions)
     {
         string name,value;
         decompose(parse(expression),&name,&value);
-        if(value_setter_map_.find(name)!=value_setter_map_.end())
-            value_setter_map_.at(name)(value);
+        const auto setter=value_setter_map_.find(name);
+        if(setter!=value_setter_map_.end()) setter->second(value);
     }
 }
 
@@ -362,7 +362,7 @@ int execute
 
 void load_properties(const string&commandLine)
 {
-    const auto psIS=pt.input_file(PS_FILE_NAME,ios_base::in);
+    const auto psIS=pt.input_file(PS_FILE_NAME,ios::in);
     if(*psIS) ct.ps.load(getlines(*psIS));
     ct.ps.load(tokenize(commandLine," "));
 }
@@ -376,8 +376,7 @@ UINT minimum_time_period()
 
 void save_properties()
 {
-    const auto psOS=
-        pt.output_file(PS_FILE_NAME,ios_base::out|ios_base::trunc);
+    const auto psOS=pt.output_file(PS_FILE_NAME,ios::out|ios::trunc);
     if(*psOS) putlines(*psOS,ct.ps.lines());
 }
 

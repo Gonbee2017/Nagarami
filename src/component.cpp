@@ -338,7 +338,7 @@ int Slider::minimum() {return minimum_;}
 
 void Slider::paint(HDC dc)
 {
-    const POINT barPos=POINT(
+    const POINT barPos(
     {
         pos_.x+HALF_UNIT_LENGTH,
         pos_.y+HALF_UNIT_LENGTH-HALF_SLIDER_BAR_WIDTH
@@ -443,7 +443,7 @@ void Slider::value(const int&value_)
 
 bool Slider::hitTestBar(const POINT&cursorPos)
 {
-    const POINT barPos=POINT(
+    const POINT barPos(
     {
         pos_.x+HALF_UNIT_LENGTH,
         pos_.y+HALF_UNIT_LENGTH-HALF_SLIDER_BAR_WIDTH
@@ -455,7 +455,7 @@ bool Slider::hitTestBar(const POINT&cursorPos)
 
 bool Slider::hitTestKnob(const POINT&cursorPos)
 {
-    const POINT knobPos=POINT({pos_.x+knobX_,pos_.y});
+    const POINT knobPos({pos_.x+knobX_,pos_.y});
     return
         contain(rect(knobPos,UNIT_SIZE),cursorPos)&&
         contain
@@ -464,8 +464,8 @@ bool Slider::hitTestKnob(const POINT&cursorPos)
 
 bool Slider::hitTestText(const POINT&cursorPos)
 {
-    const POINT textPos=POINT({pos_.x+length_-SLIDER_TEXT_WIDTH,pos_.y});
-    const SIZE textSize=SIZE({SLIDER_TEXT_WIDTH,UNIT_LENGTH});
+    const POINT textPos({pos_.x+length_-SLIDER_TEXT_WIDTH,pos_.y});
+    const SIZE textSize({SLIDER_TEXT_WIDTH,UNIT_LENGTH});
     return contain(rect(textPos,textSize),cursorPos);
 }
 
@@ -496,9 +496,9 @@ void Slider::renderBar()
         backBrush=(HBRUSH)ct.component_brush1->handle();
     }
     const LONG length=length_-SLIDER_TEXT_WIDTH-UNIT_LENGTH;
-    RECT backRect=RECT({0,0,length,SLIDER_BAR_WIDTH});
+    RECT backRect({0,0,length,SLIDER_BAR_WIDTH});
     nm::FillRect(barBuffer_->dc(),&backRect,backBrush);
-    RECT foreRect=RECT({1,1,length-1,SLIDER_BAR_WIDTH-1});
+    RECT foreRect({1,1,length-1,SLIDER_BAR_WIDTH-1});
     nm::FillRect(barBuffer_->dc(),&foreRect,foreBrush);
 }
 
