@@ -11,6 +11,6 @@ int WINAPI WinMain
     int commandShow
 )
 {
-    pt().import();
+    pt.import();
     return execute(instance,previousInstance,commandLine,commandShow);
 }

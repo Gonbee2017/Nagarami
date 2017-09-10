@@ -30,19 +30,21 @@ namespace nm
 
 using namespace std;
 
+constexpr char OMIT_ARGUMENT[]="OMIT_ARGUMENT";
+
 class call
 {
 public:
     template<class...ARGUMENTS>
         call(const string&name,ARGUMENTS&&...arguments);
 
-    string arguments() const;
+    const vector<string>&arguments() const;
     string name() const;
     bool operator!=(const call&rhs) const;
     bool operator==(const call&rhs) const;
 private:
     friend ostream&operator<<(ostream&os,const call&call_);
-    string arguments_;
+    vector<string> arguments_;
     string name_;
 };
 
@@ -69,10 +71,20 @@ protected:vector<call> history_;
 };
 
 template<class VALUE> SimpleString StringFrom(const VALUE&value);
+template<class...ARGUMENTS>
+    vector<string> describe_each(ARGUMENTS&&...arguments);
+template<class ARGUMENT>
+    void describe_each_to(vector<string>&strs,ARGUMENT&&argument);
+template<class LEAD,class...TRAILER> void describe_each_to
+(vector<string>&strs,LEAD&&lead,TRAILER&&...trailer);
+
+void describe_each_to(vector<string>&strs);
 bool operator!=(const POINT&lhs,const POINT&rhs);
 bool operator!=(const POINT_DOUBLE&lhs,const POINT_DOUBLE&rhs);
 bool operator!=(const RECT&lhs,const RECT&rhs);
 bool operator!=(const SIZE&lhs,const SIZE&rhs);
+ostream&operator<<(ostream&os,const BITMAP&bitmap);
+ostream&operator<<(ostream&os,const BITMAP*const bitmap);
 ostream&operator<<(ostream&os,const MSG&message);
 ostream&operator<<(ostream&os,const MSG*const message);
 ostream&operator<<(ostream&os,const PAINTSTRUCT&paint);
@@ -83,6 +95,8 @@ ostream&operator<<(ostream&os,const POINT_DOUBLE&point);
 ostream&operator<<(ostream&os,const RECT&rect);
 ostream&operator<<(ostream&os,const RECT*rect);
 ostream&operator<<(ostream&os,const SIZE&size);
+ostream&operator<<(ostream&os,const TIMECAPS&caps);
+ostream&operator<<(ostream&os,const TIMECAPS*const caps);
 ostream&operator<<(ostream&os,const WNDCLASSEX&clazz);
 ostream&operator<<(ostream&os,const WNDCLASSEX*clazz);
 ostream&operator<<(ostream&os,const WINDOWPLACEMENT&placement);
@@ -94,7 +108,7 @@ bool operator==(const SIZE&lhs,const SIZE&rhs);
 
 template<class...ARGUMENTS>
     call::call(const string&name,ARGUMENTS&&...arguments):
-    name_(name),arguments_(describe_with(",",arguments...)) {}
+    name_(name),arguments_(describe_each(arguments...)) {}
 
 template<class...ARGUMENTS> void logger::setPut
 (const pair<string,function<void(ARGUMENTS...)>*>&namedFunc)
@@ -141,6 +155,25 @@ template<class RESULT,class...ARGUMENTS> void logger::setPutWithResult
 
 template<class VALUE> SimpleString StringFrom(const VALUE&value)
 {return SimpleString(describe(value).c_str());}
+
+template<class...ARGUMENTS>
+    vector<string> describe_each(ARGUMENTS&&...arguments)
+{
+    vector<string> strs;
+    describe_each_to(strs,arguments...);
+    return strs;
+}
+
+template<class ARGUMENT>
+    void describe_each_to(vector<string>&strs,ARGUMENT&&argument)
+{strs.push_back(describe(argument));}
+
+template<class LEAD,class...TRAILER> void describe_each_to
+(vector<string>&strs,LEAD&&lead,TRAILER&&...trailer)
+{
+    strs.push_back(describe(lead));
+    describe_each_to(strs,trailer...);
+}
 
 }
 

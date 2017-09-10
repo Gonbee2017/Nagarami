@@ -18,6 +18,7 @@ SET(NAGARAMI_TEST_SOURCE_FILES
     ${NAGARAMI_TEST_DIRECTORY}/apiwrappertest.cpp
     ${NAGARAMI_TEST_DIRECTORY}/helpertest.cpp
     ${NAGARAMI_TEST_DIRECTORY}/nagaramitest.cpp
+    ${NAGARAMI_TEST_DIRECTORY}/systemobjecttest.cpp
 )
 
 IF(CMAKE_BUILD_TYPE MATCHES Release)

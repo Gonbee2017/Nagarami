@@ -14,9 +14,6 @@
 namespace nm
 {
 
-Initializer::Initializer(const function<void()>&initialize)
-{initialize();}
-
 Finalizer::Finalizer(const function<void()>&finalize):
     finalize_(finalize) {}
 
@@ -24,7 +21,7 @@ Finalizer::~Finalizer() {finalize_();}
 
 api_error::api_error(const string&functionName):
     runtime_error
-    (describe(functionName," failed.(",pt().GetLastError(),")")) {}
+    (describe(functionName," failed.(",pt.GetLastError(),")")) {}
 
 string chomp(const string&str,const char&ch)
 {

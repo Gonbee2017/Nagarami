@@ -180,146 +180,142 @@ void context::initialize(HINSTANCE instance)
 
 void port::clear()
 {
-    BeginPaint=nullptr;
-    BitBlt=nullptr;
-    CreateCompatibleBitmap=nullptr;
-    CreateCompatibleDC=nullptr;
-    CreateFont=nullptr;
-    CreatePatternBrush=nullptr;
-    CreatePen=nullptr;
-    CreateSolidBrush=nullptr;
-    CreateWindowEx=nullptr;
-    DefWindowProc=nullptr;
-    DeleteDC=nullptr;
-    DeleteObject=nullptr;
-    DestroyWindow=nullptr;
-    DispatchMessage=nullptr;
-    DrawText=nullptr;
-    Ellipse=nullptr;
-    EndPaint=nullptr;
-    FillRect=nullptr;
-    GetClientRect=nullptr;
-    GetCursorPos=nullptr;
-    GetDC=nullptr;
-    GetForegroundWindow=nullptr;
-    GetKeyState=nullptr;
-    GetLastError=nullptr;
-    GetMessage=nullptr;
-    GetObject=nullptr;
-    GetSystemMetrics=nullptr;
-    GetWindowPlacement=nullptr;
-    IsIconic=nullptr;
-    IsWindow=nullptr;
-    IsWindowVisible=nullptr;
-    IsZoomed=nullptr;
-    LoadBitmap=nullptr;
-    LoadCursor=nullptr;
-    MessageBox=nullptr;
-    PostQuitMessage=nullptr;
-    RedrawWindow=nullptr;
-    ReleaseDC=nullptr;
-    RegisterClassEx=nullptr;
-    ReleaseCapture=nullptr;
-    ScreenToClient=nullptr;
-    SelectObject=nullptr;
-    SendMessageW=nullptr;
-    SetBkMode=nullptr;
-    SetBrushOrgEx=nullptr;
-    SetCapture=nullptr;
-    SetCursor=nullptr;
-    SetForegroundWindow=nullptr;
-    SetLayeredWindowAttributes=nullptr;
-    SetStretchBltMode=nullptr;
-    SetTextColor=nullptr;
-    ShellExecute=nullptr;
-    ShowWindow=nullptr;
-    StretchBlt=nullptr;
-    input_file=nullptr;
-    output_file=nullptr;
-    timeBeginPeriod=nullptr;
-    timeEndPeriod=nullptr;
-    timeGetDevCaps=nullptr;
-    timeKillEvent=nullptr;
-    timeSetEvent=nullptr;
+    this->BeginPaint=nullptr;
+    this->BitBlt=nullptr;
+    this->CreateCompatibleBitmap=nullptr;
+    this->CreateCompatibleDC=nullptr;
+    this->CreateFont=nullptr;
+    this->CreatePatternBrush=nullptr;
+    this->CreatePen=nullptr;
+    this->CreateSolidBrush=nullptr;
+    this->CreateWindowEx=nullptr;
+    this->DefWindowProc=nullptr;
+    this->DeleteDC=nullptr;
+    this->DeleteObject=nullptr;
+    this->DestroyWindow=nullptr;
+    this->DispatchMessage=nullptr;
+    this->DrawText=nullptr;
+    this->Ellipse=nullptr;
+    this->EndPaint=nullptr;
+    this->FillRect=nullptr;
+    this->GetClientRect=nullptr;
+    this->GetCursorPos=nullptr;
+    this->GetDC=nullptr;
+    this->GetForegroundWindow=nullptr;
+    this->GetKeyState=nullptr;
+    this->GetLastError=nullptr;
+    this->GetMessage=nullptr;
+    this->GetObject=nullptr;
+    this->GetSystemMetrics=nullptr;
+    this->GetWindowPlacement=nullptr;
+    this->IsIconic=nullptr;
+    this->IsWindow=nullptr;
+    this->IsWindowVisible=nullptr;
+    this->IsZoomed=nullptr;
+    this->LoadBitmap=nullptr;
+    this->LoadCursor=nullptr;
+    this->MessageBox=nullptr;
+    this->PostMessage=nullptr;
+    this->PostQuitMessage=nullptr;
+    this->RedrawWindow=nullptr;
+    this->ReleaseDC=nullptr;
+    this->RegisterClassEx=nullptr;
+    this->ReleaseCapture=nullptr;
+    this->ScreenToClient=nullptr;
+    this->SelectObject=nullptr;
+    this->SendMessageW=nullptr;
+    this->SetBkMode=nullptr;
+    this->SetBrushOrgEx=nullptr;
+    this->SetCapture=nullptr;
+    this->SetCursor=nullptr;
+    this->SetForegroundWindow=nullptr;
+    this->SetLayeredWindowAttributes=nullptr;
+    this->SetStretchBltMode=nullptr;
+    this->SetTextColor=nullptr;
+    this->ShellExecute=nullptr;
+    this->ShowWindow=nullptr;
+    this->StretchBlt=nullptr;
+    this->input_file=nullptr;
+    this->output_file=nullptr;
+    this->timeBeginPeriod=nullptr;
+    this->timeEndPeriod=nullptr;
+    this->timeGetDevCaps=nullptr;
+    this->timeKillEvent=nullptr;
+    this->timeSetEvent=nullptr;
 }
 
 void port::import()
 {
-    BeginPaint=&::BeginPaint;
-    BitBlt=&::BitBlt;
-    CreateCompatibleBitmap=&::CreateCompatibleBitmap;
-    CreateCompatibleDC=&::CreateCompatibleDC;
-    CreateFont=&::CreateFont;
-    CreatePatternBrush=&::CreatePatternBrush;
-    CreatePen=&::CreatePen;
-    CreateSolidBrush=&::CreateSolidBrush;
-    CreateWindowEx=&::CreateWindowEx;
-    DefWindowProc=&::DefWindowProc;
-    DeleteDC=&::DeleteDC;
-    DeleteObject=&::DeleteObject;
-    DestroyWindow=&::DestroyWindow;
-    DispatchMessage=&::DispatchMessage;
-    DrawText=&::DrawText;
-    Ellipse=&::Ellipse;
-    EndPaint=&::EndPaint;
-    FillRect=&::FillRect;
-    GetClientRect=&::GetClientRect;
-    GetCursorPos=&::GetCursorPos;
-    GetDC=&::GetDC;
-    GetForegroundWindow=&::GetForegroundWindow;
-    GetKeyState=&::GetKeyState;
-    GetLastError=&::GetLastError;
-    GetMessage=&::GetMessage;
-    GetObject=&::GetObject;
-    GetSystemMetrics=&::GetSystemMetrics;
-    GetWindowPlacement=&::GetWindowPlacement;
-    IsIconic=&::IsIconic;
-    IsWindow=&::IsWindow;
-    IsWindowVisible=&::IsWindowVisible;
-    IsZoomed=&::IsZoomed;
-    LoadBitmap=&::LoadBitmap;
-    LoadCursor=&::LoadCursor;
-    MessageBox=&::MessageBox;
-    PostQuitMessage=&::PostQuitMessage;
-    RedrawWindow=&::RedrawWindow;
-    ReleaseDC=&::ReleaseDC;
-    RegisterClassEx=&::RegisterClassEx;
-    ReleaseCapture=&::ReleaseCapture;
-    ScreenToClient=&::ScreenToClient;
-    SelectObject=&::SelectObject;
-    SendMessageW=&::SendMessageW;
-    SetBkMode=&::SetBkMode;
-    SetBrushOrgEx=&::SetBrushOrgEx;
-    SetCapture=&::SetCapture;
-    SetCursor=&::SetCursor;
-    SetForegroundWindow=&::SetForegroundWindow;
-    SetLayeredWindowAttributes=&::SetLayeredWindowAttributes;
-    SetStretchBltMode=&::SetStretchBltMode;
-    SetTextColor=&::SetTextColor;
-    ShellExecute=&::ShellExecute;
-    ShowWindow=&::ShowWindow;
-    StretchBlt=&::StretchBlt;
-    input_file=&nm::input_file;
-    output_file=&nm::output_file;
-    timeBeginPeriod=&::timeBeginPeriod;
-    timeEndPeriod=&::timeEndPeriod;
-    timeGetDevCaps=&::timeGetDevCaps;
-    timeKillEvent=&::timeKillEvent;
-    timeSetEvent=&::timeSetEvent;
-}
-
-context&ct()
-{
-    static context instance;
-    return instance;
+    this->BeginPaint=&::BeginPaint;
+    this->BitBlt=&::BitBlt;
+    this->CreateCompatibleBitmap=&::CreateCompatibleBitmap;
+    this->CreateCompatibleDC=&::CreateCompatibleDC;
+    this->CreateFont=&::CreateFont;
+    this->CreatePatternBrush=&::CreatePatternBrush;
+    this->CreatePen=&::CreatePen;
+    this->CreateSolidBrush=&::CreateSolidBrush;
+    this->CreateWindowEx=&::CreateWindowEx;
+    this->DefWindowProc=&::DefWindowProc;
+    this->DeleteDC=&::DeleteDC;
+    this->DeleteObject=&::DeleteObject;
+    this->DestroyWindow=&::DestroyWindow;
+    this->DispatchMessage=&::DispatchMessage;
+    this->DrawText=&::DrawText;
+    this->Ellipse=&::Ellipse;
+    this->EndPaint=&::EndPaint;
+    this->FillRect=&::FillRect;
+    this->GetClientRect=&::GetClientRect;
+    this->GetCursorPos=&::GetCursorPos;
+    this->GetDC=&::GetDC;
+    this->GetForegroundWindow=&::GetForegroundWindow;
+    this->GetKeyState=&::GetKeyState;
+    this->GetLastError=&::GetLastError;
+    this->GetMessage=&::GetMessage;
+    this->GetObject=&::GetObject;
+    this->GetSystemMetrics=&::GetSystemMetrics;
+    this->GetWindowPlacement=&::GetWindowPlacement;
+    this->IsIconic=&::IsIconic;
+    this->IsWindow=&::IsWindow;
+    this->IsWindowVisible=&::IsWindowVisible;
+    this->IsZoomed=&::IsZoomed;
+    this->LoadBitmap=&::LoadBitmap;
+    this->LoadCursor=&::LoadCursor;
+    this->MessageBox=&::MessageBox;
+    this->PostMessage=&::PostMessage;
+    this->PostQuitMessage=&::PostQuitMessage;
+    this->RedrawWindow=&::RedrawWindow;
+    this->ReleaseDC=&::ReleaseDC;
+    this->RegisterClassEx=&::RegisterClassEx;
+    this->ReleaseCapture=&::ReleaseCapture;
+    this->ScreenToClient=&::ScreenToClient;
+    this->SelectObject=&::SelectObject;
+    this->SendMessageW=&::SendMessageW;
+    this->SetBkMode=&::SetBkMode;
+    this->SetBrushOrgEx=&::SetBrushOrgEx;
+    this->SetCapture=&::SetCapture;
+    this->SetCursor=&::SetCursor;
+    this->SetForegroundWindow=&::SetForegroundWindow;
+    this->SetLayeredWindowAttributes=&::SetLayeredWindowAttributes;
+    this->SetStretchBltMode=&::SetStretchBltMode;
+    this->SetTextColor=&::SetTextColor;
+    this->ShellExecute=&::ShellExecute;
+    this->ShowWindow=&::ShowWindow;
+    this->StretchBlt=&::StretchBlt;
+    this->input_file=&nm::input_file;
+    this->output_file=&nm::output_file;
+    this->timeBeginPeriod=&::timeBeginPeriod;
+    this->timeEndPeriod=&::timeEndPeriod;
+    this->timeGetDevCaps=&::timeGetDevCaps;
+    this->timeKillEvent=&::timeKillEvent;
+    this->timeSetEvent=&::timeSetEvent;
 }
 
 bool control_mode()
 {
     return
-        (!ct().ps.control_mode_alt||pt().GetKeyState(VK_MENU)<0)&&
-        (!ct().ps.control_mode_ctrl||pt().GetKeyState(VK_CONTROL)<0)&&
-        (!ct().ps.control_mode_shift||pt().GetKeyState(VK_SHIFT)<0);
+        (!ct.ps.control_mode_alt||pt.GetKeyState(VK_MENU)<0)&&
+        (!ct.ps.control_mode_ctrl||pt.GetKeyState(VK_CONTROL)<0)&&
+        (!ct.ps.control_mode_shift||pt.GetKeyState(VK_SHIFT)<0);
 }
 
 int execute
@@ -330,28 +326,25 @@ int execute
     int commandShow
 )
 {
-    static const string psFile=
-        describe(APPLICATION_NAME,".",PROPERTIES_FILE_EXTENSION);
     int result=0;
     try
     {
-        ct().initialize(instance);
-        auto psIS=pt().input_file(psFile,ios_base::in);
-        if(*psIS) ct().ps.load(getlines(*psIS));
-        ct().ps.load(tokenize(commandLine," "));
-        ct().ps.adjust();
-        auto main_window=make_shared<MainWindow>();
-        pt().ShowWindow(main_window->handle(),commandShow);
-        const UINT delay=1000/ct().ps.fps;
-        auto timer=make_shared<Timer>(delay,main_window->handle());
+        ct.initialize(instance);
+        load_properties(commandLine);
+        ct.ps.adjust();
+        Window::registerClass();
+        const auto main_window=make_shared<MainWindow>();
+        pt.ShowWindow(main_window->handle(),commandShow);
+        const auto timePeriod=nm::timeBeginPeriod(minimum_time_period());
+        const auto timer=make_shared<Timer>
+        (1000/ct.ps.fps,timePeriod->value(),main_window->handle());
         MSG msg;
         while(nm::GetMessage(&msg,NULL,0,0)) nm::DispatchMessage(&msg);
+        save_properties();
         result=msg.wParam;
-        auto psOS=pt().output_file(psFile,ios_base::out|ios_base::trunc);
-        if(*psOS) putlines(*psOS,ct().ps.lines());
     } catch(const runtime_error&error)
     {
-        pt().MessageBox
+        pt.MessageBox
         (
             NULL,
             TEXT(describe
@@ -367,10 +360,29 @@ int execute
     return result;
 }
 
-port&pt()
+void load_properties(const string&commandLine)
 {
-    static port instance;
-    return instance;
+    const auto psIS=pt.input_file(PS_FILE_NAME,ios_base::in);
+    if(*psIS) ct.ps.load(getlines(*psIS));
+    ct.ps.load(tokenize(commandLine," "));
 }
+
+UINT minimum_time_period()
+{
+    TIMECAPS timeCaps;
+    nm::timeGetDevCaps(&timeCaps,sizeof(TIMECAPS));
+    return timeCaps.wPeriodMin;
+}
+
+void save_properties()
+{
+    const auto psOS=
+        pt.output_file(PS_FILE_NAME,ios_base::out|ios_base::trunc);
+    if(*psOS) putlines(*psOS,ct.ps.lines());
+}
+
+const string PS_FILE_NAME=describe(APPLICATION_NAME,".",PS_FILE_EXTENSION);
+context ct;
+port pt;
 
 }

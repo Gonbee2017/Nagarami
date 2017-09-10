@@ -26,9 +26,9 @@ using namespace std;
 
 //---- constexpr definition ----
 
-constexpr char APPLICATION_NAME[]         ="Nagarami";
-constexpr char PROPERTIES_FILE_EXTENSION[]="ps";
-constexpr char HELP_URL[]                 =
+constexpr char APPLICATION_NAME[] ="Nagarami";
+constexpr char PS_FILE_EXTENSION[]="ps";
+constexpr char HELP_URL[]         =
     "https://github.com/Gonbee2017/Nagarami/blob/master/README.md";
 
 constexpr COLORREF ALMOST_BLACK_COLOR=RGB(  1,  1,  1);
@@ -105,7 +105,6 @@ class DeleteDC;
 class DeleteObject;
 class EndPaint;
 class Finalizer;
-class Initializer;
 class MainWindow;
 struct POINT_DOUBLE {double x,y;};
 class PushButton;
@@ -187,6 +186,7 @@ int GetSystemMetrics(int index);
 void GetWindowPlacement(HWND window,WINDOWPLACEMENT*placement);
 shared_ptr<DeleteObject> LoadBitmap(HINSTANCE instance,LPCTSTR name);
 HCURSOR LoadCursor(HINSTANCE instance,LPCTSTR name);
+void PostMessage(HWND window,UINT message,WPARAM wParam,LPARAM lParam);
 void RedrawWindow(HWND window,CONST RECT*rect,HRGN region,UINT flags);
 ATOM RegisterClassEx(CONST WNDCLASSEX*windowClass);
 void ReleaseCapture();
@@ -509,6 +509,8 @@ struct port
     function<HCURSOR(HINSTANCE instance,LPCTSTR name)> LoadCursor;
     function<int(HWND owner,LPCTSTR text,LPCTSTR caption,UINT type)>
         MessageBox;
+    function<BOOL(HWND window,UINT message,WPARAM wParam,LPARAM lParam)>
+        PostMessage;
     function<VOID(int exitCode)> PostQuitMessage;
     function<BOOL(HWND window,CONST RECT*rect,HRGN region,UINT flags)>
         RedrawWindow;
@@ -571,7 +573,6 @@ struct port
 };
 
 bool control_mode();
-context&ct();
 int execute
 (
     HINSTANCE instance,
@@ -579,7 +580,13 @@ int execute
     LPSTR commandLine,
     int commandShow
 );
-port&pt();
+void load_properties(const string&commandLine);
+UINT minimum_time_period();
+void save_properties();
+
+extern const string PS_FILE_NAME;
+extern context ct;
+extern port pt;
 
 //---- helper declaration ----
 
@@ -590,8 +597,6 @@ public:
     virtual ~Finalizer();
 protected:function<void()> finalize_;
 };
-
-class Initializer {public:Initializer(const function<void()>&initialize);};
 
 class api_error:public runtime_error
 {public:api_error(const string&functionName);};
@@ -615,19 +620,15 @@ template<class FIRST,class SECOND> void decompose
     SECOND*const second
 );
 template<class...ARGUMENTS> string describe(ARGUMENTS&&...arguments);
+template<class ARGUMENT> void describe_to_with
+(ostream&os,const string&separator,ARGUMENT&&argument);
 template<class LEAD,class...TRAILER> void describe_to_with
-(ostream&os,const string&separator,LEAD&lead,TRAILER&&...trailer);
-template<class ARGUMENT> void describe_to_with
-(ostream&os,const string&separator,const ARGUMENT&argument);
-template<class ARGUMENT> void describe_to_with
-(ostream&os,const string&separator,ARGUMENT&argument);
-template<class ARGUMENT> void describe_to_with
-(ostream&os,const string&separator,const ARGUMENT*const argument);
-template<class ARGUMENT> void describe_to_with
-(ostream&os,const string&separator,ARGUMENT*const argument);
+(ostream&os,const string&separator,LEAD&&lead,TRAILER&&...trailer);
 template<class...ARGUMENTS> string describe_with
 (const string&separator,ARGUMENTS&&...arguments);
 template<class DATA> void fill(DATA*const data,const unsigned char&byte);
+template<class RESULT,class...ARGUMENTS> ostream&operator<<
+(ostream&os,RESULT(CALLBACK*const procedure)(ARGUMENTS...));
 
 string chomp(const string&str,const char&ch);
 bool contain(const POINT&center,const LONG&squaredRadius,const POINT&pos);
@@ -723,13 +724,19 @@ public:
 protected:HDC handle_;
 };
 
-class TimeEndPeriod:public Finalizer {public:TimeEndPeriod(UINT period);};
+class TimeEndPeriod:public Finalizer
+{
+public:
+    TimeEndPeriod(UINT value);
+    UINT value();
+protected:UINT value_;
+};
 
 class TimeKillEvent:public Finalizer {public:TimeKillEvent(UINT timerID);};
 
 class Timer
 {
-public:Timer(UINT delay,HWND dest);
+public:Timer(UINT delay,UINT resolution,HWND dest);
 protected:
     static void CALLBACK procedure
     (
@@ -739,10 +746,7 @@ protected:
         DWORD_PTR reserved1,
         DWORD_PTR reserved2
     );
-    UINT delay_;
-    HWND dest_;
-    shared_ptr<TimeKillEvent> killEvent_;
-    static UINT period_;
+    shared_ptr<TimeKillEvent> event_;
 };
 
 shared_ptr<TimeEndPeriod> timeBeginPeriod(UINT period);
@@ -760,9 +764,10 @@ shared_ptr<TimeKillEvent> timeSetEvent
 
 class Window
 {
-public:HWND handle();
+public:
+    HWND handle();
+    static void registerClass();
 protected:
-    Window();
     LRESULT onReceive
     (HWND handle,UINT message,WPARAM wParam,LPARAM lParam);
     static LRESULT CALLBACK procedure
@@ -878,27 +883,16 @@ template<class FIRST,class SECOND> void decompose
 template<class...ARGUMENTS> string describe(ARGUMENTS&&...arguments)
 {return describe_with("",arguments...);}
 
+template<class ARGUMENT> void describe_to_with
+(ostream&os,const string&separator,ARGUMENT&&argument) {os<<argument;}
+
 template<class LEAD,class... TRAILER> void describe_to_with
-(ostream&os,const string&separator,LEAD&lead,TRAILER&&...trailer)
+(ostream&os,const string&separator,LEAD&&lead,TRAILER&&...trailer)
 {
     describe_to_with(os,separator,lead);
     if(!separator.empty()) os<<separator;
     describe_to_with(os,separator,trailer...);
 }
-
-template<class ARGUMENT> void describe_to_with
-(ostream&os,const string&separator,const ARGUMENT&argument) {os<<argument;}
-
-template<class ARGUMENT> void describe_to_with
-(ostream&os,const string&separator,ARGUMENT&argument) {os<<argument;}
-
-template<class ARGUMENT> void describe_to_with
-(ostream&os,const string&separator,const ARGUMENT*const argument)
-{os<<argument;}
-
-template<class ARGUMENT> void describe_to_with
-(ostream&os,const string&separator,ARGUMENT*const argument)
-{os<<argument;}
 
 template<class...ARGUMENTS> string describe_with
 (const string&separator,ARGUMENTS&&...arguments)
@@ -910,6 +904,10 @@ template<class...ARGUMENTS> string describe_with
 
 template<class DATA> void fill(DATA*const data,const unsigned char&byte)
 {memset(data,byte,sizeof(DATA));}
+
+template<class RESULT,class...ARGUMENTS> ostream&operator<<
+(ostream&os,RESULT(CALLBACK*const procedure)(ARGUMENTS...))
+{return os<<(const void*)procedure;}
 
 }
 

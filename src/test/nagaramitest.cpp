@@ -5,27 +5,56 @@
 namespace nm
 {
 
-string call::arguments() const {return arguments_;}
+const vector<string>&call::arguments() const {return arguments_;}
 
 string call::name() const {return name_;}
 
 bool call::operator!=(const call&rhs) const {return !(*this==rhs);}
 
 bool call::operator==(const call&rhs) const
-{return name_==rhs.name_&&arguments_==rhs.arguments_;}
+{
+    bool result=true;
+    if(name_!=rhs.name_) result=false;
+    else if(arguments_.size()!=rhs.arguments_.size()) result=false;
+    else
+    {
+        for(size_t i=0;i<arguments_.size();i++)
+        {
+            if
+            (
+                arguments_.at(i)!=OMIT_ARGUMENT&&
+                rhs.arguments_.at(i)!=OMIT_ARGUMENT&&
+                arguments_.at(i)!=rhs.arguments_.at(i)
+            )
+            {
+                result=false;
+                break;
+            }
+        }
+    }
+    return result;
+}
 
 ostream&operator<<(ostream&os,const call&call_)
 {
     ostringstream oss;
     oss<<call_.name_;
-    if(!call_.arguments_.empty()) oss<<':'<<call_.arguments_;
+    if(!call_.arguments_.empty())
+    {
+        oss<<':';
+        for(size_t i=0;i<call_.arguments_.size();i++)
+        {
+            if(i!=0) oss<<',';
+            oss<<call_.arguments_.at(i);
+        }
+    }
     return os<<oss.str();
 }
 
 logger::~logger()
 {
-    ct().error=runtime_error("");
-    pt().clear();
+    ct.error=runtime_error("");
+    pt.clear();
 }
 
 const vector<call>&logger::history() const {return history_;}
@@ -40,6 +69,8 @@ size_t logger::count(const string&name) const
     );
 }
 
+void describe_each_to(vector<string>&strs) {}
+
 bool operator!=(const POINT&lhs,const POINT&rhs) {return !(lhs==rhs);}
 
 bool operator!=(const POINT_DOUBLE&lhs,const POINT_DOUBLE&rhs)
@@ -48,6 +79,30 @@ bool operator!=(const POINT_DOUBLE&lhs,const POINT_DOUBLE&rhs)
 bool operator!=(const RECT&lhs,const RECT&rhs) {return !(lhs==rhs);}
 
 bool operator!=(const SIZE&lhs,const SIZE&rhs) {return !(lhs==rhs);}
+
+ostream&operator<<(ostream&os,const BITMAP&bitmap)
+{
+    return os<<describe(
+    "{",
+        describe_with
+        (
+            ",",
+            bitmap.bmType,
+            bitmap.bmWidth,
+            bitmap.bmHeight,
+            bitmap.bmWidthBytes,
+            bitmap.bmPlanes,
+            bitmap.bmBitsPixel,
+            bitmap.bmBits
+        ),
+    "}");
+}
+
+ostream&operator<<(ostream&os,const BITMAP*const bitmap)
+{
+    if(bitmap) os<<*bitmap;
+    return os;
+}
 
 ostream&operator<<(ostream&os,const MSG&message)
 {
@@ -123,6 +178,18 @@ ostream&operator<<(ostream&os,const RECT*rect)
 ostream&operator<<(ostream&os,const SIZE&size)
 {return os<<describe("{",describe_with(",",size.cx,size.cy),"}");}
 
+ostream&operator<<(ostream&os,const TIMECAPS&caps)
+{
+     return os<<describe
+     ("{",describe_with(",",caps.wPeriodMin,caps.wPeriodMax),"}");
+}
+
+ostream&operator<<(ostream&os,const TIMECAPS*const caps)
+{
+    if(caps) os<<*caps;
+    return os;
+}
+
 ostream&operator<<(ostream&os,const WNDCLASSEX&clazz)
 {
      return os<<describe(
@@ -131,7 +198,7 @@ ostream&operator<<(ostream&os,const WNDCLASSEX&clazz)
             ",",
             clazz.cbSize,
             clazz.style,
-            (const void*)clazz.lpfnWndProc,
+            clazz.lpfnWndProc,
             clazz.cbClsExtra,
             clazz.cbWndExtra,
             clazz.hInstance,

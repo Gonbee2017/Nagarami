@@ -37,13 +37,23 @@ TEST(helper,decompose)
 TEST(helper,describe)
 {
     CHECK_EQUAL("hoge",describe("hoge"));
-    CHECK_EQUAL("fuga1",describe("fuga",1));
+    CHECK_EQUAL("fuga10x10",describe("fuga",1,(const void*)0x10));
 }
 
 TEST(helper,describe_with)
 {
     CHECK_EQUAL("hoge",describe_with(",","hoge"));
-    CHECK_EQUAL("fuga,1",describe_with(",","fuga",1));
+    CHECK_EQUAL
+    ("fuga,1,0x10",describe_with(",","fuga",1,(const void*)0x10));
+}
+
+TEST(helper,operator_output_procedure)
+{
+    {
+        ostringstream oss;
+        oss<<(void(CALLBACK*)())0x10;
+        CHECK_EQUAL("0x10",oss.str());
+    }
 }
 
 TEST(helper,fill)
@@ -56,7 +66,7 @@ TEST(helper,fill)
     }
 }
 
-TEST(helper,Finalizer_destructor)
+TEST(helper,Finalizer)
 {
     {
         logger lg;
@@ -70,27 +80,15 @@ TEST(helper,Finalizer_destructor)
     }
 }
 
-TEST(helper,Initializer_constructor)
-{
-    {
-        logger lg;
-        function<void()> initialize;
-        lg.setPut(NAMED_ADDRESS(initialize));
-        Initializer initializer(initialize);
-        CHECK_EQUAL(1,lg.history().size());
-        CHECK_EQUAL(call("initialize"),lg.history().at(0));
-    }
-}
-
 TEST(helper,api_error)
 {
     {
         logger lg;
-        lg.setPutWithResult(NAMED_ADDRESS(pt().GetLastError),(DWORD)1);
+        lg.setPutWithResult(NAMED_ADDRESS(pt.GetLastError),(DWORD)1);
         CHECK_THROWS_RUNTIME_ERROR
         ("hoge failed.(1)",throw api_error("hoge"));
         CHECK_EQUAL(1,lg.history().size());
-        CHECK_EQUAL(call("pt().GetLastError"),lg.history().at(0));
+        CHECK_EQUAL(call("pt.GetLastError"),lg.history().at(0));
     }
 }
 
@@ -120,13 +118,13 @@ TEST(helper,cursor_pos)
 {
     {
         logger lg;
-        lg.setPutWithBody(NAMED_ADDRESS(pt().GetCursorPos),
+        lg.setPutWithBody(NAMED_ADDRESS(pt.GetCursorPos),
         [] (LPPOINT point)->BOOL
         {
             *point=POINT({1,2});
             return TRUE;
         });
-        lg.setPutWithBody(NAMED_ADDRESS(pt().ScreenToClient),
+        lg.setPutWithBody(NAMED_ADDRESS(pt.ScreenToClient),
         [] (HWND window,LPPOINT point)->BOOL
         {
             *point=POINT({-2,-4});
@@ -135,10 +133,10 @@ TEST(helper,cursor_pos)
         CHECK_EQUAL(POINT({-2,-4}),cursor_pos((HWND)0x10));
         CHECK_EQUAL(2,lg.history().size());
         CHECK_EQUAL
-        (call("pt().GetCursorPos",POINT({0,0})),lg.history().at(0));
+        (call("pt.GetCursorPos",POINT({0,0})),lg.history().at(0));
         CHECK_EQUAL
         (
-            call("pt().ScreenToClient",(HWND)0x10,POINT({1,2})),
+            call("pt.ScreenToClient",(HWND)0x10,POINT({1,2})),
             lg.history().at(1)
         );
     }
@@ -148,15 +146,15 @@ TEST(helper,desktop_size)
 {
     {
         logger lg;
-        lg.setPutWithBody(NAMED_ADDRESS(pt().GetSystemMetrics),
+        lg.setPutWithBody(NAMED_ADDRESS(pt.GetSystemMetrics),
         [&lg] (int index)->int
-        {return lg.count("pt().GetSystemMetrics");});
+        {return lg.count("pt.GetSystemMetrics");});
         CHECK_EQUAL(SIZE({1,2}),desktop_size());
         CHECK_EQUAL(2,lg.history().size());
         CHECK_EQUAL
-        (call("pt().GetSystemMetrics",SM_CXSCREEN),lg.history().at(0));
+        (call("pt.GetSystemMetrics",SM_CXSCREEN),lg.history().at(0));
         CHECK_EQUAL
-        (call("pt().GetSystemMetrics",SM_CYSCREEN),lg.history().at(1));
+        (call("pt.GetSystemMetrics",SM_CYSCREEN),lg.history().at(1));
     }
 }
 
