@@ -239,29 +239,12 @@ TEST(apiwrapper,CreateFont)
         (
             "CreateFont",
             1,
-            nm::CreateFont(1,2,3,4,5,6,7,8,9,10,11,12,13,TEXT("hoge"))
+            nm::CreateFont(1,2,3,4,5,6,7,8,9,10,11,12,13,"hoge")
         );
         CHECK_EQUAL(2,lg.history().size());
         CHECK_EQUAL
         (
-            call
-            (
-                "pt.CreateFont",
-                1,
-                2,
-                3,
-                4,
-                5,
-                6,
-                7,
-                8,
-                9,
-                10,
-                11,
-                12,
-                13,
-                TEXT("hoge")
-            ),
+            call("pt.CreateFont",1,2,3,4,5,6,7,8,9,10,11,12,13,"hoge"),
             lg.history().at(0)
         );
         CHECK_EQUAL(call("pt.GetLastError"),lg.history().at(1));
@@ -271,29 +254,12 @@ TEST(apiwrapper,CreateFont)
         lg.setPutWithResult(NAMED_ADDRESS(pt.CreateFont),(HFONT)0x10);
         lg.setPutWithResult(NAMED_ADDRESS(pt.DeleteObject),TRUE);
         auto font=
-            nm::CreateFont(1,2,3,4,5,6,7,8,9,10,11,12,13,TEXT("hoge"));
+            nm::CreateFont(1,2,3,4,5,6,7,8,9,10,11,12,13,"hoge");
         CHECK_EQUAL((HGDIOBJ)0x10,font->handle());
         CHECK_EQUAL(1,lg.history().size());
         CHECK_EQUAL
         (
-            call
-            (
-                "pt.CreateFont",
-                1,
-                2,
-                3,
-                4,
-                5,
-                6,
-                7,
-                8,
-                9,
-                10,
-                11,
-                12,
-                13,
-                TEXT("hoge")
-            ),
+            call("pt.CreateFont",1,2,3,4,5,6,7,8,9,10,11,12,13,"hoge"),
             lg.history().at(0)
         );
         font.reset();
@@ -437,8 +403,8 @@ TEST(apiwrapper,CreateWindowEx)
             (
                 "pt.CreateWindowEx",
                 1,
-                TEXT("fuga"),
-                TEXT("piyo"),
+                "fuga",
+                "piyo",
                 2,
                 3,
                 4,
@@ -464,8 +430,8 @@ TEST(apiwrapper,CreateWindowEx)
             nm::CreateWindowEx
             (
                 1,
-                TEXT("hoge"),
-                TEXT("fuga"),
+                "hoge",
+                "fuga",
                 2,
                 3,
                 4,
@@ -484,8 +450,8 @@ TEST(apiwrapper,CreateWindowEx)
             (
                 "pt.CreateWindowEx",
                 1,
-                TEXT("hoge"),
-                TEXT("fuga"),
+                "hoge",
+                "fuga",
                 2,
                 3,
                 4,
@@ -510,8 +476,8 @@ TEST(apiwrapper,CreateWindowEx)
             nm::CreateWindowEx
             (
                 1,
-                TEXT("hoge"),
-                TEXT("fuga"),
+                "hoge",
+                "fuga",
                 2,
                 3,
                 4,
@@ -530,8 +496,8 @@ TEST(apiwrapper,CreateWindowEx)
             (
                 "pt.CreateWindowEx",
                 1,
-                TEXT("hoge"),
-                TEXT("fuga"),
+                "hoge",
+                "fuga",
                 2,
                 3,
                 4,
@@ -594,23 +560,11 @@ TEST(apiwrapper,DrawText)
         lg.setPutWithResult(NAMED_ADDRESS(pt.GetLastError),(DWORD)1);
         RECT rect({1,-2,-3,5});
         CHECK_THROWS_API_ERROR
-        (
-            "DrawText",
-            1,
-            nm::DrawText((HDC)0x10,TEXT("hoge"),1,&rect,2)
-        );
+        ("DrawText",1,nm::DrawText((HDC)0x10,"hoge",1,&rect,2));
         CHECK_EQUAL(2,lg.history().size());
         CHECK_EQUAL
         (
-            call
-            (
-                "pt.DrawText",
-                (HDC)0x10,
-                TEXT("hoge"),
-                1,
-                RECT({1,-2,-3,5}),
-                2
-            ),
+            call("pt.DrawText",(HDC)0x10,"hoge",1,RECT({1,-2,-3,5}),2),
             lg.history().at(0)
         );
         CHECK_EQUAL(call("pt.GetLastError"),lg.history().at(1));
@@ -619,19 +573,11 @@ TEST(apiwrapper,DrawText)
         logger lg;
         lg.setPutWithResult(NAMED_ADDRESS(pt.DrawText),1);
         RECT rect({1,-2,-3,5});
-        CHECK_EQUAL(1,nm::DrawText((HDC)0x10,TEXT("hoge"),1,&rect,2));
+        CHECK_EQUAL(1,nm::DrawText((HDC)0x10,"hoge",1,&rect,2));
         CHECK_EQUAL(1,lg.history().size());
         CHECK_EQUAL
         (
-            call
-            (
-                "pt.DrawText",
-                (HDC)0x10,
-                TEXT("hoge"),
-                1,
-                RECT({1,-2,-3,5}),
-                2
-            ),
+            call("pt.DrawText",(HDC)0x10,"hoge",1,RECT({1,-2,-3,5}),2),
             lg.history().at(0)
         );
     }
@@ -1005,11 +951,11 @@ TEST(apiwrapper,LoadBitmap)
         lg.setPutWithResult(NAMED_ADDRESS(pt.LoadBitmap),(HBITMAP)NULL);
         lg.setPutWithResult(NAMED_ADDRESS(pt.GetLastError),(DWORD)1);
         CHECK_THROWS_API_ERROR
-        ("LoadBitmap",1,nm::LoadBitmap((HINSTANCE)0x10,TEXT("hoge")));
+        ("LoadBitmap",1,nm::LoadBitmap((HINSTANCE)0x10,"hoge"));
         CHECK_EQUAL(2,lg.history().size());
         CHECK_EQUAL
         (
-            call("pt.LoadBitmap",(HINSTANCE)0x10,TEXT("hoge")),
+            call("pt.LoadBitmap",(HINSTANCE)0x10,"hoge"),
             lg.history().at(0)
         );
         CHECK_EQUAL(call("pt.GetLastError"),lg.history().at(1));
@@ -1018,12 +964,12 @@ TEST(apiwrapper,LoadBitmap)
         logger lg;
         lg.setPutWithResult(NAMED_ADDRESS(pt.LoadBitmap),(HBITMAP)0x10);
         lg.setPutWithResult(NAMED_ADDRESS(pt.DeleteObject),TRUE);
-        auto bitmap=nm::LoadBitmap((HINSTANCE)0x20,TEXT("hoge"));
+        auto bitmap=nm::LoadBitmap((HINSTANCE)0x20,"hoge");
         CHECK_EQUAL((HGDIOBJ)0x10,bitmap->handle());
         CHECK_EQUAL(1,lg.history().size());
         CHECK_EQUAL
         (
-            call("pt.LoadBitmap",(HINSTANCE)0x20,TEXT("hoge")),
+            call("pt.LoadBitmap",(HINSTANCE)0x20,"hoge"),
             lg.history().at(0)
         );
         bitmap.reset();
@@ -1040,11 +986,11 @@ TEST(apiwrapper,LoadCursor)
         lg.setPutWithResult(NAMED_ADDRESS(pt.LoadCursor),(HCURSOR)NULL);
         lg.setPutWithResult(NAMED_ADDRESS(pt.GetLastError),(DWORD)1);
         CHECK_THROWS_API_ERROR
-        ("LoadCursor",1,nm::LoadCursor((HINSTANCE)0x10,TEXT("hoge")));
+        ("LoadCursor",1,nm::LoadCursor((HINSTANCE)0x10,"hoge"));
         CHECK_EQUAL(2,lg.history().size());
         CHECK_EQUAL
         (
-            call("pt.LoadCursor",(HINSTANCE)0x10,TEXT("hoge")),
+            call("pt.LoadCursor",(HINSTANCE)0x10,"hoge"),
             lg.history().at(0)
         );
         CHECK_EQUAL(call("pt.GetLastError"),lg.history().at(1));
@@ -1052,14 +998,10 @@ TEST(apiwrapper,LoadCursor)
     {
         logger lg;
         lg.setPutWithResult(NAMED_ADDRESS(pt.LoadCursor),(HCURSOR)0x10);
-        CHECK_EQUAL
-        ((HCURSOR)0x10,nm::LoadCursor((HINSTANCE)0x20,TEXT("hoge")));
+        CHECK_EQUAL((HCURSOR)0x10,nm::LoadCursor((HINSTANCE)0x20,"hoge"));
         CHECK_EQUAL(1,lg.history().size());
         CHECK_EQUAL
-        (
-            call("pt.LoadCursor",(HINSTANCE)0x20,TEXT("hoge")),
-            lg.history().at(0)
-        );
+        (call("pt.LoadCursor",(HINSTANCE)0x20,"hoge"),lg.history().at(0));
     }
 }
 
@@ -1173,8 +1115,8 @@ TEST(apiwrapper,RegisterClassEx)
             (HICON)0x30,
             (HCURSOR)0x40,
             (HBRUSH)0x50,
-            TEXT("hoge"),
-            TEXT("fuga"),
+            "hoge",
+            "fuga",
             (HICON)0x60
         });
         CHECK_THROWS_API_ERROR
@@ -1196,8 +1138,8 @@ TEST(apiwrapper,RegisterClassEx)
                     (HICON)0x30,
                     (HCURSOR)0x40,
                     (HBRUSH)0x50,
-                    TEXT("hoge"),
-                    TEXT("fuga"),
+                    "hoge",
+                    "fuga",
                     (HICON)0x60
                 })
             ),
@@ -1220,8 +1162,8 @@ TEST(apiwrapper,RegisterClassEx)
             (HICON)0x30,
             (HCURSOR)0x40,
             (HBRUSH)0x50,
-            TEXT("hoge"),
-            TEXT("fuga"),
+            "hoge",
+            "fuga",
             (HICON)0x60
         });
         CHECK_EQUAL((ATOM)1,nm::RegisterClassEx(&clazz));
@@ -1242,8 +1184,8 @@ TEST(apiwrapper,RegisterClassEx)
                     (HICON)0x30,
                     (HCURSOR)0x40,
                     (HBRUSH)0x50,
-                    TEXT("hoge"),
-                    TEXT("fuga"),
+                    "hoge",
+                    "fuga",
                     (HICON)0x60
                 })
             ),
@@ -1457,10 +1399,10 @@ TEST(apiwrapper,ShellExecute)
             nm::ShellExecute
             (
                 (HWND)0x10,
-                TEXT("hoge"),
-                TEXT("fuga"),
-                TEXT("piyo"),
-                TEXT("foo"),
+                "hoge",
+                "fuga",
+                "piyo",
+                "foo",
                 2
             )
         );
@@ -1471,10 +1413,10 @@ TEST(apiwrapper,ShellExecute)
             (
                 "pt.ShellExecute",
                 (HWND)0x10,
-                TEXT("hoge"),
-                TEXT("fuga"),
-                TEXT("piyo"),
-                TEXT("foo"),
+                "hoge",
+                "fuga",
+                "piyo",
+                "foo",
                 2
             ),
             lg.history().at(0)
@@ -1489,10 +1431,10 @@ TEST(apiwrapper,ShellExecute)
             nm::ShellExecute
             (
                 (HWND)0x10,
-                TEXT("hoge"),
-                TEXT("fuga"),
-                TEXT("piyo"),
-                TEXT("foo"),
+                "hoge",
+                "fuga",
+                "piyo",
+                "foo",
                 2
             )
         );
@@ -1503,10 +1445,10 @@ TEST(apiwrapper,ShellExecute)
             (
                 "pt.ShellExecute",
                 (HWND)0x10,
-                TEXT("hoge"),
-                TEXT("fuga"),
-                TEXT("piyo"),
-                TEXT("foo"),
+                "hoge",
+                "fuga",
+                "piyo",
+                "foo",
                 2
             ),
             lg.history().at(0)

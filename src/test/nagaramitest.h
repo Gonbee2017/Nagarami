@@ -13,20 +13,27 @@
 #include<vector>
 #include<CppUTest/TestHarness.h>
 
-#define DEBUG_PRINT(x) cout<<#x<<":'"<<(x)<<"'"<<endl
-#define DEBUG_PRINTF(x,...)\
-    cout<<#x<<":'"<<describe(__VA_ARGS__,(x))<<"'"<<endl
-#define NAMED_ADDRESS(x) (make_pair(string(#x),&(x)))
-#define CHECK_THROWS_API_ERROR(name,code,expression)\
-    CHECK_THROWS_RUNTIME_ERROR\
-    (describe((name)," failed.(",(code),")"),expression)
-#define CHECK_THROWS_RUNTIME_ERROR(expected_what,expression)\
+#define CHECK_THROWS_API_ERROR(expectedFuncName,expectedCode,expression)\
+    try\
+    {\
+        expression;\
+        FAIL("Do not pass here.");\
+    } catch(const api_error&error)\
+    {\
+        CHECK_EQUAL((expectedFuncName),error.functionName());\
+        CHECK_EQUAL((expectedCode),error.code());\
+    }
+#define CHECK_THROWS_RUNTIME_ERROR(expectedWhat,expression)\
     try\
     {\
         expression;\
         FAIL("Do not pass here.");\
     } catch(const runtime_error&error)\
-    {CHECK_EQUAL((expected_what),string(error.what()));}
+    {CHECK_EQUAL((expectedWhat),string(error.what()));}
+#define DEBUG_PRINT(x) cout<<#x<<":'"<<(x)<<"'"<<endl
+#define DEBUG_PRINTF(x,...)\
+    cout<<#x<<":'"<<describe(__VA_ARGS__,(x))<<"'"<<endl
+#define NAMED_ADDRESS(x) (make_pair(string(#x),&(x)))
 
 namespace nm
 {

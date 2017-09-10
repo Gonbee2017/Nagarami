@@ -89,16 +89,13 @@ TEST(systemobject,Buffer_load)
         lg.setPutWithResult(NAMED_ADDRESS(pt.SelectObject),(HGDIOBJ)NULL);
         lg.setPutWithResult(NAMED_ADDRESS(pt.DeleteDC),TRUE);
         lg.setPutWithResult(NAMED_ADDRESS(pt.DeleteObject),TRUE);
-        auto buffer=Buffer::load((HINSTANCE)0x40,TEXT("hoge"),(HDC)0x50);
+        auto buffer=Buffer::load((HINSTANCE)0x40,"hoge",(HDC)0x50);
         CHECK_EQUAL((HBITMAP)0x10,buffer->bitmap());
         CHECK_EQUAL((HDC)0x30,buffer->dc());
         CHECK_EQUAL(SIZE({2,3}),buffer->size());
         CHECK_EQUAL(4,lg.history().size());
         CHECK_EQUAL
-        (
-            call("pt.LoadBitmap",(HINSTANCE)0x40,TEXT("hoge")),
-            lg.history().at(0)
-        );
+        (call("pt.LoadBitmap",(HINSTANCE)0x40,"hoge"),lg.history().at(0));
         CHECK_EQUAL
         (
             call

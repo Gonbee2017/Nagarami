@@ -347,12 +347,12 @@ int execute
         pt.MessageBox
         (
             NULL,
-            TEXT(describe
+            describe
             (
                 "An unexpected error occured.\n",
                 error.what()
-            ).c_str()),
-            TEXT(APPLICATION_NAME),
+            ).c_str(),
+            APPLICATION_NAME,
             MB_ICONERROR|MB_OK
         );
         result=1;

@@ -48,7 +48,7 @@ Component::Component
     toolInfo_.uId=toolId;
     toolInfo_.rect=RECT({0,0,0,0});
     toolInfo_.hinst=NULL;
-    toolInfo_.lpszText=(LPWSTR)TEXT(toolText.c_str());
+    toolInfo_.lpszText=(LPWSTR)toolText.c_str();
     if
     (pt.SendMessageW(toolTip_,TTM_ADDTOOLW,0,(LPARAM)&toolInfo_)==FALSE)
         throw runtime_error(describe
@@ -598,7 +598,7 @@ void Slider::renderText()
     nm::DrawText
     (
         textBuffer_->dc(),
-        TEXT(text_.c_str()),
+        text_.c_str(),
         text_.length(),
         &textRect,
         FORMAT
@@ -606,7 +606,7 @@ void Slider::renderText()
     nm::DrawText
     (
         textMaskBuffer_->dc(),
-        TEXT(text_.c_str()),
+        text_.c_str(),
         text_.length(),
         &textRect,
         FORMAT
@@ -615,7 +615,7 @@ void Slider::renderText()
     nm::DrawText
     (
         textBuffer_->dc(),
-        TEXT(text_.c_str()),
+        text_.c_str(),
         text_.length(),
         &textRect,
         FORMAT
@@ -623,7 +623,7 @@ void Slider::renderText()
     nm::DrawText
     (
         textMaskBuffer_->dc(),
-        TEXT(text_.c_str()),
+        text_.c_str(),
         text_.length(),
         &textRect,
         FORMAT
@@ -633,7 +633,7 @@ void Slider::renderText()
     nm::DrawText
     (
         textBuffer_->dc(),
-        TEXT(text_.c_str()),
+        text_.c_str(),
         text_.length(),
         &textRect,
         FORMAT
@@ -641,7 +641,7 @@ void Slider::renderText()
     nm::DrawText
     (
         textMaskBuffer_->dc(),
-        TEXT(text_.c_str()),
+        text_.c_str(),
         text_.length(),
         &textRect,
         FORMAT
@@ -650,7 +650,7 @@ void Slider::renderText()
     nm::DrawText
     (
         textBuffer_->dc(),
-        TEXT(text_.c_str()),
+        text_.c_str(),
         text_.length(),
         &textRect,
         FORMAT
@@ -658,7 +658,7 @@ void Slider::renderText()
     nm::DrawText
     (
         textMaskBuffer_->dc(),
-        TEXT(text_.c_str()),
+        text_.c_str(),
         text_.length(),
         &textRect,
         FORMAT
@@ -668,7 +668,7 @@ void Slider::renderText()
     nm::DrawText
     (
         textBuffer_->dc(),
-        TEXT(text_.c_str()),
+        text_.c_str(),
         text_.length(),
         &textRect,
         FORMAT

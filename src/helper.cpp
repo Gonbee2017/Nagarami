@@ -23,10 +23,13 @@ api_error::api_error(const string&functionName):
     api_error(functionName,pt.GetLastError()) {}
 
 api_error::api_error(const string&functionName,const DWORD&code):
-    runtime_error(describe(functionName," failed.(",code,")")),code_(code)
-    {}
+    runtime_error(describe(functionName," failed.(",code,")")),
+    functionName_(functionName),
+    code_(code) {}
 
 DWORD api_error::code() const {return code_;}
+
+string api_error::functionName() const {return functionName_;}
 
 string chomp(const string&str,const char&ch)
 {

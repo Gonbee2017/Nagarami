@@ -623,7 +623,10 @@ public:
     api_error(const string&functionName);
     api_error(const string&functionName,const DWORD&code);
     DWORD code() const;
-protected:DWORD code_;
+    string functionName() const;
+protected:
+    DWORD code_;
+    string functionName_;
 };
 
 template<class OBJECT,class RESULT,class...ARGUMENTS>

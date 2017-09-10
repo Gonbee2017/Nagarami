@@ -17,7 +17,7 @@ void Window::registerClass()
     clazz.cbSize=sizeof(WNDCLASSEX);
     clazz.cbWndExtra=0;
     clazz.lpfnWndProc=&procedure;
-    clazz.lpszClassName=TEXT(APPLICATION_NAME);
+    clazz.lpszClassName=APPLICATION_NAME;
     clazz.lpszMenuName=NULL;
     clazz.hCursor=NULL;
     clazz.hIcon=NULL;
@@ -98,8 +98,8 @@ MainWindow::MainWindow():
     nm::CreateWindowEx
     (
         WS_EX_LAYERED|WS_EX_TOPMOST,
-        TEXT(APPLICATION_NAME),
-        TEXT(APPLICATION_NAME),
+        APPLICATION_NAME,
+        APPLICATION_NAME,
         WS_MAXIMIZEBOX|WS_MINIMIZEBOX|WS_POPUP,
         ct.ps.window_pos.x,
         ct.ps.window_pos.y,
@@ -163,10 +163,7 @@ void MainWindow::onHalftoneButtonChange()
 }
 
 void MainWindow::onHelpButtonClick()
-{
-    nm::ShellExecute
-    (handle_,TEXT("open"),TEXT(HELP_URL),NULL,NULL,SW_SHOWNORMAL);
-}
+{nm::ShellExecute(handle_,"open",HELP_URL,NULL,NULL,SW_SHOWNORMAL);}
 
 void MainWindow::onHoleSliderChange()
 {ct.ps.hole=UNIT_LENGTH*holeSlider_->value();}
