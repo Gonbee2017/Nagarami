@@ -85,11 +85,11 @@ TEST(helper,api_error)
     {
         logger lg;
         lg.setPutWithResult(NAMED_ADDRESS(pt.GetLastError),(DWORD)1);
-        CHECK_THROWS_RUNTIME_ERROR
-        ("hoge failed.(1)",throw api_error("hoge"));
+        CHECK_THROWS_API_ERROR("hoge",1,throw api_error("hoge"));
         CHECK_EQUAL(1,lg.history().size());
         CHECK_EQUAL(call("pt.GetLastError"),lg.history().at(0));
     }
+    CHECK_THROWS_API_ERROR("fuga",2,throw api_error("fuga",2));
 }
 
 TEST(helper,contain_circle)

@@ -90,37 +90,4 @@ void CALLBACK Timer::procedure
     DWORD_PTR reserved2
 ) {try{nm::PostMessage((HWND)user,WM_USERTIMER,0,0);} catch(...) {}}
 
-shared_ptr<TimeEndPeriod> timeBeginPeriod(UINT period)
-{
-    const MMRESULT result=pt.timeBeginPeriod(period);
-    if(result!=TIMERR_NOERROR)
-        throw runtime_error(describe
-        ("timeBeginPeriod failed.(",result,")"));
-    return make_shared<TimeEndPeriod>(period);
-}
-
-void timeGetDevCaps(LPTIMECAPS caps,UINT sizeOfCaps)
-{
-    fill(caps,0);
-    const MMRESULT result=pt.timeGetDevCaps(caps,sizeOfCaps);
-    if(result!=TIMERR_NOERROR)
-        throw runtime_error(describe
-        ("timeGetDevCaps failed.(",result,")"));
-}
-
-shared_ptr<TimeKillEvent> timeSetEvent
-(
-    UINT delay,
-    UINT resolution,
-    LPTIMECALLBACK procedure,
-    DWORD user,
-    UINT event
-)
-{
-    const UINT timerID=
-        pt.timeSetEvent(delay,resolution,procedure,user,event);
-    if(timerID==0) throw runtime_error(describe("timeSetEvent failed."));
-    return make_shared<TimeKillEvent>(timerID);
-}
-
 }

@@ -15,8 +15,8 @@ TEST(apiwrapper,BeginPaint)
         lg.setPutWithResult(NAMED_ADDRESS(pt.BeginPaint),(HDC)NULL);
         lg.setPutWithResult(NAMED_ADDRESS(pt.GetLastError),(DWORD)1);
         PAINTSTRUCT paint;
-        CHECK_THROWS_RUNTIME_ERROR
-        ("BeginPaint failed.(1)",nm::BeginPaint((HWND)0x10,&paint));
+        CHECK_THROWS_API_ERROR
+        ("BeginPaint",1,nm::BeginPaint((HWND)0x10,&paint));
         CHECK_EQUAL(2,lg.history().size());
         CHECK_EQUAL
         (
@@ -81,9 +81,10 @@ TEST(apiwrapper,BitBlt)
         logger lg;
         lg.setPutWithResult(NAMED_ADDRESS(pt.BitBlt),FALSE);
         lg.setPutWithResult(NAMED_ADDRESS(pt.GetLastError),(DWORD)1);
-        CHECK_THROWS_RUNTIME_ERROR
+        CHECK_THROWS_API_ERROR
         (
-            "BitBlt failed.(1)",
+            "BitBlt",
+            1,
             nm::BitBlt
             (
                 (HDC)0x10,
@@ -160,9 +161,10 @@ TEST(apiwrapper,CreateCompatibleBitmap)
         lg.setPutWithResult
         (NAMED_ADDRESS(pt.CreateCompatibleBitmap),(HBITMAP)NULL);
         lg.setPutWithResult(NAMED_ADDRESS(pt.GetLastError),(DWORD)1);
-        CHECK_THROWS_RUNTIME_ERROR
+        CHECK_THROWS_API_ERROR
         (
-            "CreateCompatibleBitmap failed.(1)",
+            "CreateCompatibleBitmap",
+            1,
             nm::CreateCompatibleBitmap((HDC)0x10,1,-2)
         );
         CHECK_EQUAL(2,lg.history().size());
@@ -200,9 +202,10 @@ TEST(apiwrapper,CreateCompatibleDC)
         lg.setPutWithResult
         (NAMED_ADDRESS(pt.CreateCompatibleDC),(HDC)NULL);
         lg.setPutWithResult(NAMED_ADDRESS(pt.GetLastError),(DWORD)1);
-        CHECK_THROWS_RUNTIME_ERROR
+        CHECK_THROWS_API_ERROR
         (
-            "CreateCompatibleDC failed.(1)",
+            "CreateCompatibleDC",
+            1,
             nm::CreateCompatibleDC((HDC)0x10)
         );
         CHECK_EQUAL(2,lg.history().size());
@@ -232,9 +235,10 @@ TEST(apiwrapper,CreateFont)
         logger lg;
         lg.setPutWithResult(NAMED_ADDRESS(pt.CreateFont),(HFONT)NULL);
         lg.setPutWithResult(NAMED_ADDRESS(pt.GetLastError),(DWORD)1);
-        CHECK_THROWS_RUNTIME_ERROR
+        CHECK_THROWS_API_ERROR
         (
-            "CreateFont failed.(1)",
+            "CreateFont",
+            1,
             nm::CreateFont(1,2,3,4,5,6,7,8,9,10,11,12,13,TEXT("hoge"))
         );
         CHECK_EQUAL(2,lg.history().size());
@@ -306,9 +310,10 @@ TEST(apiwrapper,CreatePatternBrush)
         lg.setPutWithResult
         (NAMED_ADDRESS(pt.CreatePatternBrush),(HBRUSH)NULL);
         lg.setPutWithResult(NAMED_ADDRESS(pt.GetLastError),(DWORD)1);
-        CHECK_THROWS_RUNTIME_ERROR
+        CHECK_THROWS_API_ERROR
         (
-            "CreatePatternBrush failed.(1)",
+            "CreatePatternBrush",
+            1,
             nm::CreatePatternBrush((HBITMAP)0x10)
         );
         CHECK_EQUAL(2,lg.history().size());
@@ -345,8 +350,8 @@ TEST(apiwrapper,CreatePen)
         logger lg;
         lg.setPutWithResult(NAMED_ADDRESS(pt.CreatePen),(HPEN)NULL);
         lg.setPutWithResult(NAMED_ADDRESS(pt.GetLastError),(DWORD)1);
-        CHECK_THROWS_RUNTIME_ERROR
-        ("CreatePen failed.(1)",nm::CreatePen(1,2,RGB(1,2,3)));
+        CHECK_THROWS_API_ERROR
+        ("CreatePen",1,nm::CreatePen(1,2,RGB(1,2,3)));
         CHECK_EQUAL(2,lg.history().size());
         CHECK_EQUAL
         (call("pt.CreatePen",1,2,RGB(1,2,3)),lg.history().at(0));
@@ -375,8 +380,8 @@ TEST(apiwrapper,CreateSolidBrush)
         lg.setPutWithResult
         (NAMED_ADDRESS(pt.CreateSolidBrush),(HBRUSH)NULL);
         lg.setPutWithResult(NAMED_ADDRESS(pt.GetLastError),(DWORD)1);
-        CHECK_THROWS_RUNTIME_ERROR
-        ("CreateSolidBrush failed.(1)",nm::CreateSolidBrush(RGB(1,2,3)));
+        CHECK_THROWS_API_ERROR
+        ("CreateSolidBrush",1,nm::CreateSolidBrush(RGB(1,2,3)));
         CHECK_EQUAL(2,lg.history().size());
         CHECK_EQUAL
         (call("pt.CreateSolidBrush",RGB(1,2,3)),lg.history().at(0));
@@ -452,9 +457,10 @@ TEST(apiwrapper,CreateWindowEx)
         lg.setPutWithResult
         (NAMED_ADDRESS(pt.CreateWindowEx),(HWND)NULL);
         lg.setPutWithResult(NAMED_ADDRESS(pt.GetLastError),(DWORD)1);
-        CHECK_THROWS_RUNTIME_ERROR
+        CHECK_THROWS_API_ERROR
         (
-            "CreateWindowEx failed.(1)",
+            "CreateWindowEx",
+            1,
             nm::CreateWindowEx
             (
                 1,
@@ -587,9 +593,10 @@ TEST(apiwrapper,DrawText)
         lg.setPutWithResult(NAMED_ADDRESS(pt.DrawText),0);
         lg.setPutWithResult(NAMED_ADDRESS(pt.GetLastError),(DWORD)1);
         RECT rect({1,-2,-3,5});
-        CHECK_THROWS_RUNTIME_ERROR
+        CHECK_THROWS_API_ERROR
         (
-            "DrawText failed.(1)",
+            "DrawText",
+            1,
             nm::DrawText((HDC)0x10,TEXT("hoge"),1,&rect,2)
         );
         CHECK_EQUAL(2,lg.history().size());
@@ -636,8 +643,8 @@ TEST(apiwrapper,Ellipse)
         logger lg;
         lg.setPutWithResult(NAMED_ADDRESS(pt.Ellipse),FALSE);
         lg.setPutWithResult(NAMED_ADDRESS(pt.GetLastError),(DWORD)1);
-        CHECK_THROWS_RUNTIME_ERROR
-        ("Ellipse failed.(1)",nm::Ellipse((HDC)0x10,1,2,3,4));
+        CHECK_THROWS_API_ERROR
+        ("Ellipse",1,nm::Ellipse((HDC)0x10,1,2,3,4));
         CHECK_EQUAL(2,lg.history().size());
         CHECK_EQUAL
         (call("pt.Ellipse",(HDC)0x10,1,2,3,4),lg.history().at(0));
@@ -660,11 +667,8 @@ TEST(apiwrapper,FillRect)
         lg.setPutWithResult(NAMED_ADDRESS(pt.FillRect),FALSE);
         lg.setPutWithResult(NAMED_ADDRESS(pt.GetLastError),(DWORD)1);
         RECT rect({1,-2,-3,5});
-        CHECK_THROWS_RUNTIME_ERROR
-        (
-            "FillRect failed.(1)",
-            nm::FillRect((HDC)0x10,&rect,(HBRUSH)0x20)
-        );
+        CHECK_THROWS_API_ERROR
+        ("FillRect",1,nm::FillRect((HDC)0x10,&rect,(HBRUSH)0x20));
         CHECK_EQUAL(2,lg.history().size());
         CHECK_EQUAL
         (
@@ -696,8 +700,8 @@ TEST(apiwrapper,GetClientRect)
         lg.setPutWithResult(NAMED_ADDRESS(pt.GetClientRect),FALSE);
         lg.setPutWithResult(NAMED_ADDRESS(pt.GetLastError),(DWORD)1);
         RECT rect;
-        CHECK_THROWS_RUNTIME_ERROR
-        ("GetClientRect failed.(1)",nm::GetClientRect((HWND)0x10,&rect));
+        CHECK_THROWS_API_ERROR
+        ("GetClientRect",1,nm::GetClientRect((HWND)0x10,&rect));
         CHECK_EQUAL(2,lg.history().size());
         CHECK_EQUAL
         (
@@ -733,8 +737,7 @@ TEST(apiwrapper,GetCursorPos)
         lg.setPutWithResult(NAMED_ADDRESS(pt.GetCursorPos),FALSE);
         lg.setPutWithResult(NAMED_ADDRESS(pt.GetLastError),(DWORD)1);
         POINT pos;
-        CHECK_THROWS_RUNTIME_ERROR
-        ("GetCursorPos failed.(1)",nm::GetCursorPos(&pos));
+        CHECK_THROWS_API_ERROR("GetCursorPos",1,nm::GetCursorPos(&pos));
         CHECK_EQUAL(2,lg.history().size());
         CHECK_EQUAL
         (call("pt.GetCursorPos",POINT({0,0})),lg.history().at(0));
@@ -763,8 +766,7 @@ TEST(apiwrapper,GetDC)
         logger lg;
         lg.setPutWithResult(NAMED_ADDRESS(pt.GetDC),(HDC)NULL);
         lg.setPutWithResult(NAMED_ADDRESS(pt.GetLastError),(DWORD)1);
-        CHECK_THROWS_RUNTIME_ERROR
-        ("GetDC failed.(1)",nm::GetDC((HWND)0x10));
+        CHECK_THROWS_API_ERROR("GetDC",1,nm::GetDC((HWND)0x10));
         CHECK_EQUAL(2,lg.history().size());
         CHECK_EQUAL(call("pt.GetDC",(HWND)0x10),lg.history().at(0));
         CHECK_EQUAL(call("pt.GetLastError"),lg.history().at(1));
@@ -791,8 +793,8 @@ TEST(apiwrapper,GetMessage)
         lg.setPutWithResult(NAMED_ADDRESS(pt.GetMessage),-1);
         lg.setPutWithResult(NAMED_ADDRESS(pt.GetLastError),(DWORD)1);
         MSG message;
-        CHECK_THROWS_RUNTIME_ERROR
-        ("GetMessage failed.(1)",nm::GetMessage(&message,(HWND)0x10,1,2));
+        CHECK_THROWS_API_ERROR
+        ("GetMessage",1,nm::GetMessage(&message,(HWND)0x10,1,2));
         CHECK_EQUAL(2,lg.history().size());
         CHECK_EQUAL
         (
@@ -874,11 +876,8 @@ TEST(apiwrapper,GetObject)
         logger lg;
         lg.setPutWithResult(NAMED_ADDRESS(pt.GetObject),0);
         lg.setPutWithResult(NAMED_ADDRESS(pt.GetLastError),(DWORD)1);
-        CHECK_THROWS_RUNTIME_ERROR
-        (
-            "GetObject failed.(1)",
-            nm::GetObject((HGDIOBJ)0x10,1,(LPVOID)0x20)
-        );
+        CHECK_THROWS_API_ERROR
+        ("GetObject",1,nm::GetObject((HGDIOBJ)0x10,1,(LPVOID)0x20));
         CHECK_EQUAL(2,lg.history().size());
         CHECK_EQUAL
         (
@@ -907,8 +906,8 @@ TEST(apiwrapper,GetSystemMetrics)
         logger lg;
         lg.setPutWithResult(NAMED_ADDRESS(pt.GetSystemMetrics),0);
         lg.setPutWithResult(NAMED_ADDRESS(pt.GetLastError),(DWORD)1);
-        CHECK_THROWS_RUNTIME_ERROR
-        ("GetSystemMetrics failed.(1)",nm::GetSystemMetrics(1));
+        CHECK_THROWS_API_ERROR
+        ("GetSystemMetrics",1,nm::GetSystemMetrics(1));
         CHECK_EQUAL(2,lg.history().size());
         CHECK_EQUAL(call("pt.GetSystemMetrics",1),lg.history().at(0));
         CHECK_EQUAL(call("pt.GetLastError"),lg.history().at(1));
@@ -930,9 +929,10 @@ TEST(apiwrapper,GetWindowPlacement)
         lg.setPutWithResult(NAMED_ADDRESS(pt.GetWindowPlacement),FALSE);
         lg.setPutWithResult(NAMED_ADDRESS(pt.GetLastError),(DWORD)1);
         WINDOWPLACEMENT placement;
-        CHECK_THROWS_RUNTIME_ERROR
+        CHECK_THROWS_API_ERROR
         (
-            "GetWindowPlacement failed.(1)",
+            "GetWindowPlacement",
+            1,
             nm::GetWindowPlacement((HWND)0x10,&placement)
         );
         CHECK_EQUAL(2,lg.history().size());
@@ -1004,11 +1004,8 @@ TEST(apiwrapper,LoadBitmap)
         logger lg;
         lg.setPutWithResult(NAMED_ADDRESS(pt.LoadBitmap),(HBITMAP)NULL);
         lg.setPutWithResult(NAMED_ADDRESS(pt.GetLastError),(DWORD)1);
-        CHECK_THROWS_RUNTIME_ERROR
-        (
-            "LoadBitmap failed.(1)",
-            nm::LoadBitmap((HINSTANCE)0x10,TEXT("hoge"))
-        );
+        CHECK_THROWS_API_ERROR
+        ("LoadBitmap",1,nm::LoadBitmap((HINSTANCE)0x10,TEXT("hoge")));
         CHECK_EQUAL(2,lg.history().size());
         CHECK_EQUAL
         (
@@ -1042,11 +1039,8 @@ TEST(apiwrapper,LoadCursor)
         logger lg;
         lg.setPutWithResult(NAMED_ADDRESS(pt.LoadCursor),(HCURSOR)NULL);
         lg.setPutWithResult(NAMED_ADDRESS(pt.GetLastError),(DWORD)1);
-        CHECK_THROWS_RUNTIME_ERROR
-        (
-            "LoadCursor failed.(1)",
-            nm::LoadCursor((HINSTANCE)0x10,TEXT("hoge"))
-        );
+        CHECK_THROWS_API_ERROR
+        ("LoadCursor",1,nm::LoadCursor((HINSTANCE)0x10,TEXT("hoge")));
         CHECK_EQUAL(2,lg.history().size());
         CHECK_EQUAL
         (
@@ -1075,11 +1069,8 @@ TEST(apiwrapper,PostMessage)
         logger lg;
         lg.setPutWithResult(NAMED_ADDRESS(pt.PostMessage),FALSE);
         lg.setPutWithResult(NAMED_ADDRESS(pt.GetLastError),(DWORD)1);
-        CHECK_THROWS_RUNTIME_ERROR
-        (
-            "PostMessage failed.(1)",
-            nm::PostMessage((HWND)0x10,1,2,3)
-        );
+        CHECK_THROWS_API_ERROR
+        ("PostMessage",1,nm::PostMessage((HWND)0x10,1,2,3));
         CHECK_EQUAL(2,lg.history().size());
         CHECK_EQUAL
         (
@@ -1122,9 +1113,10 @@ TEST(apiwrapper,RedrawWindow)
         lg.setPutWithResult(NAMED_ADDRESS(pt.RedrawWindow),FALSE);
         lg.setPutWithResult(NAMED_ADDRESS(pt.GetLastError),(DWORD)1);
         RECT rect({1,-2,-3,5});
-        CHECK_THROWS_RUNTIME_ERROR
+        CHECK_THROWS_API_ERROR
         (
-            "RedrawWindow failed.(1)",
+            "RedrawWindow",
+            1,
             nm::RedrawWindow((HWND)0x10,&rect,(HRGN)0x20,1)
         );
         CHECK_EQUAL(2,lg.history().size());
@@ -1185,8 +1177,8 @@ TEST(apiwrapper,RegisterClassEx)
             TEXT("fuga"),
             (HICON)0x60
         });
-        CHECK_THROWS_RUNTIME_ERROR
-        ("RegisterClassEx failed.(1)",nm::RegisterClassEx(&clazz));
+        CHECK_THROWS_API_ERROR
+        ("RegisterClassEx",1,nm::RegisterClassEx(&clazz));
         CHECK_EQUAL(2,lg.history().size());
         CHECK_EQUAL
         (
@@ -1266,8 +1258,7 @@ TEST(apiwrapper,ReleaseCapture)
         logger lg;
         lg.setPutWithResult(NAMED_ADDRESS(pt.ReleaseCapture),FALSE);
         lg.setPutWithResult(NAMED_ADDRESS(pt.GetLastError),(DWORD)1);
-        CHECK_THROWS_RUNTIME_ERROR
-        ("ReleaseCapture failed.(1)",nm::ReleaseCapture());
+        CHECK_THROWS_API_ERROR("ReleaseCapture",1,nm::ReleaseCapture());
         CHECK_EQUAL(2,lg.history().size());
         CHECK_EQUAL(call("pt.ReleaseCapture"),lg.history().at(0));
         CHECK_EQUAL(call("pt.GetLastError"),lg.history().at(1));
@@ -1288,8 +1279,8 @@ TEST(apiwrapper,ScreenToClient)
         lg.setPutWithResult(NAMED_ADDRESS(pt.ScreenToClient),FALSE);
         lg.setPutWithResult(NAMED_ADDRESS(pt.GetLastError),(DWORD)1);
         POINT pos({1,-2});
-        CHECK_THROWS_RUNTIME_ERROR
-        ("ScreenToClient failed.(1)",nm::ScreenToClient((HWND)0x10,&pos));
+        CHECK_THROWS_API_ERROR
+        ("ScreenToClient",1,nm::ScreenToClient((HWND)0x10,&pos));
         CHECK_EQUAL(2,lg.history().size());
         CHECK_EQUAL
         (
@@ -1324,8 +1315,7 @@ TEST(apiwrapper,SetBkMode)
         logger lg;
         lg.setPutWithResult(NAMED_ADDRESS(pt.SetBkMode),0);
         lg.setPutWithResult(NAMED_ADDRESS(pt.GetLastError),(DWORD)1);
-        CHECK_THROWS_RUNTIME_ERROR
-        ("SetBkMode failed.(1)",nm::SetBkMode((HDC)0x10,1));
+        CHECK_THROWS_API_ERROR("SetBkMode",1,nm::SetBkMode((HDC)0x10,1));
         CHECK_EQUAL(2,lg.history().size());
         CHECK_EQUAL
         (call("pt.SetBkMode",(HDC)0x10,1),lg.history().at(0));
@@ -1347,11 +1337,8 @@ TEST(apiwrapper,SetBrushOrgEx)
         logger lg;
         lg.setPutWithResult(NAMED_ADDRESS(pt.SetBrushOrgEx),FALSE);
         lg.setPutWithResult(NAMED_ADDRESS(pt.GetLastError),(DWORD)1);
-        CHECK_THROWS_RUNTIME_ERROR
-        (
-            "SetBrushOrgEx failed.(1)",
-            nm::SetBrushOrgEx((HDC)0x10,1,2,NULL)
-        );
+        CHECK_THROWS_API_ERROR
+        ("SetBrushOrgEx",1,nm::SetBrushOrgEx((HDC)0x10,1,2,NULL));
         CHECK_EQUAL(2,lg.history().size());
         CHECK_EQUAL
         (
@@ -1388,11 +1375,8 @@ TEST(apiwrapper,SetForegroundWindow)
         (NAMED_ADDRESS(pt.SetForegroundWindow),FALSE);
         lg.setPutWithResult(NAMED_ADDRESS(pt.GetLastError),(DWORD)1);
         POINT oldPos;
-        CHECK_THROWS_RUNTIME_ERROR
-        (
-            "SetForegroundWindow failed.(1)",
-            nm::SetForegroundWindow((HWND)0x10)
-        );
+        CHECK_THROWS_API_ERROR
+        ("SetForegroundWindow",1,nm::SetForegroundWindow((HWND)0x10));
         CHECK_EQUAL(2,lg.history().size());
         CHECK_EQUAL
         (call("pt.SetForegroundWindow",(HWND)0x10),lg.history().at(0));
@@ -1414,11 +1398,8 @@ TEST(apiwrapper,SetStretchBltMode)
         logger lg;
         lg.setPutWithResult(NAMED_ADDRESS(pt.SetStretchBltMode),0);
         lg.setPutWithResult(NAMED_ADDRESS(pt.GetLastError),(DWORD)1);
-        CHECK_THROWS_RUNTIME_ERROR
-        (
-            "SetStretchBltMode failed.(1)",
-            nm::SetStretchBltMode((HDC)0x10,1)
-        );
+        CHECK_THROWS_API_ERROR
+        ("SetStretchBltMode",1,nm::SetStretchBltMode((HDC)0x10,1));
         CHECK_EQUAL(2,lg.history().size());
         CHECK_EQUAL
         (call("pt.SetStretchBltMode",(HDC)0x10,1),lg.history().at(0));
@@ -1441,11 +1422,8 @@ TEST(apiwrapper,SetTextColor)
         lg.setPutWithResult
         (NAMED_ADDRESS(pt.SetTextColor),(COLORREF)CLR_INVALID);
         lg.setPutWithResult(NAMED_ADDRESS(pt.GetLastError),(DWORD)1);
-        CHECK_THROWS_RUNTIME_ERROR
-        (
-            "SetTextColor failed.(1)",
-            nm::SetTextColor((HDC)0x10,RGB(1,2,3))
-        );
+        CHECK_THROWS_API_ERROR
+        ("SetTextColor",1,nm::SetTextColor((HDC)0x10,RGB(1,2,3)));
         CHECK_EQUAL(2,lg.history().size());
         CHECK_EQUAL
         (
@@ -1467,15 +1445,85 @@ TEST(apiwrapper,SetTextColor)
     }
 }
 
+TEST(apiwrapper,ShellExecute)
+{
+    {
+        logger lg;
+        lg.setPutWithResult(NAMED_ADDRESS(pt.ShellExecute),(HINSTANCE)32);
+        CHECK_THROWS_API_ERROR
+        (
+            "ShellExecute",
+            32,
+            nm::ShellExecute
+            (
+                (HWND)0x10,
+                TEXT("hoge"),
+                TEXT("fuga"),
+                TEXT("piyo"),
+                TEXT("foo"),
+                2
+            )
+        );
+        CHECK_EQUAL(1,lg.history().size());
+        CHECK_EQUAL
+        (
+            call
+            (
+                "pt.ShellExecute",
+                (HWND)0x10,
+                TEXT("hoge"),
+                TEXT("fuga"),
+                TEXT("piyo"),
+                TEXT("foo"),
+                2
+            ),
+            lg.history().at(0)
+        );
+    }
+    {
+        logger lg;
+        lg.setPutWithResult(NAMED_ADDRESS(pt.ShellExecute),(HINSTANCE)33);
+        CHECK_EQUAL
+        (
+            33,
+            nm::ShellExecute
+            (
+                (HWND)0x10,
+                TEXT("hoge"),
+                TEXT("fuga"),
+                TEXT("piyo"),
+                TEXT("foo"),
+                2
+            )
+        );
+        CHECK_EQUAL(1,lg.history().size());
+        CHECK_EQUAL
+        (
+            call
+            (
+                "pt.ShellExecute",
+                (HWND)0x10,
+                TEXT("hoge"),
+                TEXT("fuga"),
+                TEXT("piyo"),
+                TEXT("foo"),
+                2
+            ),
+            lg.history().at(0)
+        );
+    }
+}
+
 TEST(apiwrapper,StretchBlt)
 {
     {
         logger lg;
         lg.setPutWithResult(NAMED_ADDRESS(pt.StretchBlt),FALSE);
         lg.setPutWithResult(NAMED_ADDRESS(pt.GetLastError),(DWORD)1);
-        CHECK_THROWS_RUNTIME_ERROR
+        CHECK_THROWS_API_ERROR
         (
-            "StretchBlt failed.(1)",
+            "StretchBlt",
+            1,
             nm::StretchBlt
             (
                 (HDC)0x10,
@@ -1550,6 +1598,104 @@ TEST(apiwrapper,StretchBlt)
             ),
             lg.history().at(0)
         );
+    }
+}
+
+TEST(apiwrapper,timeBeginPeriod)
+{
+    {
+        logger lg;
+        lg.setPutWithResult
+        (NAMED_ADDRESS(pt.timeBeginPeriod),(MMRESULT)TIMERR_NOCANDO);
+        CHECK_THROWS_API_ERROR
+        ("timeBeginPeriod",TIMERR_NOCANDO,nm::timeBeginPeriod(1));
+        CHECK_EQUAL(1,lg.history().size());
+        CHECK_EQUAL(call("pt.timeBeginPeriod",1),lg.history().at(0));
+    }
+    {
+        logger lg;
+        lg.setPutWithResult
+        (NAMED_ADDRESS(pt.timeBeginPeriod),(MMRESULT)TIMERR_NOERROR);
+        lg.setPutWithResult
+        (NAMED_ADDRESS(pt.timeEndPeriod),(MMRESULT)TIMERR_NOERROR);
+        auto period=nm::timeBeginPeriod(1);
+        CHECK_EQUAL(1,lg.history().size());
+        CHECK_EQUAL(call("pt.timeBeginPeriod",1),lg.history().at(0));
+        period.reset();
+        CHECK_EQUAL(2,lg.history().size());
+        CHECK_EQUAL(call("pt.timeEndPeriod",1),lg.history().at(1));
+    }
+}
+
+TEST(apiwrapper,timeGetDevCaps)
+{
+    {
+        logger lg;
+        lg.setPutWithResult
+        (NAMED_ADDRESS(pt.timeGetDevCaps),(MMRESULT)TIMERR_STRUCT);
+        TIMECAPS caps;
+        CHECK_THROWS_API_ERROR
+        (
+            "timeGetDevCaps",
+            TIMERR_STRUCT,
+            nm::timeGetDevCaps(&caps,sizeof(TIMECAPS))
+        );
+        CHECK_EQUAL(1,lg.history().size());
+        CHECK_EQUAL
+        (
+            call("pt.timeGetDevCaps",TIMECAPS({0,0}),sizeof(TIMECAPS)),
+            lg.history().at(0)
+        );
+    }
+    {
+        logger lg;
+        lg.setPutWithBody(NAMED_ADDRESS(pt.timeGetDevCaps),
+        [] (LPTIMECAPS caps,UINT sizeOfCaps)->MMRESULT
+        {
+            *caps=TIMECAPS({1,2});
+            return TIMERR_NOERROR;
+        });
+        TIMECAPS caps;
+        nm::timeGetDevCaps(&caps,sizeof(TIMECAPS));
+        CHECK_EQUAL(describe(TIMECAPS({1,2})),describe(caps));
+        CHECK_EQUAL(1,lg.history().size());
+        CHECK_EQUAL
+        (
+            call("pt.timeGetDevCaps",TIMECAPS({0,0}),sizeof(TIMECAPS)),
+            lg.history().at(0)
+        );
+    }
+}
+
+TEST(apiwrapper,timeSetEvent)
+{
+    {
+        logger lg;
+        lg.setPutWithResult(NAMED_ADDRESS(pt.timeSetEvent),(UINT)NULL);
+        CHECK_THROWS_API_ERROR
+        ("timeSetEvent",0,nm::timeSetEvent(1,2,(LPTIMECALLBACK)0x10,3,4));
+        CHECK_EQUAL(1,lg.history().size());
+        CHECK_EQUAL
+        (
+            call("pt.timeSetEvent",1,2,(LPTIMECALLBACK)0x10,3,4),
+            lg.history().at(0)
+        );
+    }
+    {
+        logger lg;
+        lg.setPutWithResult(NAMED_ADDRESS(pt.timeSetEvent),(UINT)1);
+        lg.setPutWithResult
+        (NAMED_ADDRESS(pt.timeKillEvent),(MMRESULT)TIMERR_NOERROR);
+        auto event=nm::timeSetEvent(1,2,(LPTIMECALLBACK)0x10,3,4);
+        CHECK_EQUAL(1,lg.history().size());
+        CHECK_EQUAL
+        (
+            call("pt.timeSetEvent",1,2,(LPTIMECALLBACK)0x10,3,4),lg.
+            history().at(0)
+        );
+        event.reset();
+        CHECK_EQUAL(2,lg.history().size());
+        CHECK_EQUAL(call("pt.timeKillEvent",1),lg.history().at(1));
     }
 }
 

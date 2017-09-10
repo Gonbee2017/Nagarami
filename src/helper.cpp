@@ -20,8 +20,13 @@ Finalizer::Finalizer(const function<void()>&finalize):
 Finalizer::~Finalizer() {finalize_();}
 
 api_error::api_error(const string&functionName):
-    runtime_error
-    (describe(functionName," failed.(",pt.GetLastError(),")")) {}
+    api_error(functionName,pt.GetLastError()) {}
+
+api_error::api_error(const string&functionName,const DWORD&code):
+    runtime_error(describe(functionName," failed.(",code,")")),code_(code)
+    {}
+
+DWORD api_error::code() const {return code_;}
 
 string chomp(const string&str,const char&ch)
 {

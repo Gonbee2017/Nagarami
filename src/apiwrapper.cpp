@@ -300,6 +300,22 @@ COLORREF SetTextColor(HDC dc,COLORREF color)
     return oldColor;
 }
 
+DWORD ShellExecute
+(
+    HWND parent,
+    LPCTSTR verb,
+    LPCTSTR file,
+    LPCTSTR parameters,
+    LPCTSTR directory,
+    INT showCommand
+)
+{
+    const DWORD errorCode=(DWORD)pt.ShellExecute
+    (parent,verb,file,parameters,directory,showCommand);
+    if(errorCode<=32) throw api_error("ShellExecute",errorCode);
+    return errorCode;
+}
+
 void StretchBlt
 (
     HDC destDC,
@@ -332,6 +348,35 @@ void StretchBlt
             rop
         )==FALSE
     ) throw api_error("StretchBlt");
+}
+
+shared_ptr<TimeEndPeriod> timeBeginPeriod(UINT period)
+{
+    const MMRESULT result=pt.timeBeginPeriod(period);
+    if(result!=TIMERR_NOERROR) throw api_error("timeBeginPeriod",result);
+    return make_shared<TimeEndPeriod>(period);
+}
+
+void timeGetDevCaps(LPTIMECAPS caps,UINT sizeOfCaps)
+{
+    fill(caps,0);
+    const MMRESULT result=pt.timeGetDevCaps(caps,sizeOfCaps);
+    if(result!=TIMERR_NOERROR) throw api_error("timeGetDevCaps",result);
+}
+
+shared_ptr<TimeKillEvent> timeSetEvent
+(
+    UINT delay,
+    UINT resolution,
+    LPTIMECALLBACK procedure,
+    DWORD user,
+    UINT event
+)
+{
+    const UINT timerID=
+        pt.timeSetEvent(delay,resolution,procedure,user,event);
+    if(timerID==0) throw api_error("timeSetEvent",0);
+    return make_shared<TimeKillEvent>(timerID);
 }
 
 }

@@ -17,6 +17,9 @@
 #define DEBUG_PRINTF(x,...)\
     cout<<#x<<":'"<<describe(__VA_ARGS__,(x))<<"'"<<endl
 #define NAMED_ADDRESS(x) (make_pair(string(#x),&(x)))
+#define CHECK_THROWS_API_ERROR(name,code,expression)\
+    CHECK_THROWS_RUNTIME_ERROR\
+    (describe((name)," failed.(",(code),")"),expression)
 #define CHECK_THROWS_RUNTIME_ERROR(expected_what,expression)\
     try\
     {\

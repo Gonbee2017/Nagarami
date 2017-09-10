@@ -162,11 +162,8 @@ void MainWindow::onHalftoneButtonChange()
 
 void MainWindow::onHelpButtonClick()
 {
-    int errorCode=(int)pt.ShellExecute
+    nm::ShellExecute
     (handle_,TEXT("open"),TEXT(HELP_URL),NULL,NULL,SW_SHOWNORMAL);
-    if(errorCode<=32)
-        throw runtime_error(describe
-        ("ShellExecute failed.(",errorCode,")"));
 }
 
 void MainWindow::onHoleSliderChange()

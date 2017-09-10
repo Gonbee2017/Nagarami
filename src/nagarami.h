@@ -198,6 +198,15 @@ void SetLayeredWindowAttributes
 (HWND window,COLORREF key,BYTE alpha,DWORD flags);
 int SetStretchBltMode(HDC dc,int mode);
 COLORREF SetTextColor(HDC dc,COLORREF color);
+DWORD ShellExecute
+(
+    HWND parent,
+    LPCTSTR verb,
+    LPCTSTR file,
+    LPCTSTR parameters,
+    LPCTSTR directory,
+    INT showCommand
+);
 void StretchBlt
 (
     HDC destDC,
@@ -211,6 +220,16 @@ void StretchBlt
     int srcWidth,
     int srcHeight,
     DWORD rop
+);
+shared_ptr<TimeEndPeriod> timeBeginPeriod(UINT period);
+void timeGetDevCaps(LPTIMECAPS caps,UINT sizeOfCaps);
+shared_ptr<TimeKillEvent> timeSetEvent
+(
+    UINT delay,
+    UINT resolution,
+    LPTIMECALLBACK procedure,
+    DWORD user,
+    UINT event
 );
 
 //---- component declaration ----
@@ -599,7 +618,13 @@ protected:function<void()> finalize_;
 };
 
 class api_error:public runtime_error
-{public:api_error(const string&functionName);};
+{
+public:
+    api_error(const string&functionName);
+    api_error(const string&functionName,const DWORD&code);
+    DWORD code() const;
+protected:DWORD code_;
+};
 
 template<class OBJECT,class RESULT,class...ARGUMENTS>
     function<RESULT(ARGUMENTS...arguments)> bind_object
@@ -748,17 +773,6 @@ protected:
     );
     shared_ptr<TimeKillEvent> event_;
 };
-
-shared_ptr<TimeEndPeriod> timeBeginPeriod(UINT period);
-void timeGetDevCaps(LPTIMECAPS caps,UINT sizeOfCaps);
-shared_ptr<TimeKillEvent> timeSetEvent
-(
-    UINT delay,
-    UINT resolution,
-    LPTIMECALLBACK procedure,
-    DWORD user,
-    UINT event
-);
 
 //---- window declaration ----
 
