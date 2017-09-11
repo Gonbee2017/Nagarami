@@ -10,28 +10,39 @@
 namespace nm
 {
 
-TEST_GROUP(helper) {};
+TEST_GROUP(helper)
+{
+    TEST_SETUP()
+    {
+        lg=make_shared<logger>();
+        pt=make_shared<port>();
+        ct=make_shared<context>();
+    }
+    TEST_TEARDOWN()
+    {
+        ct.reset();
+        pt.reset();
+        lg.reset();
+    }
+    shared_ptr<logger> lg;
+};
 
 TEST(helper,bind_object)
 {
-    {
-        string str="hoge";
-        const function<size_t()> length=bind_object(&string::length,&str);
-        CHECK_EQUAL(4,length());
-        const function<char&(size_t pos)> at=bind_object(&string::at,&str);
-        CHECK_EQUAL('g',at(2));
-    }
+    string str="hoge";
+    const function<size_t()> length=bind_object(&string::length,&str);
+    CHECK_EQUAL(4,length());
+    const function<char&(size_t pos)> at=bind_object(&string::at,&str);
+    CHECK_EQUAL('g',at(2));
 }
 
 TEST(helper,decompose)
 {
-    {
-        string name;
-        int number;
-        decompose(make_pair(string("hoge"),1),&name,&number);
-        CHECK_EQUAL("hoge",name);
-        CHECK_EQUAL(1,number);
-    }
+    string name;
+    int number;
+    decompose(make_pair(string("hoge"),1),&name,&number);
+    CHECK_EQUAL("hoge",name);
+    CHECK_EQUAL(1,number);
 }
 
 TEST(helper,describe)
@@ -49,46 +60,36 @@ TEST(helper,describe_with)
 
 TEST(helper,operator_output_procedure)
 {
-    {
-        ostringstream oss;
-        oss<<(void(CALLBACK*)())0x10;
-        CHECK_EQUAL("0x10",oss.str());
-    }
+    ostringstream oss;
+    oss<<(void(CALLBACK*)())0x10;
+    CHECK_EQUAL("0x10",oss.str());
 }
 
 TEST(helper,fill)
 {
-    {
-        POINT p;
-        fill(&p,0);
-        CHECK_EQUAL(0,p.x);
-        CHECK_EQUAL(0,p.y);
-    }
+    POINT p;
+    fill(&p,0);
+    CHECK_EQUAL(0,p.x);
+    CHECK_EQUAL(0,p.y);
 }
 
 TEST(helper,Finalizer)
 {
-    {
-        logger lg;
-        function<void()> finalize;
-        lg.setPut(NAMED_ADDRESS(finalize));
-        auto finalizer=make_shared<Finalizer>(finalize);
-        CHECK_EQUAL(0,lg.history().size());
-        finalizer.reset();
-        CHECK_EQUAL(1,lg.history().size());
-        CHECK_EQUAL(call("finalize"),lg.history().at(0));
-    }
+    function<void()> finalize;
+    lg->setPut(NAMED_ADDRESS(finalize));
+    auto finalizer=make_shared<Finalizer>(finalize);
+    CHECK_EQUAL(0,lg->history().size());
+    finalizer.reset();
+    CHECK_EQUAL(1,lg->history().size());
+    CHECK_EQUAL(call("finalize"),lg->history().at(0));
 }
 
 TEST(helper,api_error)
 {
-    {
-        logger lg;
-        lg.setPutWithResult(NAMED_ADDRESS(pt.GetLastError),(DWORD)1);
-        CHECK_THROWS_API_ERROR("hoge",1,throw api_error("hoge"));
-        CHECK_EQUAL(1,lg.history().size());
-        CHECK_EQUAL(call("pt.GetLastError"),lg.history().at(0));
-    }
+    lg->setPutWithResult(NAMED_ADDRESS(pt->GetLastError),(DWORD)1);
+    CHECK_THROWS_API_ERROR("hoge",1,throw api_error("hoge"));
+    CHECK_EQUAL(1,lg->history().size());
+    CHECK_EQUAL(call("pt->GetLastError"),lg->history().at(0));
     CHECK_THROWS_API_ERROR("fuga",2,throw api_error("fuga",2));
 }
 
@@ -116,46 +117,38 @@ TEST(helper,coordinates)
 
 TEST(helper,cursor_pos)
 {
+    lg->setPutWithBody(NAMED_ADDRESS(pt->GetCursorPos),
+    [] (LPPOINT point)->BOOL
     {
-        logger lg;
-        lg.setPutWithBody(NAMED_ADDRESS(pt.GetCursorPos),
-        [] (LPPOINT point)->BOOL
-        {
-            *point=POINT({1,2});
-            return TRUE;
-        });
-        lg.setPutWithBody(NAMED_ADDRESS(pt.ScreenToClient),
-        [] (HWND window,LPPOINT point)->BOOL
-        {
-            *point=POINT({-2,-4});
-            return TRUE;
-        });
-        CHECK_EQUAL(POINT({-2,-4}),cursor_pos((HWND)0x10));
-        CHECK_EQUAL(2,lg.history().size());
-        CHECK_EQUAL
-        (call("pt.GetCursorPos",POINT({0,0})),lg.history().at(0));
-        CHECK_EQUAL
-        (
-            call("pt.ScreenToClient",(HWND)0x10,POINT({1,2})),
-            lg.history().at(1)
-        );
-    }
+        *point=POINT({1,2});
+        return TRUE;
+    });
+    lg->setPutWithBody(NAMED_ADDRESS(pt->ScreenToClient),
+    [] (HWND window,LPPOINT point)->BOOL
+    {
+        *point=POINT({-2,-4});
+        return TRUE;
+    });
+    CHECK_EQUAL(POINT({-2,-4}),cursor_pos((HWND)0x10));
+    CHECK_EQUAL(2,lg->history().size());
+    CHECK_EQUAL(call("pt->GetCursorPos",POINT({0,0})),lg->history().at(0));
+    CHECK_EQUAL
+    (
+        call("pt->ScreenToClient",(HWND)0x10,POINT({1,2})),
+        lg->history().at(1)
+    );
 }
 
 TEST(helper,desktop_size)
 {
-    {
-        logger lg;
-        lg.setPutWithBody(NAMED_ADDRESS(pt.GetSystemMetrics),
-        [&lg] (int index)->int
-        {return lg.count("pt.GetSystemMetrics");});
-        CHECK_EQUAL(SIZE({1,2}),desktop_size());
-        CHECK_EQUAL(2,lg.history().size());
-        CHECK_EQUAL
-        (call("pt.GetSystemMetrics",SM_CXSCREEN),lg.history().at(0));
-        CHECK_EQUAL
-        (call("pt.GetSystemMetrics",SM_CYSCREEN),lg.history().at(1));
-    }
+    lg->setPutWithBody(NAMED_ADDRESS(pt->GetSystemMetrics),
+    [this] (int index)->int {return lg->count("pt->GetSystemMetrics");});
+    CHECK_EQUAL(SIZE({1,2}),desktop_size());
+    CHECK_EQUAL(2,lg->history().size());
+    CHECK_EQUAL
+    (call("pt->GetSystemMetrics",SM_CXSCREEN),lg->history().at(0));
+    CHECK_EQUAL
+    (call("pt->GetSystemMetrics",SM_CYSCREEN),lg->history().at(1));
 }
 
 TEST(helper,floating_point_number)
@@ -171,19 +164,17 @@ TEST(helper,floating_point_number)
 
 TEST(helper,getlines)
 {
-    {
-        istringstream iss
-        (
-            "hoge\r\n"
-            "fuga\r\n"
-            "piyo\r\n"
-        );
-        const auto lines=getlines(iss);
-        CHECK_EQUAL(3,lines.size());
-        CHECK_EQUAL("hoge",lines.at(0));
-        CHECK_EQUAL("fuga",lines.at(1));
-        CHECK_EQUAL("piyo",lines.at(2));
-    }
+    istringstream iss
+    (
+        "hoge\r\n"
+        "fuga\r\n"
+        "piyo\r\n"
+    );
+    const auto lines=getlines(iss);
+    CHECK_EQUAL(3,lines.size());
+    CHECK_EQUAL("hoge",lines.at(0));
+    CHECK_EQUAL("fuga",lines.at(1));
+    CHECK_EQUAL("piyo",lines.at(2));
 }
 
 TEST(helper,height)
@@ -283,15 +274,6 @@ TEST(helper,operator_divide_SIZE_LONG)
     CHECK_EQUAL(SIZE({-4,7}),SIZE({-13,21})/3);
 }
 
-TEST(helper,operator_output_char_pointer)
-{
-    {
-        ostringstream oss;
-        oss<<"hoge"<<((const char*)nullptr)<<"fuga";
-        CHECK_EQUAL("hogefuga",oss.str());
-    }
-}
-
 TEST(helper,point_POINT_DOUBLE)
 {
     CHECK_EQUAL(POINT({2,-2}),point(POINT_DOUBLE({1.5,-2.25})));
@@ -318,17 +300,15 @@ TEST(helper,pos)
 
 TEST(helper,putlines)
 {
-    {
-        ostringstream oss;
-        putlines(oss,vector<string>({"hoge","fuga","piyo"}));
-        CHECK_EQUAL
-        (
-            "hoge\n"
-            "fuga\n"
-            "piyo\n",
-            oss.str()
-        );
-    }
+    ostringstream oss;
+    putlines(oss,vector<string>({"hoge","fuga","piyo"}));
+    CHECK_EQUAL
+    (
+        "hoge\n"
+        "fuga\n"
+        "piyo\n",
+        oss.str()
+    );
 }
 
 TEST(helper,rect)
@@ -363,13 +343,11 @@ TEST(helper,squared_distance)
 
 TEST(helper,tokenize)
 {
-    {
-        const auto tokens=tokenize("hoge:fuga,,piyo",":,");
-        CHECK_EQUAL(3,tokens.size());
-        CHECK_EQUAL("hoge",tokens.at(0));
-        CHECK_EQUAL("fuga",tokens.at(1));
-        CHECK_EQUAL("piyo",tokens.at(2));
-    }
+    const auto tokens=tokenize("hoge:fuga,,piyo",":,");
+    CHECK_EQUAL(3,tokens.size());
+    CHECK_EQUAL("hoge",tokens.at(0));
+    CHECK_EQUAL("fuga",tokens.at(1));
+    CHECK_EQUAL("piyo",tokens.at(2));
 }
 
 TEST(helper,width)

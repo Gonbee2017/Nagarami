@@ -16,41 +16,41 @@ namespace nm
 
 properties::properties()
 {
-    value_setter_map_["alpha"]=[this] (const string&value)
+    setter_map_["alpha"]=[this] (const string&value)
     {try {alpha=integer(value);} catch(...) {}};
-    value_setter_map_["back_color1"]=[this] (const string&value)
+    setter_map_["back_color1"]=[this] (const string&value)
     {try {back_color1=integer(value);} catch(...) {}};
-    value_setter_map_["back_color2"]=[this] (const string&value)
+    setter_map_["back_color2"]=[this] (const string&value)
     {try {back_color2=integer(value);} catch(...) {}};
-    value_setter_map_["component_color1"]=[this] (const string&value)
+    setter_map_["component_color1"]=[this] (const string&value)
     {try {component_color1=integer(value);} catch(...) {}};
-    value_setter_map_["component_color2"]=[this] (const string&value)
+    setter_map_["component_color2"]=[this] (const string&value)
     {try {component_color2=integer(value);} catch(...) {}};
-    value_setter_map_["control_mode_alt"]=[this] (const string&value)
+    setter_map_["control_mode_alt"]=[this] (const string&value)
     {try {control_mode_alt=integer(value);} catch(...) {}};
-    value_setter_map_["control_mode_ctrl"]=[this] (const string&value)
+    setter_map_["control_mode_ctrl"]=[this] (const string&value)
     {try {control_mode_ctrl=integer(value);} catch(...) {}};
-    value_setter_map_["control_mode_shift"]=[this] (const string&value)
+    setter_map_["control_mode_shift"]=[this] (const string&value)
     {try {control_mode_shift=integer(value);} catch(...) {}};
-    value_setter_map_["fps"]=[this] (const string&value)
+    setter_map_["fps"]=[this] (const string&value)
     {try {fps=integer(value);} catch(...) {}};
-    value_setter_map_["halftone"]=[this] (const string&value)
+    setter_map_["halftone"]=[this] (const string&value)
     {try {halftone=integer(value);} catch(...) {}};
-    value_setter_map_["hole"]=[this] (const string&value)
+    setter_map_["hole"]=[this] (const string&value)
     {try {hole=integer(value);} catch(...) {}};
-    value_setter_map_["scale"]=[this] (const string&value)
+    setter_map_["scale"]=[this] (const string&value)
     {try {scale=integer(value);} catch(...) {}};
-    value_setter_map_["view_base.x"]=[this] (const string&value)
+    setter_map_["view_base.x"]=[this] (const string&value)
     {try {view_base.x=floating_point_number(value);} catch(...) {}};
-    value_setter_map_["view_base.y"]=[this] (const string&value)
+    setter_map_["view_base.y"]=[this] (const string&value)
     {try {view_base.y=floating_point_number(value);} catch(...) {}};
-    value_setter_map_["window_pos.x"]=[this] (const string&value)
+    setter_map_["window_pos.x"]=[this] (const string&value)
     {try {window_pos.x=integer(value);} catch(...) {}};
-    value_setter_map_["window_pos.y"]=[this] (const string&value)
+    setter_map_["window_pos.y"]=[this] (const string&value)
     {try {window_pos.y=integer(value);} catch(...) {}};
-    value_setter_map_["window_size.cx"]=[this] (const string&value)
+    setter_map_["window_size.cx"]=[this] (const string&value)
     {try {window_size.cx=integer(value);} catch(...) {}};
-    value_setter_map_["window_size.cy"]=[this] (const string&value)
+    setter_map_["window_size.cy"]=[this] (const string&value)
     {try {window_size.cy=integer(value);} catch(...) {}};
 }
 
@@ -125,8 +125,8 @@ void properties::load(const vector<string>&expressions)
     {
         string name,value;
         decompose(parse(expression),&name,&value);
-        const auto setter=value_setter_map_.find(name);
-        if(setter!=value_setter_map_.end()) setter->second(value);
+        const auto setter=setter_map_.find(name);
+        if(setter!=setter_map_.end()) setter->second(value);
     }
 }
 
@@ -142,20 +142,20 @@ pair<string,string> properties::parse(const string&expression)
     return make_pair(name,value);
 }
 
-context::context():error("") {}
+context::context():ps(make_shared<properties>()),error("") {}
 
 void context::initialize(HINSTANCE instance)
 {
-    ps.initialize();
+    ps->initialize();
     almost_black_brush=nm::CreateSolidBrush(ALMOST_BLACK_COLOR);
-    back_brush1=nm::CreateSolidBrush(ps.back_color1);
-    back_brush2=nm::CreateSolidBrush(ps.back_color2);
+    back_brush1=nm::CreateSolidBrush(ps->back_color1);
+    back_brush2=nm::CreateSolidBrush(ps->back_color2);
     black_pen=nm::CreatePen(PS_SOLID,0,BLACK_COLOR);
     black_brush=nm::CreateSolidBrush(BLACK_COLOR);
-    component_pen1=nm::CreatePen(PS_SOLID,0,ps.component_color1);
-    component_brush1=nm::CreateSolidBrush(ps.component_color1);
-    component_pen2=nm::CreatePen(PS_SOLID,0,ps.component_color2);
-    component_brush2=nm::CreateSolidBrush(ps.component_color2);
+    component_pen1=nm::CreatePen(PS_SOLID,0,ps->component_color1);
+    component_brush1=nm::CreateSolidBrush(ps->component_color1);
+    component_pen2=nm::CreatePen(PS_SOLID,0,ps->component_color2);
+    component_brush2=nm::CreateSolidBrush(ps->component_color2);
     font=nm::CreateFont
     (
         UNIT_LENGTH-4,
@@ -176,72 +176,6 @@ void context::initialize(HINSTANCE instance)
     this->instance=instance;
     target=NULL;
     white_brush=nm::CreateSolidBrush(WHITE_COLOR);
-}
-
-void port::clear()
-{
-    this->BeginPaint=nullptr;
-    this->BitBlt=nullptr;
-    this->CreateCompatibleBitmap=nullptr;
-    this->CreateCompatibleDC=nullptr;
-    this->CreateFont=nullptr;
-    this->CreatePatternBrush=nullptr;
-    this->CreatePen=nullptr;
-    this->CreateSolidBrush=nullptr;
-    this->CreateWindowEx=nullptr;
-    this->DefWindowProc=nullptr;
-    this->DeleteDC=nullptr;
-    this->DeleteObject=nullptr;
-    this->DestroyWindow=nullptr;
-    this->DispatchMessage=nullptr;
-    this->DrawText=nullptr;
-    this->Ellipse=nullptr;
-    this->EndPaint=nullptr;
-    this->FillRect=nullptr;
-    this->GetClientRect=nullptr;
-    this->GetCursorPos=nullptr;
-    this->GetDC=nullptr;
-    this->GetForegroundWindow=nullptr;
-    this->GetKeyState=nullptr;
-    this->GetLastError=nullptr;
-    this->GetMessage=nullptr;
-    this->GetObject=nullptr;
-    this->GetSystemMetrics=nullptr;
-    this->GetWindowPlacement=nullptr;
-    this->IsIconic=nullptr;
-    this->IsWindow=nullptr;
-    this->IsWindowVisible=nullptr;
-    this->IsZoomed=nullptr;
-    this->LoadBitmap=nullptr;
-    this->LoadCursor=nullptr;
-    this->MessageBox=nullptr;
-    this->PostMessage=nullptr;
-    this->PostQuitMessage=nullptr;
-    this->RedrawWindow=nullptr;
-    this->ReleaseDC=nullptr;
-    this->RegisterClassEx=nullptr;
-    this->ReleaseCapture=nullptr;
-    this->ScreenToClient=nullptr;
-    this->SelectObject=nullptr;
-    this->SendMessageW=nullptr;
-    this->SetBkMode=nullptr;
-    this->SetBrushOrgEx=nullptr;
-    this->SetCapture=nullptr;
-    this->SetCursor=nullptr;
-    this->SetForegroundWindow=nullptr;
-    this->SetLayeredWindowAttributes=nullptr;
-    this->SetStretchBltMode=nullptr;
-    this->SetTextColor=nullptr;
-    this->ShellExecute=nullptr;
-    this->ShowWindow=nullptr;
-    this->StretchBlt=nullptr;
-    this->input_file=nullptr;
-    this->output_file=nullptr;
-    this->timeBeginPeriod=nullptr;
-    this->timeEndPeriod=nullptr;
-    this->timeGetDevCaps=nullptr;
-    this->timeKillEvent=nullptr;
-    this->timeSetEvent=nullptr;
 }
 
 void port::import()
@@ -313,9 +247,9 @@ void port::import()
 bool control_mode()
 {
     return
-        (!ct.ps.control_mode_alt||pt.GetKeyState(VK_MENU)<0)&&
-        (!ct.ps.control_mode_ctrl||pt.GetKeyState(VK_CONTROL)<0)&&
-        (!ct.ps.control_mode_shift||pt.GetKeyState(VK_SHIFT)<0);
+        (!ct->ps->control_mode_alt||pt->GetKeyState(VK_MENU)<0)&&
+        (!ct->ps->control_mode_ctrl||pt->GetKeyState(VK_CONTROL)<0)&&
+        (!ct->ps->control_mode_shift||pt->GetKeyState(VK_SHIFT)<0);
 }
 
 int execute
@@ -329,22 +263,22 @@ int execute
     int result=0;
     try
     {
-        ct.initialize(instance);
+        ct->initialize(instance);
         load_properties(commandLine);
-        ct.ps.adjust();
+        ct->ps->adjust();
         Window::registerClass();
         const auto main_window=make_shared<MainWindow>();
-        pt.ShowWindow(main_window->handle(),commandShow);
+        pt->ShowWindow(main_window->handle(),commandShow);
         const auto timePeriod=nm::timeBeginPeriod(minimum_time_period());
         const auto timer=make_shared<Timer>
-        (1000/ct.ps.fps,timePeriod->value(),main_window->handle());
+        (1000/ct->ps->fps,timePeriod->value(),main_window->handle());
         MSG msg;
         while(nm::GetMessage(&msg,NULL,0,0)) nm::DispatchMessage(&msg);
         save_properties();
         result=msg.wParam;
     } catch(const runtime_error&error)
     {
-        pt.MessageBox
+        pt->MessageBox
         (
             NULL,
             describe
@@ -362,9 +296,9 @@ int execute
 
 void load_properties(const string&commandLine)
 {
-    const auto psIS=pt.input_file(PS_FILE_NAME,ios::in);
-    if(*psIS) ct.ps.load(getlines(*psIS));
-    ct.ps.load(tokenize(commandLine," "));
+    const auto psIS=pt->input_file(PS_FILE_NAME,ios::in);
+    if(*psIS) ct->ps->load(getlines(*psIS));
+    ct->ps->load(tokenize(commandLine," "));
 }
 
 UINT minimum_time_period()
@@ -376,12 +310,12 @@ UINT minimum_time_period()
 
 void save_properties()
 {
-    const auto psOS=pt.output_file(PS_FILE_NAME,ios::out|ios::trunc);
-    if(*psOS) putlines(*psOS,ct.ps.lines());
+    const auto psOS=pt->output_file(PS_FILE_NAME,ios::out|ios::trunc);
+    if(*psOS) putlines(*psOS,ct->ps->lines());
 }
 
 const string PS_FILE_NAME=describe(APPLICATION_NAME,".",PS_FILE_EXTENSION);
-context ct;
-port pt;
+shared_ptr<port> pt;
+shared_ptr<context> ct;
 
 }

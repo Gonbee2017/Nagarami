@@ -254,7 +254,7 @@ protected:
         HWND container,
         HWND toolTip,
         UINT toolId,
-        const wstring&toolText
+        LPCWSTR toolText
     );
     virtual void relocateTool()=0;
     virtual void render()=0;
@@ -264,7 +264,6 @@ protected:
     POINT pos_;
     bool toolActive_;
     HWND toolTip_;
-    wstring toolText_;
     TOOLINFOW toolInfo_;
 };
 
@@ -285,7 +284,7 @@ protected:
         HWND container,
         HWND toolTip,
         UINT toolId,
-        const wstring&toolText
+        LPCWSTR toolText
     );
     virtual void relocateTool() override;
     void render_(const bool&push);
@@ -306,7 +305,7 @@ public:
         HWND container,
         HWND toolTip,
         UINT toolId,
-        const wstring&toolText
+        LPCWSTR toolText
     );
     virtual void deactivate(const POINT&cursorPos) override;
     function<void()> click;
@@ -325,7 +324,7 @@ public:
         HWND container,
         HWND toolTip,
         UINT toolId,
-        const wstring&toolText
+        LPCWSTR toolText
     );
     virtual void deactivate(const POINT&cursorPos) override;
     bool value();
@@ -351,7 +350,7 @@ public:
         HWND container,
         HWND toolTip,
         UINT toolId,
-        const wstring&toolText
+        LPCWSTR toolText
     );
     virtual void activate(const POINT&cursorPos) override;
     virtual void deactivate(const POINT&cursorPos) override;
@@ -418,7 +417,7 @@ struct properties
     SIZE window_size;
 protected:
     static pair<string,string> parse(const string&expression);
-    map<string,function<void(const string&value)>> value_setter_map_;
+    map<string,function<void(const string&value)>> setter_map_;
 };
 
 struct context
@@ -437,14 +436,13 @@ struct context
     runtime_error error;
     shared_ptr<DeleteObject> font;
     HINSTANCE instance;
-    properties ps;
+    shared_ptr<properties> ps;
     HWND target;
     shared_ptr<DeleteObject> white_brush;
 };
 
 struct port
 {
-    void clear();
     void import();
     function<HDC(HWND window,PAINTSTRUCT*paint)> BeginPaint;
     function<BOOL
@@ -604,8 +602,8 @@ UINT minimum_time_period();
 void save_properties();
 
 extern const string PS_FILE_NAME;
-extern context ct;
-extern port pt;
+extern shared_ptr<port> pt;
+extern shared_ptr<context> ct;
 
 //---- helper declaration ----
 
@@ -632,13 +630,13 @@ protected:
 template<class OBJECT,class RESULT,class...ARGUMENTS>
     function<RESULT(ARGUMENTS...arguments)> bind_object
 (
-    RESULT(OBJECT::*const member)(ARGUMENTS...arguments) const,
+    RESULT(OBJECT::*const memberFunction)(ARGUMENTS...arguments) const,
     const OBJECT*const object
 );
 template<class OBJECT,class RESULT,class...ARGUMENTS>
     function<RESULT(ARGUMENTS...arguments)> bind_object
 (
-    RESULT(OBJECT::*const member)(ARGUMENTS...arguments),
+    RESULT(OBJECT::*const memberFunction)(ARGUMENTS...arguments),
     OBJECT*const object
 );
 template<class FIRST,class SECOND> void decompose
@@ -655,8 +653,6 @@ template<class LEAD,class...TRAILER> void describe_to_with
 template<class...ARGUMENTS> string describe_with
 (const string&separator,ARGUMENTS&&...arguments);
 template<class DATA> void fill(DATA*const data,const unsigned char&byte);
-template<class RESULT,class...ARGUMENTS> ostream&operator<<
-(ostream&os,RESULT(CALLBACK*const procedure)(ARGUMENTS...));
 
 string chomp(const string&str,const char&ch);
 bool contain(const POINT&center,const LONG&squaredRadius,const POINT&pos);
@@ -680,7 +676,6 @@ POINT operator-(const POINT&lhs,const POINT&rhs);
 SIZE operator-(const SIZE&lhs,const SIZE&rhs);
 POINT operator/(const POINT&lhs,const LONG&rhs);
 SIZE operator/(const SIZE&lhs,const LONG&rhs);
-ostream&operator<<(ostream&os,const char*const ascii);
 shared_ptr<ostream> output_file
 (const string&name,const ios::openmode&mode);
 POINT point(const POINT_DOUBLE&pointDouble);
@@ -870,23 +865,23 @@ protected:
 template<class OBJECT,class RESULT,class...ARGUMENTS>
     function<RESULT(ARGUMENTS...arguments)> bind_object
 (
-    RESULT(OBJECT::*const member)(ARGUMENTS...arguments) const,
+    RESULT(OBJECT::*const memberFunction)(ARGUMENTS...arguments) const,
     const OBJECT*const object
 )
 {
-    return [object,member] (ARGUMENTS&&...arguments)->RESULT
-    {return (object->*member)(arguments...);};
+    return [object,memberFunction] (ARGUMENTS&&...arguments)->RESULT
+    {return (object->*memberFunction)(arguments...);};
 }
 
 template<class OBJECT,class RESULT,class...ARGUMENTS>
     function<RESULT(ARGUMENTS...arguments)> bind_object
 (
-    RESULT(OBJECT::*const member)(ARGUMENTS...arguments),
+    RESULT(OBJECT::*const memberFunction)(ARGUMENTS...arguments),
     OBJECT*const object
 )
 {
-    return [object,member] (ARGUMENTS&&...arguments)->RESULT
-    {return (object->*member)(arguments...);};
+    return [object,memberFunction] (ARGUMENTS&&...arguments)->RESULT
+    {return (object->*memberFunction)(arguments...);};
 }
 
 template<class FIRST,class SECOND> void decompose
@@ -920,10 +915,6 @@ template<class...ARGUMENTS> string describe_with
 
 template<class DATA> void fill(DATA*const data,const unsigned char&byte)
 {memset(data,byte,sizeof(DATA));}
-
-template<class RESULT,class...ARGUMENTS> ostream&operator<<
-(ostream&os,RESULT(CALLBACK*const procedure)(ARGUMENTS...))
-{return os<<(const void*)procedure;}
 
 }
 

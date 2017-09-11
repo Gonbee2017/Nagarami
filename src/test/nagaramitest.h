@@ -40,7 +40,8 @@ namespace nm
 
 using namespace std;
 
-constexpr char OMIT_ARGUMENT[]="OMIT_ARGUMENT";
+constexpr char NULL_STRING[]="null_string";
+constexpr char OMIT_ARGUMENT[]="omit_argument";
 
 class call
 {
@@ -74,7 +75,6 @@ public:
         const RESULT&result
     );
 
-    ~logger();
     const vector<call>&history() const;
     size_t count(const string&callName) const;
 protected:vector<call> history_;
@@ -87,6 +87,8 @@ template<class ARGUMENT>
     void describe_each_to(vector<string>&strs,ARGUMENT&&argument);
 template<class LEAD,class...TRAILER> void describe_each_to
 (vector<string>&strs,LEAD&&lead,TRAILER&&...trailer);
+template<class RESULT,class...ARGUMENTS> ostream&operator<<
+(ostream&os,RESULT(CALLBACK*const procedure)(ARGUMENTS...));
 
 void describe_each_to(vector<string>&strs);
 bool operator!=(const POINT&lhs,const POINT&rhs);
@@ -107,10 +109,14 @@ ostream&operator<<(ostream&os,const RECT*rect);
 ostream&operator<<(ostream&os,const SIZE&size);
 ostream&operator<<(ostream&os,const TIMECAPS&caps);
 ostream&operator<<(ostream&os,const TIMECAPS*const caps);
+ostream&operator<<(ostream&os,const TOOLINFOW&toolInfo);
+ostream&operator<<(ostream&os,const TOOLINFOW*toolInfo);
 ostream&operator<<(ostream&os,const WNDCLASSEX&clazz);
 ostream&operator<<(ostream&os,const WNDCLASSEX*clazz);
 ostream&operator<<(ostream&os,const WINDOWPLACEMENT&placement);
 ostream&operator<<(ostream&os,const WINDOWPLACEMENT*const placement);
+ostream&operator<<(ostream&os,const char*const ascii);
+ostream&operator<<(ostream&os,const wchar_t*const ascii);
 bool operator==(const POINT&lhs,const POINT&rhs);
 bool operator==(const POINT_DOUBLE&lhs,const POINT_DOUBLE&rhs);
 bool operator==(const RECT&lhs,const RECT&rhs);
@@ -184,6 +190,10 @@ template<class LEAD,class...TRAILER> void describe_each_to
     strs.push_back(describe(lead));
     describe_each_to(strs,trailer...);
 }
+
+template<class RESULT,class...ARGUMENTS> ostream&operator<<
+(ostream&os,RESULT(CALLBACK*const procedure)(ARGUMENTS...))
+{return os<<(const void*)procedure;}
 
 }
 

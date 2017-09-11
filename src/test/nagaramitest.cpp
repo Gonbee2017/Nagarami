@@ -51,12 +51,6 @@ ostream&operator<<(ostream&os,const call&call_)
     return os<<oss.str();
 }
 
-logger::~logger()
-{
-    ct.error=runtime_error("");
-    pt.clear();
-}
-
 const vector<call>&logger::history() const {return history_;}
 
 size_t logger::count(const string&name) const
@@ -190,6 +184,31 @@ ostream&operator<<(ostream&os,const TIMECAPS*const caps)
     return os;
 }
 
+ostream&operator<<(ostream&os,const TOOLINFOW&toolInfo)
+{
+     return os<<describe(
+    "{",describe_with
+        (
+            ",",
+            toolInfo.cbSize,
+            toolInfo.uFlags,
+            toolInfo.hwnd,
+            toolInfo.uId,
+            toolInfo.rect,
+            toolInfo.hinst,
+            toolInfo.lpszText,
+            toolInfo.lParam,
+            toolInfo.lpReserved
+        ),
+    "}");
+}
+
+ostream&operator<<(ostream&os,const TOOLINFOW*toolInfo)
+{
+    if(toolInfo) os<<*toolInfo;
+    return os;
+}
+
 ostream&operator<<(ostream&os,const WNDCLASSEX&clazz)
 {
      return os<<describe(
@@ -238,6 +257,32 @@ ostream&operator<<(ostream&os,const WINDOWPLACEMENT*const placement)
 {
     if(placement) os<<*placement;
     return os;
+}
+
+ostream&operator<<(ostream&os,const char*const ascii)
+{
+    string str;
+    if(ascii) str=string(ascii);
+    else str=string(NULL_STRING);
+    return os<<str;
+}
+
+ostream&operator<<(ostream&os,const wchar_t*const ascii)
+{
+    shared_ptr<char> buffer;
+    if(ascii)
+    {
+        int length=WideCharToMultiByte
+        (CP_UTF8,0,ascii,-1,NULL,0,NULL,NULL);
+        if(length==0) throw api_error("WideCharToMultiByte");
+        buffer=shared_ptr<char>(new char[length],default_delete<char[]>());
+        if
+        (
+            WideCharToMultiByte
+            (CP_UTF8,0,ascii,-1,buffer.get(),length,NULL,NULL)!=length
+        ) throw api_error("WideCharToMultiByte");
+    }
+    return os<<buffer.get();
 }
 
 bool operator==(const POINT&lhs,const POINT&rhs)

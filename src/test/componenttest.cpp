@@ -1,0 +1,318 @@
+#include"../nagarami.h"
+#include<memory>
+#include"nagaramitest.h"
+#include<CppUTest/TestHarness.h>
+#include<windows.h>
+
+namespace nm
+{
+
+TEST_GROUP(component)
+{
+    TEST_SETUP()
+    {
+        lg=make_shared<logger>();
+        pt=make_shared<port>();
+        ct=make_shared<context>();
+    }
+    TEST_TEARDOWN()
+    {
+        ct.reset();
+        pt.reset();
+        lg.reset();
+    }
+    shared_ptr<logger> lg;
+};
+
+TEST(component,PushButton_constructor)
+{
+    lg->setPutWithBody(NAMED_ADDRESS(pt->SendMessageW),
+    [this] (HWND window,UINT message,WPARAM wParam,LPARAM lParam)->LRESULT
+    {
+        switch(lg->count("pt->SendMessageW"))
+        {
+        case 1:
+            CHECK_EQUAL
+            (
+                describe(TOOLINFOW(
+                {
+                    TTTOOLINFOW_V2_SIZE,
+                    TTF_SUBCLASS,
+                    (HWND)0x90,
+                    7,
+                    RECT({0,0,0,0}),
+                    NULL,
+                    (LPWSTR)L"fuga",
+                    0,
+                    (LPVOID)NULL
+                })),
+                describe((TOOLINFOW*)lParam)
+            );
+            break;
+        }
+        return TRUE;
+    });
+    lg->setPutWithBody(NAMED_ADDRESS(pt->LoadBitmap),
+    [this] (HINSTANCE instance,LPCTSTR name)->HBITMAP
+    {return (HBITMAP)(0x10+lg->count("pt->LoadBitmap"));});
+    lg->setPutWithBody(NAMED_ADDRESS(pt->GetObject),
+    [this] (HGDIOBJ object,int sizeOfBuffer,LPVOID buffer)->int
+    {
+        *(BITMAP*)buffer=BITMAP
+        ({1,2,3,4,5,6,(LPVOID)(0x20+lg->count("pt->GetObject"))});
+        return sizeof(BITMAP);
+    });
+    lg->setPutWithBody
+    (NAMED_ADDRESS(pt->CreateCompatibleDC),[this] (HDC dc)->HDC
+    {return (HDC)(0x30+lg->count("pt->CreateCompatibleDC"));});
+    lg->setPutWithResult(NAMED_ADDRESS(pt->SelectObject),(HGDIOBJ)NULL);
+    lg->setPutWithBody
+    (NAMED_ADDRESS(pt->CreateCompatibleBitmap),
+    [this] (HDC destDC,int width,int height)->HBITMAP
+    {return (HBITMAP)(0x40+lg->count("pt->CreateCompatibleBitmap"));});
+    lg->setPutWithResult(NAMED_ADDRESS(pt->FillRect),TRUE);
+    lg->setPutWithResult(NAMED_ADDRESS(pt->Ellipse),TRUE);
+    lg->setPutWithResult(NAMED_ADDRESS(pt->BitBlt),TRUE);
+    lg->setPutWithBody(NAMED_ADDRESS(pt->CreatePen),
+    [this] (int style,int width,COLORREF color)->HPEN
+    {return (HPEN)(0x50+lg->count("pt->CreatePen"));});
+    lg->setPutWithBody(NAMED_ADDRESS(pt->CreateSolidBrush),
+    [this] (COLORREF color)->HBRUSH
+    {return (HBRUSH)(0x60+lg->count("pt->CreateSolidBrush"));});
+    lg->setPutWithResult(NAMED_ADDRESS(pt->DeleteDC),TRUE);
+    lg->setPutWithResult(NAMED_ADDRESS(pt->DeleteObject),TRUE);
+
+    ct->instance=(HINSTANCE)0x70;
+    ct->black_brush=nm::CreateSolidBrush(RGB(1,2,3));
+    ct->black_pen=nm::CreatePen(1,2,RGB(1,2,3));
+    ct->component_brush1=nm::CreateSolidBrush(RGB(1,2,3));
+    ct->component_brush2=nm::CreateSolidBrush(RGB(1,2,3));
+    ct->component_pen1=nm::CreatePen(1,2,RGB(1,2,3));
+    ct->component_pen2=nm::CreatePen(1,2,RGB(1,2,3));
+    ct->white_brush=nm::CreateSolidBrush(RGB(1,2,3));
+    CHECK_EQUAL(7,lg->history().size());
+    CHECK_EQUAL
+    (call("pt->CreateSolidBrush",RGB(1,2,3)),lg->history().at(0));
+    CHECK_EQUAL(call("pt->CreatePen",1,2,RGB(1,2,3)),lg->history().at(1));
+    CHECK_EQUAL
+    (call("pt->CreateSolidBrush",RGB(1,2,3)),lg->history().at(2));
+    CHECK_EQUAL
+    (call("pt->CreateSolidBrush",RGB(1,2,3)),lg->history().at(3));
+    CHECK_EQUAL(call("pt->CreatePen",1,2,RGB(1,2,3)),lg->history().at(4));
+    CHECK_EQUAL(call("pt->CreatePen",1,2,RGB(1,2,3)),lg->history().at(5));
+    CHECK_EQUAL
+    (call("pt->CreateSolidBrush",RGB(1,2,3)),lg->history().at(6));
+
+    auto pushButton=make_shared<PushButton>
+    (
+        "hoge",
+        (HDC)0x80,
+        POINT({1,-2}),
+        (HWND)0x90,
+        (HWND)0xa0,
+        7,
+        L"fuga"
+    );
+    CHECK_EQUAL(35,lg->history().size());
+    CHECK_EQUAL
+    (
+        call("pt->SendMessageW",(HWND)0xa0,TTM_ADDTOOLW,0,OMIT_ARGUMENT),
+        lg->history().at(7)
+    );
+    CHECK_EQUAL
+    (
+        call("pt->SendMessageW",(HWND)0xa0,TTM_ACTIVATE,FALSE,0),
+        lg->history().at(8)
+    );
+    CHECK_EQUAL
+    (
+        call("pt->CreateCompatibleBitmap",(HDC)0x80,16,16),
+        lg->history().at(9)
+    );
+    CHECK_EQUAL
+    (
+        call("pt->CreateCompatibleDC",(HDC)0x80),
+        lg->history().at(10)
+    );
+    CHECK_EQUAL
+    (
+        call("pt->SelectObject",(HDC)0x31,(HGDIOBJ)0x41),
+        lg->history().at(11)
+    );
+    CHECK_EQUAL
+    (
+        call("pt->CreateCompatibleBitmap",(HDC)0x80,16,16),
+        lg->history().at(12)
+    );
+    CHECK_EQUAL
+    (
+        call("pt->CreateCompatibleDC",(HDC)0x80),
+        lg->history().at(13)
+    );
+    CHECK_EQUAL
+    (
+        call("pt->SelectObject",(HDC)0x32,(HGDIOBJ)0x42),
+        lg->history().at(14)
+    );
+    CHECK_EQUAL
+    (
+        call("pt->LoadBitmap",(HINSTANCE)0x70,"hoge"),
+        lg->history().at(15)
+    );
+    CHECK_EQUAL
+    (
+        call("pt->GetObject",(HGDIOBJ)0x11,sizeof(BITMAP),OMIT_ARGUMENT),
+        lg->history().at(16)
+    );
+    CHECK_EQUAL
+    (
+        call("pt->CreateCompatibleDC",(HDC)0x80),
+        lg->history().at(17)
+    );
+    CHECK_EQUAL
+    (
+        call("pt->SelectObject",(HDC)0x33,(HGDIOBJ)0x11),
+        lg->history().at(18)
+    );
+    CHECK_EQUAL
+    (
+        call("pt->CreateCompatibleBitmap",(HDC)0x80,16,16),
+        lg->history().at(19)
+    );
+    CHECK_EQUAL
+    (
+        call("pt->CreateCompatibleDC",(HDC)0x80),
+        lg->history().at(20)
+    );
+    CHECK_EQUAL
+    (
+        call("pt->SelectObject",(HDC)0x34,(HGDIOBJ)0x43),
+        lg->history().at(21)
+    );
+    CHECK_EQUAL
+    (
+        call("pt->FillRect",(HDC)0x34,RECT({0,0,16,16}),(HBRUSH)0x64),
+        lg->history().at(22)
+    );
+    CHECK_EQUAL
+    (
+        call("pt->SelectObject",(HDC)0x34,(HGDIOBJ)0x51),
+        lg->history().at(23)
+    );
+    CHECK_EQUAL
+    (
+        call("pt->SelectObject",(HDC)0x34,(HGDIOBJ)0x61),
+        lg->history().at(24)
+    );
+    CHECK_EQUAL
+    (
+        call("pt->Ellipse",(HDC)0x34,0,0,16,16),
+        lg->history().at(25)
+    );
+    CHECK_EQUAL
+    (
+        call("pt->FillRect",(HDC)0x32,RECT({0,0,16,16}),(HBRUSH)0x62),
+        lg->history().at(26)
+    );
+    CHECK_EQUAL
+    (
+        call
+        (
+            "pt->BitBlt",
+            (HDC)0x31,
+            0,
+            0,
+            16,
+            16,
+            (HDC)0x33,
+            0,
+            0,
+            NOTSRCCOPY
+        ),
+        lg->history().at(27)
+    );
+    CHECK_EQUAL
+    (
+        call
+        (
+            "pt->BitBlt",
+            (HDC)0x32,
+            0,
+            0,
+            16,
+            16,
+            (HDC)0x31,
+            0,
+            0,
+            SRCAND
+        ),
+        lg->history().at(28)
+    );
+    CHECK_EQUAL
+    (
+        call("pt->FillRect",(HDC)0x31,RECT({0,0,16,16}),(HBRUSH)0x61),
+        lg->history().at(29)
+    );
+    CHECK_EQUAL
+    (
+        call("pt->SelectObject",(HDC)0x31,(HGDIOBJ)0x52),
+        lg->history().at(30)
+    );
+    CHECK_EQUAL
+    (
+        call("pt->SelectObject",(HDC)0x31,(HGDIOBJ)0x63),
+        lg->history().at(31)
+    );
+    CHECK_EQUAL
+    (
+        call("pt->Ellipse",(HDC)0x31,0,0,16,16),
+        lg->history().at(32)
+    );
+    CHECK_EQUAL
+    (
+        call
+        (
+            "pt->BitBlt",
+            (HDC)0x31,
+            0,
+            0,
+            16,
+            16,
+            (HDC)0x33,
+            0,
+            0,
+            SRCAND
+        ),
+        lg->history().at(33)
+    );
+    CHECK_EQUAL
+    (
+        call
+        (
+            "pt->BitBlt",
+            (HDC)0x31,
+            0,
+            0,
+            16,
+            16,
+            (HDC)0x32,
+            0,
+            0,
+            SRCPAINT
+        ),
+        lg->history().at(34)
+    );
+
+    pushButton.reset();
+    CHECK_EQUAL(43,lg->history().size());
+    CHECK_EQUAL(call("pt->DeleteDC",(HDC)0x34),lg->history().at(35));
+    CHECK_EQUAL(call("pt->DeleteObject",(HDC)0x43),lg->history().at(36));
+    CHECK_EQUAL(call("pt->DeleteDC",(HDC)0x33),lg->history().at(37));
+    CHECK_EQUAL(call("pt->DeleteObject",(HDC)0x11),lg->history().at(38));
+    CHECK_EQUAL(call("pt->DeleteDC",(HDC)0x32),lg->history().at(39));
+    CHECK_EQUAL(call("pt->DeleteObject",(HDC)0x42),lg->history().at(40));
+    CHECK_EQUAL(call("pt->DeleteDC",(HDC)0x31),lg->history().at(41));
+    CHECK_EQUAL(call("pt->DeleteObject",(HDC)0x41),lg->history().at(42));
+}
+
+}

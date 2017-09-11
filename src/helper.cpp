@@ -2,6 +2,7 @@
 #include<cstdlib>
 #include<fstream>
 #include<ios>
+#include<iostream>
 #include<istream>
 #include<memory>
 #include"nagarami.h"
@@ -20,7 +21,7 @@ Finalizer::Finalizer(const function<void()>&finalize):
 Finalizer::~Finalizer() {finalize_();}
 
 api_error::api_error(const string&functionName):
-    api_error(functionName,pt.GetLastError()) {}
+    api_error(functionName,pt->GetLastError()) {}
 
 api_error::api_error(const string&functionName,const DWORD&code):
     runtime_error(describe(functionName," failed.(",code,")")),
@@ -135,12 +136,6 @@ POINT operator/(const POINT&lhs,const LONG&rhs)
 
 SIZE operator/(const SIZE&lhs,const LONG&rhs)
 {return SIZE({lhs.cx/rhs,lhs.cy/rhs});}
-
-ostream&operator<<(ostream&os,const char*const ascii)
-{
-    if(ascii) os<<string(ascii);
-    return os;
-}
 
 shared_ptr<ostream> output_file
 (const string&name,const ios::openmode&mode)

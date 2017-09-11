@@ -10,7 +10,7 @@ namespace nm
 
 void Component::activateTool()
 {
-    if(!toolActive_) pt.SendMessageW(toolTip_,TTM_ACTIVATE,TRUE,0);
+    if(!toolActive_) pt->SendMessageW(toolTip_,TTM_ACTIVATE,TRUE,0);
     toolActive_=true;
 }
 
@@ -18,7 +18,7 @@ bool Component::active() {return active_;}
 
 void Component::deactivateTool()
 {
-    if(toolActive_) pt.SendMessageW(toolTip_,TTM_ACTIVATE,FALSE,0);
+    if(toolActive_) pt->SendMessageW(toolTip_,TTM_ACTIVATE,FALSE,0);
     toolActive_=false;
 }
 
@@ -34,25 +34,21 @@ Component::Component
     HWND container,
     HWND toolTip,
     UINT toolId,
-    const wstring&toolText
+    LPCWSTR toolText
 ):
     cellPos_(cellPos),
     toolTip_(toolTip),
-    toolText_(toolText),
     active_(false),
     toolActive_(true)
 {
+    fill(&toolInfo_,0);
     toolInfo_.cbSize=TTTOOLINFOW_V2_SIZE;
     toolInfo_.uFlags=TTF_SUBCLASS;
     toolInfo_.hwnd=container;
     toolInfo_.uId=toolId;
-    toolInfo_.rect=RECT({0,0,0,0});
-    toolInfo_.hinst=NULL;
-    toolInfo_.lpszText=(LPWSTR)toolText.c_str();
-    if
-    (pt.SendMessageW(toolTip_,TTM_ADDTOOLW,0,(LPARAM)&toolInfo_)==FALSE)
-        throw runtime_error(describe
-        ("SendMessageW with TTM_ADDTOOLW is failed."));
+    toolInfo_.lpszText=(LPWSTR)toolText;
+    if(pt->SendMessageW(toolTip_,TTM_ADDTOOLW,0,(LPARAM)&toolInfo_)==FALSE)
+        throw api_error("SendMessageW with TTM_ADDTOOLW",0);
     deactivateTool();
 }
 
@@ -119,25 +115,25 @@ Button::Button
     HWND container,
     HWND toolTip,
     UINT toolId,
-    const wstring&toolText
+    LPCWSTR toolText
 ):
     Component(cellPos,container,toolTip,toolId,toolText),
-    iconMaskBuffer_(Buffer::load(ct.instance,maskBitmapName,destDC)),
-    foreBuffer_(Buffer::create(UNIT_SIZE,destDC)),
     backBuffer_(Buffer::create(UNIT_SIZE,destDC)),
+    foreBuffer_(Buffer::create(UNIT_SIZE,destDC)),
+    iconMaskBuffer_(Buffer::load(ct->instance,maskBitmapName,destDC)),
     maskBuffer_(Buffer::create(UNIT_SIZE,destDC))
 {
     nm::FillRect
-    (maskBuffer_->dc(),&UNIT_RECT,(HBRUSH)ct.white_brush->handle());
-    pt.SelectObject(maskBuffer_->dc(),ct.black_pen->handle());
-    pt.SelectObject(maskBuffer_->dc(),ct.black_brush->handle());
+    (maskBuffer_->dc(),&UNIT_RECT,(HBRUSH)ct->white_brush->handle());
+    pt->SelectObject(maskBuffer_->dc(),ct->black_pen->handle());
+    pt->SelectObject(maskBuffer_->dc(),ct->black_brush->handle());
     nm::Ellipse(maskBuffer_->dc(),0,0,UNIT_LENGTH,UNIT_LENGTH);
 }
 
 void Button::relocateTool()
 {
     toolInfo_.rect=rect(pos_,UNIT_SIZE);
-    pt.SendMessageW(toolTip_,TTM_NEWTOOLRECTW,0,(LPARAM)&toolInfo_);
+    pt->SendMessageW(toolTip_,TTM_NEWTOOLRECTW,0,(LPARAM)&toolInfo_);
 }
 
 void Button::render_(const bool&push)
@@ -146,14 +142,14 @@ void Button::render_(const bool&push)
     HBRUSH foreBrush,backBrush;
     if(push)
     {
-        foreBrush=(HBRUSH)ct.component_brush2->handle();
-        backPen=(HPEN)ct.component_pen2->handle();
-        backBrush=(HBRUSH)ct.component_brush1->handle();
+        foreBrush=(HBRUSH)ct->component_brush2->handle();
+        backPen=(HPEN)ct->component_pen2->handle();
+        backBrush=(HBRUSH)ct->component_brush1->handle();
     } else
     {
-        foreBrush=(HBRUSH)ct.component_brush1->handle();
-        backPen=(HPEN)ct.component_pen1->handle();
-        backBrush=(HBRUSH)ct.component_brush2->handle();
+        foreBrush=(HBRUSH)ct->component_brush1->handle();
+        backPen=(HPEN)ct->component_pen1->handle();
+        backBrush=(HBRUSH)ct->component_brush2->handle();
     }
     nm::FillRect(foreBuffer_->dc(),&UNIT_RECT,foreBrush);
     nm::BitBlt
@@ -181,9 +177,9 @@ void Button::render_(const bool&push)
         SRCAND
     );
     nm::FillRect
-    (backBuffer_->dc(),&UNIT_RECT,(HBRUSH)ct.black_brush->handle());
-    pt.SelectObject(backBuffer_->dc(),backPen);
-    pt.SelectObject(backBuffer_->dc(),backBrush);
+    (backBuffer_->dc(),&UNIT_RECT,(HBRUSH)ct->black_brush->handle());
+    pt->SelectObject(backBuffer_->dc(),backPen);
+    pt->SelectObject(backBuffer_->dc(),backBrush);
     nm::Ellipse(backBuffer_->dc(),0,0,UNIT_LENGTH,UNIT_LENGTH);
     nm::BitBlt
     (
@@ -219,7 +215,7 @@ PushButton::PushButton
     HWND container,
     HWND toolTip,
     UINT toolId,
-    const wstring&toolText
+    LPCWSTR toolText
 ):Button(maskBitmapName,destDC,cellPos,container,toolTip,toolId,toolText)
 {render();}
 
@@ -241,7 +237,7 @@ RadioButton::RadioButton
     HWND container,
     HWND toolTip,
     UINT toolId,
-    const wstring&toolText
+    LPCWSTR toolText
 ):
     Button
     (maskBitmapName,destDC,cellPos,container,toolTip,toolId,toolText),
@@ -281,7 +277,7 @@ Slider::Slider
     HWND container,
     HWND toolTip,
     UINT toolId,
-    const wstring&toolText
+    LPCWSTR toolText
 ):
     Component(cellPos,container,toolTip,toolId,toolText),
     minimum_(minimum),
@@ -289,7 +285,7 @@ Slider::Slider
     value_(initialValue),
     getText_(getText),
     knobIconMaskBuffer_
-    (Buffer::load(ct.instance,knobMaskBitmapName,destDC)),
+    (Buffer::load(ct->instance,knobMaskBitmapName,destDC)),
     knobForeBuffer_(Buffer::create(UNIT_SIZE,destDC)),
     knobBackBuffer_(Buffer::create(UNIT_SIZE,destDC)),
     knobMaskBuffer_(Buffer::create(UNIT_SIZE,destDC)),
@@ -300,13 +296,13 @@ Slider::Slider
 {
     updateKnobX();
     nm::FillRect
-    (knobMaskBuffer_->dc(),&UNIT_RECT,(HBRUSH)ct.white_brush->handle());
-    pt.SelectObject(knobMaskBuffer_->dc(),ct.black_pen->handle());
-    pt.SelectObject(knobMaskBuffer_->dc(),ct.black_brush->handle());
+    (knobMaskBuffer_->dc(),&UNIT_RECT,(HBRUSH)ct->white_brush->handle());
+    pt->SelectObject(knobMaskBuffer_->dc(),ct->black_pen->handle());
+    pt->SelectObject(knobMaskBuffer_->dc(),ct->black_brush->handle());
     nm::Ellipse(knobMaskBuffer_->dc(),0,0,UNIT_LENGTH,UNIT_LENGTH);
-    pt.SelectObject(textBuffer_->dc(),ct.font->handle());
+    pt->SelectObject(textBuffer_->dc(),ct->font->handle());
     nm::SetBkMode(textBuffer_->dc(),TRANSPARENT);
-    pt.SelectObject(textMaskBuffer_->dc(),ct.font->handle());
+    pt->SelectObject(textMaskBuffer_->dc(),ct->font->handle());
     nm::SetBkMode(textMaskBuffer_->dc(),TRANSPARENT);
     render();
 }
@@ -418,7 +414,7 @@ void Slider::relocate(const SIZE&containerSize)
 
 void Slider::update(const POINT&cursorPos)
 {
-    if(pt.GetKeyState(VK_LBUTTON)<0)
+    if(pt->GetKeyState(VK_LBUTTON)<0)
     {
         const int range=maximum_-minimum_;
         const LONG x=cursorPos.x-pos_.x-pinch_;
@@ -472,7 +468,7 @@ bool Slider::hitTestText(const POINT&cursorPos)
 void Slider::relocateTool()
 {
     toolInfo_.rect=rect(pos_,SIZE({length_,UNIT_LENGTH}));
-    pt.SendMessageW(toolTip_,TTM_NEWTOOLRECTW,0,(LPARAM)&toolInfo_);
+    pt->SendMessageW(toolTip_,TTM_NEWTOOLRECTW,0,(LPARAM)&toolInfo_);
 }
 
 void Slider::render()
@@ -487,13 +483,13 @@ void Slider::renderBar()
     HBRUSH foreBrush,backBrush;
     if(active_)
     {
-        foreBrush=(HBRUSH)ct.component_brush1->handle();
-        backBrush=(HBRUSH)ct.component_brush2->handle();
+        foreBrush=(HBRUSH)ct->component_brush1->handle();
+        backBrush=(HBRUSH)ct->component_brush2->handle();
     } 
     else
     {
-        foreBrush=(HBRUSH)ct.component_brush2->handle();
-        backBrush=(HBRUSH)ct.component_brush1->handle();
+        foreBrush=(HBRUSH)ct->component_brush2->handle();
+        backBrush=(HBRUSH)ct->component_brush1->handle();
     }
     const LONG length=length_-SLIDER_TEXT_WIDTH-UNIT_LENGTH;
     RECT backRect({0,0,length,SLIDER_BAR_WIDTH});
@@ -508,14 +504,14 @@ void Slider::renderKnob()
     HBRUSH foreBrush,backBrush;
     if(active_)
     {
-        foreBrush=(HBRUSH)ct.component_brush2->handle();
-        backPen=(HPEN)ct.component_pen2->handle();
-        backBrush=(HBRUSH)ct.component_brush1->handle();
+        foreBrush=(HBRUSH)ct->component_brush2->handle();
+        backPen=(HPEN)ct->component_pen2->handle();
+        backBrush=(HBRUSH)ct->component_brush1->handle();
     } else
     {
-        foreBrush=(HBRUSH)ct.component_brush1->handle();
-        backPen=(HPEN)ct.component_pen1->handle();
-        backBrush=(HBRUSH)ct.component_brush2->handle();
+        foreBrush=(HBRUSH)ct->component_brush1->handle();
+        backPen=(HPEN)ct->component_pen1->handle();
+        backBrush=(HBRUSH)ct->component_brush2->handle();
     }
     nm::FillRect(knobForeBuffer_->dc(),&UNIT_RECT,foreBrush);
     nm::BitBlt
@@ -543,9 +539,9 @@ void Slider::renderKnob()
         SRCAND
     );
     nm::FillRect
-    (knobBackBuffer_->dc(),&UNIT_RECT,(HBRUSH)ct.black_brush->handle());
-    pt.SelectObject(knobBackBuffer_->dc(),backPen);
-    pt.SelectObject(knobBackBuffer_->dc(),backBrush);
+    (knobBackBuffer_->dc(),&UNIT_RECT,(HBRUSH)ct->black_brush->handle());
+    pt->SelectObject(knobBackBuffer_->dc(),backPen);
+    pt->SelectObject(knobBackBuffer_->dc(),backBrush);
     nm::Ellipse(knobBackBuffer_->dc(),0,0,UNIT_LENGTH,UNIT_LENGTH);
     nm::BitBlt
     (
@@ -579,18 +575,18 @@ void Slider::renderText()
     text_=getText_(value_);
     RECT textRect=rect(POINT({0,0}),SLIDER_TEXT_SIZE);
     nm::FillRect
-    (textBuffer_->dc(),&textRect,(HBRUSH)ct.black_brush->handle());
+    (textBuffer_->dc(),&textRect,(HBRUSH)ct->black_brush->handle());
     nm::FillRect
-    (textMaskBuffer_->dc(),&textRect,(HBRUSH)ct.white_brush->handle());
+    (textMaskBuffer_->dc(),&textRect,(HBRUSH)ct->white_brush->handle());
     COLORREF foreTextColor,backTextColor;
     if(active_)
     {
-        foreTextColor=ct.ps.component_color1;
-        backTextColor=ct.ps.component_color2;
+        foreTextColor=ct->ps->component_color1;
+        backTextColor=ct->ps->component_color2;
     } else
     {
-        foreTextColor=ct.ps.component_color2;
-        backTextColor=ct.ps.component_color1;
+        foreTextColor=ct->ps->component_color2;
+        backTextColor=ct->ps->component_color1;
     }
     nm::SetTextColor(textBuffer_->dc(),backTextColor);
     nm::SetTextColor(textMaskBuffer_->dc(),BLACK_COLOR);

@@ -7,12 +7,12 @@ namespace nm
 {
 
 DeleteDC::DeleteDC(HDC handle):
-    Finalizer([handle] {pt.DeleteDC(handle);}),handle_(handle) {}
+    Finalizer([handle] {pt->DeleteDC(handle);}),handle_(handle) {}
 
 HDC DeleteDC::handle() {return handle_;}
 
 DeleteObject::DeleteObject(HGDIOBJ handle):
-    Finalizer([handle] {pt.DeleteObject(handle);}),handle_(handle) {}
+    Finalizer([handle] {pt->DeleteObject(handle);}),handle_(handle) {}
 
 HGDIOBJ DeleteObject::handle() {return handle_;}
 
@@ -22,7 +22,7 @@ shared_ptr<Buffer> Buffer::create(const SIZE&size,HDC destDC)
 {
     auto bitmap=nm::CreateCompatibleBitmap(destDC,size.cx,size.cy);
     auto dc=nm::CreateCompatibleDC(destDC);
-    pt.SelectObject(dc->handle(),bitmap->handle());
+    pt->SelectObject(dc->handle(),bitmap->handle());
     return shared_ptr<Buffer>(new Buffer(bitmap,dc,size));
 }
 
@@ -35,7 +35,7 @@ shared_ptr<Buffer> Buffer::load(HINSTANCE instance,LPCTSTR name,HDC destDC)
     fill(&bmp,0);
     nm::GetObject((HGDIOBJ)bitmap->handle(),sizeof(BITMAP),&bmp);
     auto dc=nm::CreateCompatibleDC(destDC);
-    pt.SelectObject(dc->handle(),bitmap->handle());
+    pt->SelectObject(dc->handle(),bitmap->handle());
     return shared_ptr<Buffer>
     (new Buffer(bitmap,dc,SIZE({bmp.bmWidth,bmp.bmHeight})));
 }
@@ -50,24 +50,24 @@ Buffer::Buffer
 ):bitmap_(bitmap),dc_(dc),size_(size) {}
 
 EndPaint::EndPaint(HWND window,PAINTSTRUCT*paint,HDC handle):
-    Finalizer([window,paint] {pt.EndPaint(window,paint);}),
+    Finalizer([window,paint] {pt->EndPaint(window,paint);}),
     handle_(handle) {}
 
 HDC EndPaint::handle() {return handle_;}
 
 ReleaseDC::ReleaseDC(HWND window,HDC handle):
-    Finalizer([window,handle] {pt.ReleaseDC(window,handle);}),
+    Finalizer([window,handle] {pt->ReleaseDC(window,handle);}),
     handle_(handle) {}
 
 HDC ReleaseDC::handle() {return handle_;}
 
 TimeEndPeriod::TimeEndPeriod(UINT value):
-    Finalizer([value] {pt.timeEndPeriod(value);}),value_(value) {}
+    Finalizer([value] {pt->timeEndPeriod(value);}),value_(value) {}
 
 UINT TimeEndPeriod::value() {return value_;}
 
 TimeKillEvent::TimeKillEvent(UINT timerID):
-    Finalizer([timerID] {pt.timeKillEvent(timerID);}) {}
+    Finalizer([timerID] {pt->timeKillEvent(timerID);}) {}
 
 Timer::Timer(UINT delay,UINT resolution,HWND dest)
 {
