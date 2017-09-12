@@ -36,10 +36,10 @@ Component::Component
     UINT toolId,
     LPCWSTR toolText
 ):
-    cellPos_(cellPos),
-    toolTip_(toolTip),
     active_(false),
-    toolActive_(true)
+    cellPos_(cellPos),
+    toolActive_(true),
+    toolTip_(toolTip)
 {
     fill(&toolInfo_,0);
     toolInfo_.cbSize=TTTOOLINFOW_V2_SIZE;
@@ -136,7 +136,7 @@ void Button::relocateTool()
     pt->SendMessageW(toolTip_,TTM_NEWTOOLRECTW,0,(LPARAM)&toolInfo_);
 }
 
-void Button::render_(const bool&push)
+void Button::renderButton(const bool&push)
 {
     HPEN backPen;
     HBRUSH foreBrush,backBrush;
@@ -226,7 +226,7 @@ void PushButton::deactivate(const POINT&cursorPos)
     render();
 }
 
-void PushButton::render() {render_(active_);}
+void PushButton::render() {renderButton(active_);}
 
 RadioButton::RadioButton
 (
@@ -263,7 +263,7 @@ void RadioButton::deactivate(const POINT&cursorPos)
     render();
 }
 
-void RadioButton::render() {render_(active_||value_);}
+void RadioButton::render() {renderButton(active_||value_);}
 
 Slider::Slider
 (

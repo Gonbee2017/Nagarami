@@ -287,7 +287,7 @@ protected:
         LPCWSTR toolText
     );
     virtual void relocateTool() override;
-    void render_(const bool&push);
+    void renderButton(const bool&push);
     shared_ptr<Buffer> backBuffer_;
     shared_ptr<Buffer> foreBuffer_;
     shared_ptr<Buffer> iconMaskBuffer_;
