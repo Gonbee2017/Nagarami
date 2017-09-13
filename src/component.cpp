@@ -136,11 +136,11 @@ void Button::relocateTool()
     pt->SendMessageW(toolTip_,TTM_NEWTOOLRECTW,0,(LPARAM)&toolInfo_);
 }
 
-void Button::renderButton(const bool&push)
+void Button::renderButton(const bool&pushed)
 {
     HPEN backPen;
     HBRUSH foreBrush,backBrush;
-    if(push)
+    if(pushed)
     {
         foreBrush=(HBRUSH)ct->component_brush2->handle();
         backPen=(HPEN)ct->component_pen2->handle();
