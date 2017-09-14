@@ -2,6 +2,7 @@
 #define NAGARAMITEST_H
 
 #include"../nagarami.h"
+#include<algorithm>
 #include<cstddef>
 #include<functional>
 #include<iomanip>
@@ -46,15 +47,17 @@ constexpr char OMIT_ARGUMENT[]="omit_argument";
 class call
 {
 public:
-    template<class...ARGUMENTS>
-        call(const string&name,ARGUMENTS&&...arguments);
+    template<class FUNC,class...ARGUMENTS>
+        call(const pair<string,FUNC*>&namedFunc,ARGUMENTS&&...arguments);
 
+    const void*address() const;
     const vector<string>&arguments() const;
     string name() const;
     bool operator!=(const call&rhs) const;
     bool operator==(const call&rhs) const;
 private:
     friend ostream&operator<<(ostream&os,const call&call_);
+    void*address_;
     vector<string> arguments_;
     string name_;
 };
@@ -62,21 +65,22 @@ private:
 class logger
 {
 public:
-    template<class...ARGUMENTS> void setPut
+    template<class...ARGUMENTS> void mockUp
     (const pair<string,function<void(ARGUMENTS...)>*>&namedFunc);
-    template<class BODY,class RESULT,class...ARGUMENTS> void setPutWithBody
+    template<class BODY,class RESULT,class...ARGUMENTS> void mockUpWithBody
     (
         const pair<string,function<RESULT(ARGUMENTS...)>*>&namedFunc,
         const BODY&body
     );
-    template<class RESULT,class...ARGUMENTS> void setPutWithResult
+    template<class RESULT,class...ARGUMENTS> void mockUpWithResult
     (
         const pair<string,function<RESULT(ARGUMENTS...)>*>&namedFunc,
         const RESULT&result
     );
 
-    const vector<call>&history() const;
-    size_t count(const string&callName) const;
+    vector<call>&history();
+    template<class RESULT,class...ARGUMENTS> size_t count
+    (const pair<string,function<RESULT(ARGUMENTS...)>*>&namedFunc) const;
 protected:vector<call> history_;
 };
 
@@ -122,51 +126,62 @@ bool operator==(const POINT_DOUBLE&lhs,const POINT_DOUBLE&rhs);
 bool operator==(const RECT&lhs,const RECT&rhs);
 bool operator==(const SIZE&lhs,const SIZE&rhs);
 
-template<class...ARGUMENTS>
-    call::call(const string&name,ARGUMENTS&&...arguments):
-    name_(name),arguments_(describe_each(arguments...)) {}
+template<class FUNC,class...ARGUMENTS>
+    call::call(const pair<string,FUNC*>&namedFunc,ARGUMENTS&&...arguments):
+    address_(namedFunc.second),
+    arguments_(describe_each(arguments...)),
+    name_(namedFunc.first) {}
 
-template<class...ARGUMENTS> void logger::setPut
+template<class...ARGUMENTS> void logger::mockUp
 (const pair<string,function<void(ARGUMENTS...)>*>&namedFunc)
 {
-    string name;
-    function<void(ARGUMENTS...)>*func;
-    decompose(namedFunc,&name,&func);
-    *func=[this,name] (ARGUMENTS&&...arguments)
-    {history_.push_back(call(name,arguments...));};
+    *namedFunc.second=[this,namedFunc] (ARGUMENTS&&...arguments)
+    {history_.push_back(call(namedFunc,arguments...));};
 }
 
 template<class BODY,class RESULT,class...ARGUMENTS>
-    void logger::setPutWithBody
+    void logger::mockUpWithBody
 (
     const pair<string,function<RESULT(ARGUMENTS...)>*>&namedFunc,
     const BODY&body
 )
 {
-    string name;
-    function<RESULT(ARGUMENTS...)>*func;
-    decompose(namedFunc,&name,&func);
-    *func=[this,name,body] (ARGUMENTS&&...arguments)->RESULT
+    *namedFunc.second=
+    [this,namedFunc,body] (ARGUMENTS&&...arguments)->RESULT
     {
-        history_.push_back(call(name,arguments...));
+        history_.push_back(call(namedFunc,arguments...));
         return body(arguments...);
     };
 }
 
-template<class RESULT,class...ARGUMENTS> void logger::setPutWithResult
+template<class RESULT,class...ARGUMENTS> void logger::mockUpWithResult
 (
     const pair<string,function<RESULT(ARGUMENTS...)>*>&namedFunc,
     const RESULT&result
 )
 {
-    string name;
-    function<RESULT(ARGUMENTS...)>*func;
-    decompose(namedFunc,&name,&func);
-    *func=[this,name,result] (ARGUMENTS&&...arguments)->RESULT
+    *namedFunc.second=
+    [this,namedFunc,result] (ARGUMENTS&&...arguments)->RESULT
     {
-        history_.push_back(call(name,arguments...));
+        history_.push_back(call(namedFunc,arguments...));
         return result;
     };
+}
+
+template<class RESULT,class...ARGUMENTS> size_t logger::count
+(const pair<string,function<RESULT(ARGUMENTS...)>*>&namedFunc) const
+{
+    return count_if
+    (
+        history_.begin(),
+        history_.end(),
+        [&namedFunc] (const call&call_)->bool
+        {
+            return
+                call_.name()==namedFunc.first&&
+                call_.address()==namedFunc.second;
+        }
+    );
 }
 
 template<class VALUE> SimpleString StringFrom(const VALUE&value)

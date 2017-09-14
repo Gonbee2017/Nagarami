@@ -1,9 +1,10 @@
-#include<algorithm>
 #include<sstream>
 #include"nagaramitest.h"
 
 namespace nm
 {
+
+const void*call::address() const {return address_;}
 
 const vector<string>&call::arguments() const {return arguments_;}
 
@@ -14,7 +15,7 @@ bool call::operator!=(const call&rhs) const {return !(*this==rhs);}
 bool call::operator==(const call&rhs) const
 {
     bool result=true;
-    if(name_!=rhs.name_) result=false;
+    if(address_!=rhs.address_) result=false;
     else if(arguments_.size()!=rhs.arguments_.size()) result=false;
     else
     {
@@ -38,7 +39,7 @@ bool call::operator==(const call&rhs) const
 ostream&operator<<(ostream&os,const call&call_)
 {
     ostringstream oss;
-    oss<<call_.name_;
+    oss<<call_.name_<<"("<<call_.address_<<")";
     if(!call_.arguments_.empty())
     {
         oss<<':';
@@ -51,17 +52,7 @@ ostream&operator<<(ostream&os,const call&call_)
     return os<<oss.str();
 }
 
-const vector<call>&logger::history() const {return history_;}
-
-size_t logger::count(const string&name) const
-{
-    return count_if
-    (
-        history_.begin(),
-        history_.end(),
-        [&name] (const call&call_)->bool {return call_.name()==name;}
-    );
-}
+vector<call>&logger::history() {return history_;}
 
 void describe_each_to(vector<string>&strs) {}
 

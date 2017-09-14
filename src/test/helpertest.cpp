@@ -76,20 +76,21 @@ TEST(helper,fill)
 TEST(helper,Finalizer)
 {
     function<void()> finalize;
-    lg->setPut(NAMED_ADDRESS(finalize));
+    lg->mockUp(NAMED_ADDRESS(finalize));
     auto finalizer=make_shared<Finalizer>(finalize);
     CHECK_EQUAL(0,lg->history().size());
     finalizer.reset();
     CHECK_EQUAL(1,lg->history().size());
-    CHECK_EQUAL(call("finalize"),lg->history().at(0));
+    CHECK_EQUAL(call(NAMED_ADDRESS(finalize)),lg->history().at(0));
 }
 
 TEST(helper,api_error)
 {
-    lg->setPutWithResult(NAMED_ADDRESS(pt->GetLastError),(DWORD)1);
+    lg->mockUpWithResult(NAMED_ADDRESS(pt->GetLastError),(DWORD)1);
     CHECK_THROWS_API_ERROR("hoge",1,throw api_error("hoge"));
     CHECK_EQUAL(1,lg->history().size());
-    CHECK_EQUAL(call("pt->GetLastError"),lg->history().at(0));
+    CHECK_EQUAL
+    (call(NAMED_ADDRESS(pt->GetLastError)),lg->history().at(0));
     CHECK_THROWS_API_ERROR("fuga",2,throw api_error("fuga",2));
 }
 
@@ -117,13 +118,13 @@ TEST(helper,coordinates)
 
 TEST(helper,cursor_pos)
 {
-    lg->setPutWithBody(NAMED_ADDRESS(pt->GetCursorPos),
+    lg->mockUpWithBody(NAMED_ADDRESS(pt->GetCursorPos),
     [] (LPPOINT point)->BOOL
     {
         *point=POINT({1,2});
         return TRUE;
     });
-    lg->setPutWithBody(NAMED_ADDRESS(pt->ScreenToClient),
+    lg->mockUpWithBody(NAMED_ADDRESS(pt->ScreenToClient),
     [] (HWND window,LPPOINT point)->BOOL
     {
         *point=POINT({-2,-4});
@@ -131,24 +132,35 @@ TEST(helper,cursor_pos)
     });
     CHECK_EQUAL(POINT({-2,-4}),cursor_pos((HWND)0x10));
     CHECK_EQUAL(2,lg->history().size());
-    CHECK_EQUAL(call("pt->GetCursorPos",POINT({0,0})),lg->history().at(0));
     CHECK_EQUAL
     (
-        call("pt->ScreenToClient",(HWND)0x10,POINT({1,2})),
+        call(NAMED_ADDRESS(pt->GetCursorPos),POINT({0,0})),
+        lg->history().at(0)
+    );
+    CHECK_EQUAL
+    (
+        call(NAMED_ADDRESS(pt->ScreenToClient),(HWND)0x10,POINT({1,2})),
         lg->history().at(1)
     );
 }
 
 TEST(helper,desktop_size)
 {
-    lg->setPutWithBody(NAMED_ADDRESS(pt->GetSystemMetrics),
-    [this] (int index)->int {return lg->count("pt->GetSystemMetrics");});
+    lg->mockUpWithBody(NAMED_ADDRESS(pt->GetSystemMetrics),
+    [this] (int index)->int
+    {return lg->count(NAMED_ADDRESS(pt->GetSystemMetrics));});
     CHECK_EQUAL(SIZE({1,2}),desktop_size());
     CHECK_EQUAL(2,lg->history().size());
     CHECK_EQUAL
-    (call("pt->GetSystemMetrics",SM_CXSCREEN),lg->history().at(0));
+    (
+        call(NAMED_ADDRESS(pt->GetSystemMetrics),SM_CXSCREEN),
+        lg->history().at(0)
+    );
     CHECK_EQUAL
-    (call("pt->GetSystemMetrics",SM_CYSCREEN),lg->history().at(1));
+    (
+        call(NAMED_ADDRESS(pt->GetSystemMetrics),SM_CYSCREEN),
+        lg->history().at(1)
+    );
 }
 
 TEST(helper,floating_point_number)
