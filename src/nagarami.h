@@ -17,7 +17,7 @@
 #include<commctrl.h>
 
 #define SQUARE(x) ((x)*(x))
-#define WM_USERTIMER (WM_USER+1)
+#define WM_USERTIMER (WM_USER+1u)
 
 namespace nm
 {
@@ -26,32 +26,28 @@ using namespace std;
 
 //---- constexpr definition ----
 
-constexpr char APPLICATION_NAME[] ="Nagarami";
-constexpr char PS_FILE_EXTENSION[]="ps";
-constexpr char HELP_URL[]         =
+constexpr char APPLICATION_NAME[]         ="Nagarami";
+constexpr char HELP_URL[]                 =
     "https://github.com/Gonbee2017/Nagarami/blob/master/README.md";
 
-constexpr COLORREF ALMOST_BLACK_COLOR=RGB(  1,  1,  1);
-constexpr COLORREF BLACK_COLOR       =RGB(  0,  0,  0);
-constexpr COLORREF WHITE_COLOR       =RGB(255,255,255);
+constexpr COLORREF BLACK_COLOR =RGB(  0,  0,  0);
+constexpr COLORREF OPAQUE_COLOR=RGB(  0,  0,  1);
+constexpr COLORREF WHITE_COLOR =RGB(255,255,255);
 
 constexpr LONG  UNIT_LENGTH          =16;
 constexpr SIZE  UNIT_SIZE            ({UNIT_LENGTH,UNIT_LENGTH});
 constexpr LONG  HALF_UNIT_LENGTH     =UNIT_LENGTH/2;
-constexpr SIZE  HALF_UNIT_SIZE       =
-    SIZE({HALF_UNIT_LENGTH,HALF_UNIT_LENGTH});
-constexpr RECT  UNIT_RECT            =
-    RECT({0,0,UNIT_SIZE.cx,UNIT_SIZE.cy});
+constexpr SIZE  HALF_UNIT_SIZE       ({HALF_UNIT_LENGTH,HALF_UNIT_LENGTH});
+constexpr RECT  UNIT_RECT            ({0,0,UNIT_SIZE.cx,UNIT_SIZE.cy});
 constexpr LONG  FRAME_LENGTH         =UNIT_LENGTH;
 constexpr LONG  MINIMUM_WINDOW_WIDTH =UNIT_LENGTH*8+FRAME_LENGTH*2;
 constexpr LONG  MINIMUM_WINDOW_HEIGHT=UNIT_LENGTH*4+FRAME_LENGTH*2;
-constexpr SIZE  MINIMUM_WINDOW_SIZE  =
-    SIZE({MINIMUM_WINDOW_WIDTH,MINIMUM_WINDOW_HEIGHT});
+constexpr SIZE  MINIMUM_WINDOW_SIZE
+    ({MINIMUM_WINDOW_WIDTH,MINIMUM_WINDOW_HEIGHT});
 constexpr LONG  SLIDER_BAR_WIDTH     =UNIT_LENGTH/4;
 constexpr LONG  HALF_SLIDER_BAR_WIDTH=SLIDER_BAR_WIDTH/2;
 constexpr LONG  SLIDER_TEXT_WIDTH    =UNIT_LENGTH*2;
-constexpr SIZE  SLIDER_TEXT_SIZE     =
-    SIZE({SLIDER_TEXT_WIDTH,UNIT_LENGTH});
+constexpr SIZE  SLIDER_TEXT_SIZE     ({SLIDER_TEXT_WIDTH,UNIT_LENGTH});
 
 constexpr POINT ALPHA_SLIDER_CELL_POS     ({ 0,-1});
 constexpr POINT CLOSE_BUTTON_CELL_POS     ({-1, 0});
@@ -81,6 +77,8 @@ constexpr bool     DEFAULT_CONTROL_MODE_SHIFT =false;
 constexpr UINT     DEFAULT_FPS                =30;
 constexpr bool     DEFAULT_HALFTONE           =false;
 constexpr LONG     DEFAULT_HOLE               =UNIT_LENGTH*0;
+constexpr char     DEFAULT_PS_FILE_BASE[]     ="Nagarami";
+constexpr char     DEFAULT_PS_FILE_EXTENSION[]="ps";
 constexpr LONG     DEFAULT_SCALE              =100;
 constexpr LONG     DEFAULT_WINDOW_SIZE_DIVISOR=4;
 
@@ -100,6 +98,7 @@ constexpr wchar_t SCALE_SLIDER_TOOL_TEXT[]     =L"倍率";
 
 class Buffer;
 class Button;
+struct Context;
 class Component;
 class DeleteDC;
 class DeleteObject;
@@ -107,6 +106,8 @@ class EndPaint;
 class Finalizer;
 class MainWindow;
 struct POINT_DOUBLE {double x,y;};
+struct Port;
+struct Properties;
 class PushButton;
 class RadioButton;
 class ReleaseDC;
@@ -116,9 +117,6 @@ class TimeKillEvent;
 class Timer;
 class Window;
 class api_error;
-struct context;
-struct port;
-struct properties;
 
 //---- apiwrapper declaration ----
 
@@ -182,6 +180,7 @@ void GetCursorPos(LPPOINT pos);
 shared_ptr<ReleaseDC> GetDC(HWND window);
 bool GetMessage(LPMSG message,HWND window,UINT first,UINT last);
 int GetObject(HGDIOBJ object,int sizeOfBuffer,LPVOID buffer);
+COLORREF GetPixel(HDC dc,int x,int y);
 int GetSystemMetrics(int index);
 void GetWindowPlacement(HWND window,WINDOWPLACEMENT*placement);
 shared_ptr<DeleteObject> LoadBitmap(HINSTANCE instance,LPCTSTR name);
@@ -239,12 +238,12 @@ class Component
 public:
     virtual void activate(const POINT&cursorPos)=0;
     void activateTool();
-    bool active();
+    bool active() const;
     virtual void deactivate(const POINT&cursorPos)=0;
     void deactivateTool();
-    virtual bool hitTest(const POINT&cursorPos)=0;
-    virtual bool hitTestTool(const POINT&cursorPos)=0;
-    virtual void paint(HDC dc)=0;
+    virtual bool hitTest(const POINT&cursorPos) const=0;
+    virtual bool hitTestTool(const POINT&cursorPos) const=0;
+    virtual void paint(HDC dc) const=0;
     virtual void relocate(const SIZE&containerSize);
     virtual void update(const POINT&cursorPos)=0;
 protected:
@@ -257,7 +256,7 @@ protected:
         LPCWSTR toolText
     );
     virtual void relocateTool()=0;
-    virtual void render()=0;
+    virtual void render() const=0;
     void reposition(const SIZE&containerSize);
     bool active_;
     POINT cellPos_;
@@ -271,9 +270,9 @@ class Button:public Component
 {
 public:
     virtual void activate(const POINT&cursorPos) override;
-    virtual bool hitTest(const POINT&cursorPos) override;
-    virtual bool hitTestTool(const POINT&cursorPos) override;
-    virtual void paint(HDC dc) override;
+    virtual bool hitTest(const POINT&cursorPos) const override;
+    virtual bool hitTestTool(const POINT&cursorPos) const override;
+    virtual void paint(HDC dc) const override;
     virtual void update(const POINT&cursorPos) override;
 protected:
     Button
@@ -287,7 +286,7 @@ protected:
         LPCWSTR toolText
     );
     virtual void relocateTool() override;
-    void renderButton(const bool&pushed);
+    void renderButton(const bool&pushed) const;
     shared_ptr<Buffer> backBuffer_;
     shared_ptr<Buffer> foreBuffer_;
     shared_ptr<Buffer> iconMaskBuffer_;
@@ -309,7 +308,7 @@ public:
     );
     virtual void deactivate(const POINT&cursorPos) override;
     function<void()> click;
-protected:virtual void render() override;
+protected:virtual void render() const override;
 };
 
 class RadioButton:public Button
@@ -327,11 +326,11 @@ public:
         LPCWSTR toolText
     );
     virtual void deactivate(const POINT&cursorPos) override;
-    bool value();
+    bool value() const;
     void value(const bool&value_);
     function<void()> change;
 protected:
-    virtual void render() override;
+    virtual void render() const override;
     bool value_;
 };
 
@@ -354,25 +353,25 @@ public:
     );
     virtual void activate(const POINT&cursorPos) override;
     virtual void deactivate(const POINT&cursorPos) override;
-    virtual bool hitTest(const POINT&cursorPos) override;
-    virtual bool hitTestTool(const POINT&cursorPos) override;
-    int maximum();
-    int minimum();
-    virtual void paint(HDC dc) override;
+    virtual bool hitTest(const POINT&cursorPos) const override;
+    virtual bool hitTestTool(const POINT&cursorPos) const override;
+    int maximum() const;
+    int minimum() const;
+    virtual void paint(HDC dc) const override;
     virtual void relocate(const SIZE&containerSize) override;
     virtual void update(const POINT&cursorPos) override;
-    int value();
+    int value() const;
     void value(const int&value_);
     function<void()> change;
 protected:
-    bool hitTestBar(const POINT&cursorPos);
-    bool hitTestKnob(const POINT&cursorPos);
-    bool hitTestText(const POINT&cursorPos);
+    bool hitTestBar(const POINT&cursorPos) const;
+    bool hitTestKnob(const POINT&cursorPos) const;
+    bool hitTestText(const POINT&cursorPos) const;
     virtual void relocateTool() override;
-    virtual void render() override;
-    void renderBar();
-    void renderKnob();
-    void renderText();
+    virtual void render() const override;
+    void renderBar() const;
+    void renderKnob() const;
+    void renderText() const;
     void updateKnobX();
     shared_ptr<Buffer> barBuffer_;
     function<string(const int&value)> getText_;
@@ -385,7 +384,6 @@ protected:
     int maximum_;
     int minimum_;
     LONG pinch_;
-    string text_;
     shared_ptr<Buffer> textBuffer_;
     shared_ptr<Buffer> textMaskBuffer_;
     int value_;
@@ -393,55 +391,27 @@ protected:
 
 //---- execute declaration ----
 
-struct properties
+struct Context
 {
-    properties();
-    void adjust();
-    void initialize();
-    vector<string> lines() const;
-    void load(const vector<string>&expressions);
-    BYTE alpha;
-    COLORREF back_color1;
-    COLORREF back_color2;
-    COLORREF component_color1;
-    COLORREF component_color2;
-    bool control_mode_alt;
-    bool control_mode_ctrl;
-    bool control_mode_shift;
-    UINT fps;
-    bool halftone;
-    LONG hole;
-    LONG scale;
-    POINT_DOUBLE view_base;
-    POINT window_pos;
-    SIZE window_size;
-protected:
-    static pair<string,string> parse(const string&expression);
-    map<string,function<void(const string&value)>> setter_map_;
-};
-
-struct context
-{
-    context();
+    Context();
     void initialize(HINSTANCE instance);
-    shared_ptr<DeleteObject> almost_black_brush;
-    shared_ptr<DeleteObject> back_brush1;
-    shared_ptr<DeleteObject> back_brush2;
-    shared_ptr<DeleteObject> black_brush;
-    shared_ptr<DeleteObject> black_pen;
-    shared_ptr<DeleteObject> component_brush1;
-    shared_ptr<DeleteObject> component_brush2;
-    shared_ptr<DeleteObject> component_pen1;
-    shared_ptr<DeleteObject> component_pen2;
+    shared_ptr<DeleteObject> backBrush1;
+    shared_ptr<DeleteObject> backBrush2;
+    shared_ptr<DeleteObject> blackBrush;
+    shared_ptr<DeleteObject> blackPen;
+    shared_ptr<DeleteObject> componentBrush1;
+    shared_ptr<DeleteObject> componentBrush2;
+    shared_ptr<DeleteObject> componentPen1;
+    shared_ptr<DeleteObject> componentPen2;
     runtime_error error;
     shared_ptr<DeleteObject> font;
     HINSTANCE instance;
-    shared_ptr<properties> ps;
+    shared_ptr<DeleteObject> opaqueBrush;
     HWND target;
-    shared_ptr<DeleteObject> white_brush;
+    shared_ptr<DeleteObject> whiteBrush;
 };
 
-struct port
+struct Port
 {
     void import();
     function<HDC(HWND window,PAINTSTRUCT*paint)> BeginPaint;
@@ -515,6 +485,7 @@ struct port
     function<int(LPMSG message,HWND window,UINT first,UINT last)>
         GetMessage;
     function<int(HGDIOBJ object,int sizeOfBuffer,LPVOID buffer)> GetObject;
+    function<COLORREF(HDC dc,int x,int y)> GetPixel;
     function<int(int index)> GetSystemMetrics;
     function<BOOL(HWND window,WINDOWPLACEMENT*placement)>
         GetWindowPlacement;
@@ -589,6 +560,34 @@ struct port
     )> timeSetEvent;
 };
 
+struct Properties
+{
+    Properties();
+    void adjust();
+    void initialize();
+    vector<string> lines() const;
+    void load(const vector<string>&expressions);
+    BYTE alpha;
+    COLORREF backColor1;
+    COLORREF backColor2;
+    COLORREF componentColor1;
+    COLORREF componentColor2;
+    bool controlModeAlt;
+    bool controlModeCtrl;
+    bool controlModeShift;
+    UINT fps;
+    bool halftone;
+    LONG hole;
+    string psFileName;
+    LONG scale;
+    POINT_DOUBLE viewBase;
+    POINT windowPos;
+    SIZE windowSize;
+protected:
+    static pair<string,string> parse(const string&expression);
+    map<string,function<void(const string&value)>> setter_map_;
+};
+
 bool control_mode();
 int execute
 (
@@ -601,9 +600,9 @@ void load_properties(const string&commandLine);
 UINT minimum_time_period();
 void save_properties();
 
-extern const string PS_FILE_NAME;
-extern shared_ptr<port> pt;
-extern shared_ptr<context> ct;
+extern shared_ptr<Port> pt;
+extern shared_ptr<Properties> ps;
+extern shared_ptr<Context> ct;
 
 //---- helper declaration ----
 
@@ -653,19 +652,26 @@ template<class LEAD,class...TRAILER> void describe_to_with
 template<class...ARGUMENTS> string describe_with
 (const string&separator,ARGUMENTS&&...arguments);
 template<class DATA> void fill(DATA*const data,const unsigned char&byte);
+template<class NUMBER> void floating_point_number
+(NUMBER*number,const string&str);
+template<class NUMBER> void integer(NUMBER*number,const string&str);
 
 string chomp(const string&str,const char&ch);
-bool contain(const POINT&center,const LONG&squaredRadius,const POINT&pos);
 bool contain(const RECT&rect,const POINT&pos);
 POINT coordinates(LPARAM lParam);
 POINT cursor_pos(HWND window);
 void describe_to_with(ostream&os,const string&separator);
+LONG desktop_height();
 SIZE desktop_size();
-double floating_point_number(const string&str);
-vector<string> getlines(istream&is);
+LONG desktop_width();
+long double floating_point_number(const string&str);
+long double floating_point_number
+(const string&str,const long double&reserve);
+vector<string> get_lines(istream&is);
 LONG height(const RECT&rect);
 shared_ptr<istream> input_file(const string&name,const ios::openmode&mode);
-long integer(const string&str);
+long long integer(const string&str);
+long long integer(const string&str,const long long&reserve);
 POINT operator*(const POINT&lhs,const LONG&rhs);
 SIZE operator*(const SIZE&lhs,const LONG&rhs);
 POINT operator+(const POINT&lhs,const POINT&rhs);
@@ -682,12 +688,11 @@ POINT point(const POINT_DOUBLE&pointDouble);
 POINT point(const SIZE&size);
 POINT_DOUBLE point_double(const POINT&point);
 POINT pos(const RECT&rect);
-void putlines(ostream&os,const vector<string>&lines);
+void put_lines(ostream&os,const vector<string>&lines);
 RECT rect(const POINT&pos,const SIZE&size);
 SIZE size(LPARAM lParam);
 SIZE size(const POINT&pos);
 SIZE size(const RECT&rect);
-LONG squared_distance(const POINT&p,const POINT&q);
 vector<string> tokenize(const string&str,const string&dels);
 LONG width(const RECT&rect);
 
@@ -697,7 +702,7 @@ class DeleteDC:public Finalizer
 {
 public:
     DeleteDC(HDC handle);
-    HDC handle();
+    HDC handle() const;
 protected:HDC handle_;
 };
 
@@ -705,19 +710,19 @@ class DeleteObject:public Finalizer
 {
 public:
     DeleteObject(HGDIOBJ handle);
-    HGDIOBJ handle();
+    HGDIOBJ handle() const;
 protected:HGDIOBJ handle_;
 };
 
 class Buffer
 {
 public:
-    HBITMAP bitmap();
+    HBITMAP bitmap() const;
     static shared_ptr<Buffer> create(const SIZE&size,HDC destDC);
-    HDC dc();
+    HDC dc() const;
     static shared_ptr<Buffer> load
     (HINSTANCE instance,LPCTSTR name,HDC destDC);
-    const SIZE&size();
+    const SIZE&size() const;
 protected:
     Buffer
     (
@@ -734,7 +739,7 @@ class EndPaint:public Finalizer
 {
 public:
     EndPaint(HWND window,PAINTSTRUCT*paint,HDC dc);
-    HDC handle();
+    HDC handle() const;
 protected:HDC handle_;
 };
 
@@ -742,7 +747,7 @@ class ReleaseDC:public Finalizer
 {
 public:
     ReleaseDC(HWND window,HDC handle);
-    HDC handle();
+    HDC handle() const;
 protected:HDC handle_;
 };
 
@@ -750,7 +755,7 @@ class TimeEndPeriod:public Finalizer
 {
 public:
     TimeEndPeriod(UINT value);
-    UINT value();
+    UINT value() const;
 protected:UINT value_;
 };
 
@@ -833,6 +838,13 @@ public:
     (UINT message,WPARAM wParam,LPARAM lParam);
     LRESULT onUserTimer
     (UINT message,WPARAM wParam,LPARAM lParam);
+    void paintBack();
+    void paintBuffer();
+    void paintComponent();
+    void paintHole();
+    void paintOpacity();
+    void paintTarget();
+    void paintWindow();
 protected:
     void initializeBackBrush();
     void initializeBuffers();
@@ -851,11 +863,16 @@ protected:
     shared_ptr<RadioButton> lockButton_;
     shared_ptr<RadioButton> maximizeButton_;
     shared_ptr<PushButton> minimizeButton_;
+    shared_ptr<Buffer> opaqueBuffer_;
+    POINT paintDestPos_;
+    SIZE paintDestSize_;
+    PAINTSTRUCT paintStruct_;
+    POINT paintSrcPos_;
+    SIZE paintSrcSize_;
     shared_ptr<PushButton> resetButton_;
     shared_ptr<Slider> scaleSlider_;
     shared_ptr<Timer> timer_;
     HWND toolTip_;
-    shared_ptr<Buffer> viewBuffer_;
     bool viewSliding_;
     POINT viewSlidingBase_;
 };
@@ -915,6 +932,13 @@ template<class...ARGUMENTS> string describe_with
 
 template<class DATA> void fill(DATA*const data,const unsigned char&byte)
 {memset(data,byte,sizeof(DATA));}
+
+template<class NUMBER> void floating_point_number
+(NUMBER*number,const string&str)
+{*number=floating_point_number(str,*number);}
+
+template<class NUMBER> void integer(NUMBER*number,const string&str)
+{*number=integer(str,*number);}
 
 }
 

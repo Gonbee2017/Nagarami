@@ -11,25 +11,27 @@ TEST_GROUP(component)
 {
     TEST_SETUP()
     {
-        lg=make_shared<logger>();
-        pt=make_shared<port>();
-        ct=make_shared<context>();
+        im=make_shared<Imitator>();
+        pt=make_shared<Port>();
+        ps=make_shared<Properties>();
+        ct=make_shared<Context>();
     }
     TEST_TEARDOWN()
     {
         ct.reset();
+        ps.reset();
         pt.reset();
-        lg.reset();
+        im.reset();
     }
-    shared_ptr<logger> lg;
+    shared_ptr<Imitator> im;
 };
 
 TEST(component,PushButton)
 {
-    lg->mockUpWithBody(NAMED_ADDRESS(pt->SendMessageW),
+    im->mockUpWithBody(NAMED_ADDRESS(pt->SendMessageW),
     [this] (HWND window,UINT message,WPARAM wParam,LPARAM lParam)->LRESULT
     {
-        switch(lg->count(NAMED_ADDRESS(pt->SendMessageW)))
+        switch(im->count(NAMED_ADDRESS(pt->SendMessageW)))
         {
         case 1:
             CHECK_EQUAL
@@ -52,10 +54,10 @@ TEST(component,PushButton)
         };
         return TRUE;
     });
-    lg->mockUpWithBody(NAMED_ADDRESS(pt->LoadBitmap),
+    im->mockUpWithBody(NAMED_ADDRESS(pt->LoadBitmap),
     [this] (HINSTANCE instance,LPCTSTR name)->HBITMAP
-    {return (HBITMAP)(0x10+lg->count(NAMED_ADDRESS(pt->LoadBitmap)));});
-    lg->mockUpWithBody(NAMED_ADDRESS(pt->GetObject),
+    {return (HBITMAP)(0x10+im->count(NAMED_ADDRESS(pt->LoadBitmap)));});
+    im->mockUpWithBody(NAMED_ADDRESS(pt->GetObject),
     [this] (HGDIOBJ object,int sizeOfBuffer,LPVOID buffer)->int
     {
         *(BITMAP*)buffer=BITMAP(
@@ -66,49 +68,49 @@ TEST(component,PushButton)
             4,
             5,
             6,
-            (LPVOID)(0x20+lg->count(NAMED_ADDRESS(pt->GetObject)))
+            (LPVOID)(0x20+im->count(NAMED_ADDRESS(pt->GetObject)))
         });
         return sizeof(BITMAP);
     });
-    lg->mockUpWithBody
+    im->mockUpWithBody
     (NAMED_ADDRESS(pt->CreateCompatibleDC),[this] (HDC dc)->HDC
     {
-        return (HDC)(0x30+lg->count
+        return (HDC)(0x30+im->count
         (NAMED_ADDRESS(pt->CreateCompatibleDC)));
     });
-    lg->mockUpWithResult(NAMED_ADDRESS(pt->SelectObject),(HGDIOBJ)NULL);
-    lg->mockUpWithBody
+    im->mockUpWithResult(NAMED_ADDRESS(pt->SelectObject),(HGDIOBJ)NULL);
+    im->mockUpWithBody
     (NAMED_ADDRESS(pt->CreateCompatibleBitmap),
     [this] (HDC destDC,int width,int height)->HBITMAP
     {
-        return (HBITMAP)(0x40+lg->count
+        return (HBITMAP)(0x40+im->count
         (NAMED_ADDRESS(pt->CreateCompatibleBitmap)));
     });
-    lg->mockUpWithResult(NAMED_ADDRESS(pt->FillRect),TRUE);
-    lg->mockUpWithResult(NAMED_ADDRESS(pt->Ellipse),TRUE);
-    lg->mockUpWithResult(NAMED_ADDRESS(pt->BitBlt),TRUE);
-    lg->mockUpWithBody(NAMED_ADDRESS(pt->CreatePen),
+    im->mockUpWithResult(NAMED_ADDRESS(pt->FillRect),TRUE);
+    im->mockUpWithResult(NAMED_ADDRESS(pt->Ellipse),TRUE);
+    im->mockUpWithResult(NAMED_ADDRESS(pt->BitBlt),TRUE);
+    im->mockUpWithBody(NAMED_ADDRESS(pt->CreatePen),
     [this] (int style,int width,COLORREF color)->HPEN
-    {return (HPEN)(0x50+lg->count(NAMED_ADDRESS(pt->CreatePen)));});
-    lg->mockUpWithBody(NAMED_ADDRESS(pt->CreateSolidBrush),
+    {return (HPEN)(0x50+im->count(NAMED_ADDRESS(pt->CreatePen)));});
+    im->mockUpWithBody(NAMED_ADDRESS(pt->CreateSolidBrush),
     [this] (COLORREF color)->HBRUSH
     {
-        return (HBRUSH)(0x60+lg->count
+        return (HBRUSH)(0x60+im->count
         (NAMED_ADDRESS(pt->CreateSolidBrush)));
     });
-    lg->mockUpWithResult(NAMED_ADDRESS(pt->DeleteDC),TRUE);
-    lg->mockUpWithResult(NAMED_ADDRESS(pt->DeleteObject),TRUE);
+    im->mockUpWithResult(NAMED_ADDRESS(pt->DeleteDC),TRUE);
+    im->mockUpWithResult(NAMED_ADDRESS(pt->DeleteObject),TRUE);
 
     ct->instance=(HINSTANCE)0x70;
-    ct->black_brush=nm::CreateSolidBrush(RGB(1,2,3));
-    ct->black_pen=nm::CreatePen(1,2,RGB(1,2,3));
-    ct->component_brush1=nm::CreateSolidBrush(RGB(1,2,3));
-    ct->component_brush2=nm::CreateSolidBrush(RGB(1,2,3));
-    ct->component_pen1=nm::CreatePen(1,2,RGB(1,2,3));
-    ct->component_pen2=nm::CreatePen(1,2,RGB(1,2,3));
-    ct->white_brush=nm::CreateSolidBrush(RGB(1,2,3));
-    lg->history().clear();
+    ct->blackBrush=nm::CreateSolidBrush(RGB(1,2,3));
+    ct->blackPen=nm::CreatePen(1,2,RGB(1,2,3));
+    ct->componentBrush1=nm::CreateSolidBrush(RGB(1,2,3));
+    ct->componentBrush2=nm::CreateSolidBrush(RGB(1,2,3));
+    ct->componentPen1=nm::CreatePen(1,2,RGB(1,2,3));
+    ct->componentPen2=nm::CreatePen(1,2,RGB(1,2,3));
+    ct->whiteBrush=nm::CreateSolidBrush(RGB(1,2,3));
 
+    im->history().clear();
     auto pushButton=make_shared<PushButton>
     (
         "hoge",
@@ -120,59 +122,65 @@ TEST(component,PushButton)
         L"fuga"
     );
     CHECK_FALSE(pushButton->active());
-    CHECK_EQUAL(28,lg->history().size());
+    CHECK_EQUAL(28,im->history().size());
     CHECK_EQUAL
     (
         call
         (
             NAMED_ADDRESS(pt->SendMessageW),
             (HWND)0xa0,
-            TTM_ADDTOOLW,
-            0,
-            OMIT_ARGUMENT
+            (UINT)TTM_ADDTOOLW,
+            0u,
+            (LPARAM)OMIT_POINTER
         ),
-        lg->history().at(0)
+        im->history().at(0)
     );
     CHECK_EQUAL
     (
         call
-        (NAMED_ADDRESS(pt->SendMessageW),(HWND)0xa0,TTM_ACTIVATE,FALSE,0),
-        lg->history().at(1)
+        (
+            NAMED_ADDRESS(pt->SendMessageW),
+            (HWND)0xa0,
+            (UINT)TTM_ACTIVATE,
+            (UINT)FALSE,
+            0l
+        ),
+        im->history().at(1)
     );
     CHECK_EQUAL
     (
         call(NAMED_ADDRESS(pt->CreateCompatibleBitmap),(HDC)0x80,16,16),
-        lg->history().at(2)
+        im->history().at(2)
     );
     CHECK_EQUAL
     (
         call(NAMED_ADDRESS(pt->CreateCompatibleDC),(HDC)0x80),
-        lg->history().at(3)
+        im->history().at(3)
     );
     CHECK_EQUAL
     (
         call(NAMED_ADDRESS(pt->SelectObject),(HDC)0x31,(HGDIOBJ)0x41),
-        lg->history().at(4)
+        im->history().at(4)
     );
     CHECK_EQUAL
     (
         call(NAMED_ADDRESS(pt->CreateCompatibleBitmap),(HDC)0x80,16,16),
-        lg->history().at(5)
+        im->history().at(5)
     );
     CHECK_EQUAL
     (
         call(NAMED_ADDRESS(pt->CreateCompatibleDC),(HDC)0x80),
-        lg->history().at(6)
+        im->history().at(6)
     );
     CHECK_EQUAL
     (
         call(NAMED_ADDRESS(pt->SelectObject),(HDC)0x32,(HGDIOBJ)0x42),
-        lg->history().at(7)
+        im->history().at(7)
     );
     CHECK_EQUAL
     (
         call(NAMED_ADDRESS(pt->LoadBitmap),(HINSTANCE)0x70,"hoge"),
-        lg->history().at(8)
+        im->history().at(8)
     );
     CHECK_EQUAL
     (
@@ -180,35 +188,35 @@ TEST(component,PushButton)
         (
             NAMED_ADDRESS(pt->GetObject),
             (HGDIOBJ)0x11,
-            sizeof(BITMAP),
-            OMIT_ARGUMENT
+            (int)sizeof(BITMAP),
+            (LPVOID)OMIT_POINTER
         ),
-        lg->history().at(9)
+        im->history().at(9)
     );
     CHECK_EQUAL
     (
         call(NAMED_ADDRESS(pt->CreateCompatibleDC),(HDC)0x80),
-        lg->history().at(10)
+        im->history().at(10)
     );
     CHECK_EQUAL
     (
         call(NAMED_ADDRESS(pt->SelectObject),(HDC)0x33,(HGDIOBJ)0x11),
-        lg->history().at(11)
+        im->history().at(11)
     );
     CHECK_EQUAL
     (
         call(NAMED_ADDRESS(pt->CreateCompatibleBitmap),(HDC)0x80,16,16),
-        lg->history().at(12)
+        im->history().at(12)
     );
     CHECK_EQUAL
     (
         call(NAMED_ADDRESS(pt->CreateCompatibleDC),(HDC)0x80),
-        lg->history().at(13)
+        im->history().at(13)
     );
     CHECK_EQUAL
     (
         call(NAMED_ADDRESS(pt->SelectObject),(HDC)0x34,(HGDIOBJ)0x43),
-        lg->history().at(14)
+        im->history().at(14)
     );
     CHECK_EQUAL
     (
@@ -216,25 +224,25 @@ TEST(component,PushButton)
         (
             NAMED_ADDRESS(pt->FillRect),
             (HDC)0x34,
-            RECT({0,0,16,16}),
+            make_shared_pod<const RECT>(0,0,16,16).get(),
             (HBRUSH)0x64
         ),
-        lg->history().at(15)
+        im->history().at(15)
     );
     CHECK_EQUAL
     (
         call(NAMED_ADDRESS(pt->SelectObject),(HDC)0x34,(HGDIOBJ)0x51),
-        lg->history().at(16)
+        im->history().at(16)
     );
     CHECK_EQUAL
     (
         call(NAMED_ADDRESS(pt->SelectObject),(HDC)0x34,(HGDIOBJ)0x61),
-        lg->history().at(17)
+        im->history().at(17)
     );
     CHECK_EQUAL
     (
         call(NAMED_ADDRESS(pt->Ellipse),(HDC)0x34,0,0,16,16),
-        lg->history().at(18)
+        im->history().at(18)
     );
     CHECK_EQUAL
     (
@@ -242,10 +250,10 @@ TEST(component,PushButton)
         (
             NAMED_ADDRESS(pt->FillRect),
             (HDC)0x32,
-            RECT({0,0,16,16}),
+            make_shared_pod<const RECT>(0,0,16,16).get(),
             (HBRUSH)0x62
         ),
-        lg->history().at(19)
+        im->history().at(19)
     );
     CHECK_EQUAL
     (
@@ -262,7 +270,7 @@ TEST(component,PushButton)
             0,
             NOTSRCCOPY
         ),
-        lg->history().at(20)
+        im->history().at(20)
     );
     CHECK_EQUAL
     (
@@ -279,7 +287,7 @@ TEST(component,PushButton)
             0,
             SRCAND
         ),
-        lg->history().at(21)
+        im->history().at(21)
     );
     CHECK_EQUAL
     (
@@ -287,25 +295,25 @@ TEST(component,PushButton)
         (
             NAMED_ADDRESS(pt->FillRect),
             (HDC)0x31,
-            RECT({0,0,16,16}),
+            make_shared_pod<const RECT>(0,0,16,16).get(),
             (HBRUSH)0x61
         ),
-        lg->history().at(22)
+        im->history().at(22)
     );
     CHECK_EQUAL
     (
         call(NAMED_ADDRESS(pt->SelectObject),(HDC)0x31,(HGDIOBJ)0x52),
-        lg->history().at(23)
+        im->history().at(23)
     );
     CHECK_EQUAL
     (
         call(NAMED_ADDRESS(pt->SelectObject),(HDC)0x31,(HGDIOBJ)0x63),
-        lg->history().at(24)
+        im->history().at(24)
     );
     CHECK_EQUAL
     (
         call(NAMED_ADDRESS(pt->Ellipse),(HDC)0x31,0,0,16,16),
-        lg->history().at(25)
+        im->history().at(25)
     );
     CHECK_EQUAL
     (
@@ -322,7 +330,7 @@ TEST(component,PushButton)
             0,
             SRCAND
         ),
-        lg->history().at(26)
+        im->history().at(26)
     );
     CHECK_EQUAL
     (
@@ -339,56 +347,132 @@ TEST(component,PushButton)
             0,
             SRCPAINT
         ),
-        lg->history().at(27)
+        im->history().at(27)
     );
-    lg->history().clear();
 
-    lg->mockUpWithResult(NAMED_ADDRESS(pt->SendMessageW),(LRESULT)TRUE);
+    im->history().clear();
+    im->mockUpWithBody(NAMED_ADDRESS(pt->SendMessageW),
+    [this] (HWND window,UINT message,WPARAM wParam,LPARAM lParam)->LRESULT
+    {
+        CHECK_EQUAL
+        (
+            describe(TOOLINFOW(
+            {
+                TTTOOLINFOW_V2_SIZE,
+                TTF_SUBCLASS,
+                (HWND)0x90,
+                7,
+                RECT({32,152,48,168}),
+                NULL,
+                (LPWSTR)L"fuga",
+                0,
+                (LPVOID)NULL
+            })),
+            describe((TOOLINFOW*)lParam)
+        );
+        return TRUE;
+    });
     pushButton->relocate(SIZE({100,200}));
-    CHECK_FALSE(pushButton->hitTest(POINT({39,152})));
-    CHECK(pushButton->hitTest(POINT({40,152})));
-    CHECK_FALSE(pushButton->hitTest(POINT({32,159})));
-    CHECK(pushButton->hitTest(POINT({32,160})));
-    CHECK_FALSE(pushButton->hitTest(POINT({44,167})));
-    CHECK(pushButton->hitTest(POINT({43,167})));
-    CHECK_FALSE(pushButton->hitTest(POINT({47,164})));
-    CHECK(pushButton->hitTest(POINT({47,163})));
-    CHECK_FALSE(pushButton->hitTestTool(POINT({39,152})));
-    CHECK(pushButton->hitTestTool(POINT({40,152})));
-    CHECK_FALSE(pushButton->hitTestTool(POINT({32,159})));
-    CHECK(pushButton->hitTestTool(POINT({32,160})));
-    CHECK_FALSE(pushButton->hitTestTool(POINT({44,167})));
-    CHECK(pushButton->hitTestTool(POINT({43,167})));
-    CHECK_FALSE(pushButton->hitTestTool(POINT({47,164})));
-    CHECK(pushButton->hitTestTool(POINT({47,163})));
-    CHECK_EQUAL(1,lg->history().size());
+    CHECK_EQUAL(1,im->history().size());
     CHECK_EQUAL
     (
         call
         (
             NAMED_ADDRESS(pt->SendMessageW),
             (HWND)0xa0,
-            TTM_NEWTOOLRECTW,
-            0,
-            OMIT_ARGUMENT
+            (UINT)TTM_NEWTOOLRECTW,
+            0u,
+            (LPARAM)OMIT_POINTER
         ),
-        lg->history().at(0)
+        im->history().at(0)
     );
-    lg->history().clear();
 
+    im->history().clear();
+    im->mockUpWithResult(NAMED_ADDRESS(pt->GetPixel),WHITE_COLOR);
+    CHECK_FALSE(pushButton->hitTest(POINT({32,152})));
+    CHECK_FALSE(pushButton->hitTest(POINT({47,167})));
+    CHECK_EQUAL(2,im->history().size());
+    CHECK_EQUAL
+    (
+        call(NAMED_ADDRESS(pt->GetPixel),(HDC)0x34,0,0),
+        im->history().at(0)
+    );
+    CHECK_EQUAL
+    (
+        call(NAMED_ADDRESS(pt->GetPixel),(HDC)0x34,15,15),
+        im->history().at(1)
+    );
+
+    im->history().clear();
+    im->mockUpWithResult(NAMED_ADDRESS(pt->GetPixel),BLACK_COLOR);
+    CHECK_FALSE(pushButton->hitTest(POINT({31,152})));
+    CHECK_FALSE(pushButton->hitTest(POINT({32,151})));
+    CHECK(pushButton->hitTest(POINT({32,152})));
+    CHECK(pushButton->hitTest(POINT({47,167})));
+    CHECK_FALSE(pushButton->hitTest(POINT({48,167})));
+    CHECK_FALSE(pushButton->hitTest(POINT({47,168})));
+    CHECK_EQUAL(2,im->history().size());
+    CHECK_EQUAL
+    (
+        call(NAMED_ADDRESS(pt->GetPixel),(HDC)0x34,0,0),
+        im->history().at(0)
+    );
+    CHECK_EQUAL
+    (
+        call(NAMED_ADDRESS(pt->GetPixel),(HDC)0x34,15,15),
+        im->history().at(1)
+    );
+
+    im->history().clear();
+    im->mockUpWithResult(NAMED_ADDRESS(pt->GetPixel),WHITE_COLOR);
+    CHECK_FALSE(pushButton->hitTestTool(POINT({32,152})));
+    CHECK_FALSE(pushButton->hitTestTool(POINT({47,167})));
+    CHECK_EQUAL(2,im->history().size());
+    CHECK_EQUAL
+    (
+        call(NAMED_ADDRESS(pt->GetPixel),(HDC)0x34,0,0),
+        im->history().at(0)
+    );
+    CHECK_EQUAL
+    (
+        call(NAMED_ADDRESS(pt->GetPixel),(HDC)0x34,15,15),
+        im->history().at(1)
+    );
+
+    im->history().clear();
+    im->mockUpWithResult(NAMED_ADDRESS(pt->GetPixel),BLACK_COLOR);
+    CHECK_FALSE(pushButton->hitTestTool(POINT({31,152})));
+    CHECK_FALSE(pushButton->hitTestTool(POINT({32,151})));
+    CHECK(pushButton->hitTestTool(POINT({32,152})));
+    CHECK(pushButton->hitTestTool(POINT({47,167})));
+    CHECK_FALSE(pushButton->hitTestTool(POINT({48,167})));
+    CHECK_FALSE(pushButton->hitTestTool(POINT({47,168})));
+    CHECK_EQUAL(2,im->history().size());
+    CHECK_EQUAL
+    (
+        call(NAMED_ADDRESS(pt->GetPixel),(HDC)0x34,0,0),
+        im->history().at(0)
+    );
+    CHECK_EQUAL
+    (
+        call(NAMED_ADDRESS(pt->GetPixel),(HDC)0x34,15,15),
+        im->history().at(1)
+    );
+
+    im->history().clear();
     pushButton->activate(POINT({1,-2}));
     CHECK(pushButton->active());
-    CHECK_EQUAL(9,lg->history().size());
+    CHECK_EQUAL(9,im->history().size());
     CHECK_EQUAL
     (
         call
         (
             NAMED_ADDRESS(pt->FillRect),
             (HDC)0x32,
-            RECT({0,0,16,16}),
+            make_shared_pod<const RECT>(0,0,16,16).get(),
             (HBRUSH)0x63
         ),
-        lg->history().at(0)
+        im->history().at(0)
     );
     CHECK_EQUAL
     (
@@ -405,7 +489,7 @@ TEST(component,PushButton)
             0,
             NOTSRCCOPY
         ),
-        lg->history().at(1)
+        im->history().at(1)
     );
     CHECK_EQUAL
     (
@@ -422,7 +506,7 @@ TEST(component,PushButton)
             0,
             SRCAND
         ),
-        lg->history().at(2)
+        im->history().at(2)
     );
     CHECK_EQUAL
     (
@@ -430,25 +514,25 @@ TEST(component,PushButton)
         (
             NAMED_ADDRESS(pt->FillRect),
             (HDC)0x31,
-            RECT({0,0,16,16}),
+            make_shared_pod<const RECT>(0,0,16,16).get(),
             (HBRUSH)0x61
         ),
-        lg->history().at(3)
+        im->history().at(3)
     );
     CHECK_EQUAL
     (
         call(NAMED_ADDRESS(pt->SelectObject),(HDC)0x31,(HGDIOBJ)0x53),
-        lg->history().at(4)
+        im->history().at(4)
     );
     CHECK_EQUAL
     (
         call(NAMED_ADDRESS(pt->SelectObject),(HDC)0x31,(HGDIOBJ)0x62),
-        lg->history().at(5)
+        im->history().at(5)
     );
     CHECK_EQUAL
     (
         call(NAMED_ADDRESS(pt->Ellipse),(HDC)0x31,0,0,16,16),
-        lg->history().at(6)
+        im->history().at(6)
     );
     CHECK_EQUAL
     (
@@ -465,7 +549,7 @@ TEST(component,PushButton)
             0,
             SRCAND
         ),
-        lg->history().at(7)
+        im->history().at(7)
     );
     CHECK_EQUAL
     (
@@ -482,12 +566,12 @@ TEST(component,PushButton)
             0,
             SRCPAINT
         ),
-        lg->history().at(8)
+        im->history().at(8)
     );
-    lg->history().clear();
 
+    im->history().clear();
     pushButton->paint((HDC)0xb0);
-    CHECK_EQUAL(2,lg->history().size());
+    CHECK_EQUAL(2,im->history().size());
     CHECK_EQUAL
     (
         call
@@ -503,7 +587,7 @@ TEST(component,PushButton)
             0,
             SRCAND
         ),
-        lg->history().at(0)
+        im->history().at(0)
     );
     CHECK_EQUAL
     (
@@ -520,22 +604,22 @@ TEST(component,PushButton)
             0,
             SRCPAINT
         ),
-        lg->history().at(1)
+        im->history().at(1)
     );
-    lg->history().clear();
 
-    pushButton->deactivate(POINT({32,152}));
-    CHECK_EQUAL(9,lg->history().size());
+    im->history().clear();
+    pushButton->deactivate(POINT({31,151}));
+    CHECK_EQUAL(9,im->history().size());
     CHECK_EQUAL
     (
         call
         (
             NAMED_ADDRESS(pt->FillRect),
             (HDC)0x32,
-            RECT({0,0,16,16}),
+            make_shared_pod<const RECT>(0,0,16,16).get(),
             (HBRUSH)0x62
         ),
-        lg->history().at(0)
+        im->history().at(0)
     );
     CHECK_EQUAL
     (
@@ -552,7 +636,7 @@ TEST(component,PushButton)
             0,
             NOTSRCCOPY
         ),
-        lg->history().at(1)
+        im->history().at(1)
     );
     CHECK_EQUAL
     (
@@ -569,7 +653,7 @@ TEST(component,PushButton)
             0,
             SRCAND
         ),
-        lg->history().at(2)
+        im->history().at(2)
     );
     CHECK_EQUAL
     (
@@ -577,25 +661,25 @@ TEST(component,PushButton)
         (
             NAMED_ADDRESS(pt->FillRect),
             (HDC)0x31,
-            RECT({0,0,16,16}),
+            make_shared_pod<const RECT>(0,0,16,16).get(),
             (HBRUSH)0x61
         ),
-        lg->history().at(3)
+        im->history().at(3)
     );
     CHECK_EQUAL
     (
         call(NAMED_ADDRESS(pt->SelectObject),(HDC)0x31,(HGDIOBJ)0x52),
-        lg->history().at(4)
+        im->history().at(4)
     );
     CHECK_EQUAL
     (
         call(NAMED_ADDRESS(pt->SelectObject),(HDC)0x31,(HGDIOBJ)0x63),
-        lg->history().at(5)
+        im->history().at(5)
     );
     CHECK_EQUAL
     (
         call(NAMED_ADDRESS(pt->Ellipse),(HDC)0x31,0,0,16,16),
-        lg->history().at(6)
+        im->history().at(6)
     );
     CHECK_EQUAL
     (
@@ -612,7 +696,7 @@ TEST(component,PushButton)
             0,
             SRCAND
         ),
-        lg->history().at(7)
+        im->history().at(7)
     );
     CHECK_EQUAL
     (
@@ -629,25 +713,27 @@ TEST(component,PushButton)
             0,
             SRCPAINT
         ),
-        lg->history().at(8)
+        im->history().at(8)
     );
-    lg->history().clear();
 
-    lg->mockUp(NAMED_ADDRESS(pushButton->click));
+    im->history().clear();
+    im->mockUp(NAMED_ADDRESS(pushButton->click));
     pushButton->deactivate(POINT({40,160}));
-    CHECK_EQUAL(10,lg->history().size());
+    CHECK_EQUAL(11,im->history().size());
     CHECK_EQUAL
-    (call(NAMED_ADDRESS(pushButton->click)),lg->history().at(0));
+    (call(NAMED_ADDRESS(pt->GetPixel),(HDC)0x34,8,8),im->history().at(0));
+    CHECK_EQUAL
+    (call(NAMED_ADDRESS(pushButton->click)),im->history().at(1));
     CHECK_EQUAL
     (
         call
         (
             NAMED_ADDRESS(pt->FillRect),
             (HDC)0x32,
-            RECT({0,0,16,16}),
+            make_shared_pod<const RECT>(0,0,16,16).get(),
             (HBRUSH)0x62
         ),
-        lg->history().at(1)
+        im->history().at(2)
     );
     CHECK_EQUAL
     (
@@ -664,7 +750,7 @@ TEST(component,PushButton)
             0,
             NOTSRCCOPY
         ),
-        lg->history().at(2)
+        im->history().at(3)
     );
     CHECK_EQUAL
     (
@@ -681,7 +767,7 @@ TEST(component,PushButton)
             0,
             SRCAND
         ),
-        lg->history().at(3)
+        im->history().at(4)
     );
     CHECK_EQUAL
     (
@@ -689,25 +775,25 @@ TEST(component,PushButton)
         (
             NAMED_ADDRESS(pt->FillRect),
             (HDC)0x31,
-            RECT({0,0,16,16}),
+            make_shared_pod<const RECT>(0,0,16,16).get(),
             (HBRUSH)0x61
         ),
-        lg->history().at(4)
+        im->history().at(5)
     );
     CHECK_EQUAL
     (
         call(NAMED_ADDRESS(pt->SelectObject),(HDC)0x31,(HGDIOBJ)0x52),
-        lg->history().at(5)
+        im->history().at(6)
     );
     CHECK_EQUAL
     (
         call(NAMED_ADDRESS(pt->SelectObject),(HDC)0x31,(HGDIOBJ)0x63),
-        lg->history().at(6)
+        im->history().at(7)
     );
     CHECK_EQUAL
     (
         call(NAMED_ADDRESS(pt->Ellipse),(HDC)0x31,0,0,16,16),
-        lg->history().at(7)
+        im->history().at(8)
     );
     CHECK_EQUAL
     (
@@ -724,7 +810,7 @@ TEST(component,PushButton)
             0,
             SRCAND
         ),
-        lg->history().at(8)
+        im->history().at(9)
     );
     CHECK_EQUAL
     (
@@ -741,82 +827,89 @@ TEST(component,PushButton)
             0,
             SRCPAINT
         ),
-        lg->history().at(9)
+        im->history().at(10)
     );
-    lg->history().clear();
 
+    im->history().clear();
+    im->mockUpWithResult(NAMED_ADDRESS(pt->SendMessageW),(LRESULT)TRUE);
     pushButton->activateTool();
-    CHECK_EQUAL(1,lg->history().size());
+    CHECK_EQUAL(1,im->history().size());
     CHECK_EQUAL
     (
         call
         (
             NAMED_ADDRESS(pt->SendMessageW),
             (HWND)0xa0,
-            TTM_ACTIVATE,
-            TRUE,
-            0
+            (UINT)TTM_ACTIVATE,
+            (UINT)TRUE,
+            0l
         ),
-        lg->history().at(0)
+        im->history().at(0)
     );
-    lg->history().clear();
 
+    im->history().clear();
     pushButton->activateTool();
-    CHECK_EQUAL(0,lg->history().size());
-    lg->history().clear();
+    CHECK_EQUAL(0,im->history().size());
 
+    im->history().clear();
     pushButton->deactivateTool();
-    CHECK_EQUAL(1,lg->history().size());
+    CHECK_EQUAL(1,im->history().size());
     CHECK_EQUAL
     (
         call
-        (NAMED_ADDRESS(pt->SendMessageW),(HWND)0xa0,TTM_ACTIVATE,FALSE,0),
-        lg->history().at(0)
+        (
+            NAMED_ADDRESS(pt->SendMessageW),
+            (HWND)0xa0,
+            (UINT)TTM_ACTIVATE,
+            (UINT)FALSE,
+            0l
+        ),
+        im->history().at(0)
     );
-    lg->history().clear();
 
+    im->history().clear();
     pushButton->deactivateTool();
-    CHECK_EQUAL(0,lg->history().size());
-    lg->history().clear();
+    CHECK_EQUAL(0,im->history().size());
 
+    im->history().clear();
     pushButton.reset();
-    CHECK_EQUAL(8,lg->history().size());
+    CHECK_EQUAL(8,im->history().size());
     CHECK_EQUAL
-    (call(NAMED_ADDRESS(pt->DeleteDC),(HDC)0x34),lg->history().at(0));
+    (call(NAMED_ADDRESS(pt->DeleteDC),(HDC)0x34),im->history().at(0));
     CHECK_EQUAL
     (
-        call(NAMED_ADDRESS(pt->DeleteObject),(HDC)0x43),
-        lg->history().at(1)
+        call(NAMED_ADDRESS(pt->DeleteObject),(HGDIOBJ)0x43),
+        im->history().at(1)
     );
     CHECK_EQUAL
-    (call(NAMED_ADDRESS(pt->DeleteDC),(HDC)0x33),lg->history().at(2));
+    (call(NAMED_ADDRESS(pt->DeleteDC),(HDC)0x33),im->history().at(2));
     CHECK_EQUAL
     (
-        call(NAMED_ADDRESS(pt->DeleteObject),(HDC)0x11),
-        lg->history().at(3)
+        call(NAMED_ADDRESS(pt->DeleteObject),(HGDIOBJ)0x11),
+        im->history().at(3)
     );
     CHECK_EQUAL
-    (call(NAMED_ADDRESS(pt->DeleteDC),(HDC)0x32),lg->history().at(4));
+    (call(NAMED_ADDRESS(pt->DeleteDC),(HDC)0x32),im->history().at(4));
     CHECK_EQUAL
     (
-        call(NAMED_ADDRESS(pt->DeleteObject),(HDC)0x42),
-        lg->history().at(5)
+        call(NAMED_ADDRESS(pt->DeleteObject),(HGDIOBJ)0x42),
+        im->history().at(5)
     );
     CHECK_EQUAL
-    (call(NAMED_ADDRESS(pt->DeleteDC),(HDC)0x31),lg->history().at(6));
+    (call(NAMED_ADDRESS(pt->DeleteDC),(HDC)0x31),im->history().at(6));
     CHECK_EQUAL
     (
-        call(NAMED_ADDRESS(pt->DeleteObject),(HDC)0x41),
-        lg->history().at(7)
+        call(NAMED_ADDRESS(pt->DeleteObject),(HGDIOBJ)0x41),
+        im->history().at(7)
     );
 }
 
 TEST(component,RadioButton)
 {
-    lg->mockUpWithBody(NAMED_ADDRESS(pt->SendMessageW),
+    im->mockUpWithBody(NAMED_ADDRESS(pt->SendMessageW),
     [this] (HWND window,UINT message,WPARAM wParam,LPARAM lParam)->LRESULT
     {
-        switch(lg->count(NAMED_ADDRESS(pt->SendMessageW)))
+        switch(im->count(NAMED_ADDRESS(pt->SendMessageW)))
         {
         case 1:
             CHECK_EQUAL
@@ -839,10 +932,10 @@ TEST(component,RadioButton)
         }
         return TRUE;
     });
-    lg->mockUpWithBody(NAMED_ADDRESS(pt->LoadBitmap),
+    im->mockUpWithBody(NAMED_ADDRESS(pt->LoadBitmap),
     [this] (HINSTANCE instance,LPCTSTR name)->HBITMAP
-    {return (HBITMAP)(0x10+lg->count(NAMED_ADDRESS(pt->LoadBitmap)));});
-    lg->mockUpWithBody(NAMED_ADDRESS(pt->GetObject),
+    {return (HBITMAP)(0x10+im->count(NAMED_ADDRESS(pt->LoadBitmap)));});
+    im->mockUpWithBody(NAMED_ADDRESS(pt->GetObject),
     [this] (HGDIOBJ object,int sizeOfBuffer,LPVOID buffer)->int
     {
         *(BITMAP*)buffer=BITMAP(
@@ -853,49 +946,49 @@ TEST(component,RadioButton)
             4,
             5,
             6,
-            (LPVOID)(0x20+lg->count(NAMED_ADDRESS(pt->GetObject)))
+            (LPVOID)(0x20+im->count(NAMED_ADDRESS(pt->GetObject)))
         });
         return sizeof(BITMAP);
     });
-    lg->mockUpWithBody
+    im->mockUpWithBody
     (NAMED_ADDRESS(pt->CreateCompatibleDC),[this] (HDC dc)->HDC
     {
-        return (HDC)(0x30+lg->count
+        return (HDC)(0x30+im->count
         (NAMED_ADDRESS(pt->CreateCompatibleDC)));
     });
-    lg->mockUpWithResult(NAMED_ADDRESS(pt->SelectObject),(HGDIOBJ)NULL);
-    lg->mockUpWithBody
+    im->mockUpWithResult(NAMED_ADDRESS(pt->SelectObject),(HGDIOBJ)NULL);
+    im->mockUpWithBody
     (NAMED_ADDRESS(pt->CreateCompatibleBitmap),
     [this] (HDC destDC,int width,int height)->HBITMAP
     {
-        return (HBITMAP)(0x40+lg->count
+        return (HBITMAP)(0x40+im->count
         (NAMED_ADDRESS(pt->CreateCompatibleBitmap)));
     });
-    lg->mockUpWithResult(NAMED_ADDRESS(pt->FillRect),TRUE);
-    lg->mockUpWithResult(NAMED_ADDRESS(pt->Ellipse),TRUE);
-    lg->mockUpWithResult(NAMED_ADDRESS(pt->BitBlt),TRUE);
-    lg->mockUpWithBody(NAMED_ADDRESS(pt->CreatePen),
+    im->mockUpWithResult(NAMED_ADDRESS(pt->FillRect),TRUE);
+    im->mockUpWithResult(NAMED_ADDRESS(pt->Ellipse),TRUE);
+    im->mockUpWithResult(NAMED_ADDRESS(pt->BitBlt),TRUE);
+    im->mockUpWithBody(NAMED_ADDRESS(pt->CreatePen),
     [this] (int style,int width,COLORREF color)->HPEN
-    {return (HPEN)(0x50+lg->count(NAMED_ADDRESS(pt->CreatePen)));});
-    lg->mockUpWithBody(NAMED_ADDRESS(pt->CreateSolidBrush),
+    {return (HPEN)(0x50+im->count(NAMED_ADDRESS(pt->CreatePen)));});
+    im->mockUpWithBody(NAMED_ADDRESS(pt->CreateSolidBrush),
     [this] (COLORREF color)->HBRUSH
     {
-        return (HBRUSH)(0x60+lg->count
+        return (HBRUSH)(0x60+im->count
         (NAMED_ADDRESS(pt->CreateSolidBrush)));
     });
-    lg->mockUpWithResult(NAMED_ADDRESS(pt->DeleteDC),TRUE);
-    lg->mockUpWithResult(NAMED_ADDRESS(pt->DeleteObject),TRUE);
+    im->mockUpWithResult(NAMED_ADDRESS(pt->DeleteDC),TRUE);
+    im->mockUpWithResult(NAMED_ADDRESS(pt->DeleteObject),TRUE);
 
     ct->instance=(HINSTANCE)0x70;
-    ct->black_brush=nm::CreateSolidBrush(RGB(1,2,3));
-    ct->black_pen=nm::CreatePen(1,2,RGB(1,2,3));
-    ct->component_brush1=nm::CreateSolidBrush(RGB(1,2,3));
-    ct->component_brush2=nm::CreateSolidBrush(RGB(1,2,3));
-    ct->component_pen1=nm::CreatePen(1,2,RGB(1,2,3));
-    ct->component_pen2=nm::CreatePen(1,2,RGB(1,2,3));
-    ct->white_brush=nm::CreateSolidBrush(RGB(1,2,3));
-    lg->history().clear();
+    ct->blackBrush=nm::CreateSolidBrush(RGB(1,2,3));
+    ct->blackPen=nm::CreatePen(1,2,RGB(1,2,3));
+    ct->componentBrush1=nm::CreateSolidBrush(RGB(1,2,3));
+    ct->componentBrush2=nm::CreateSolidBrush(RGB(1,2,3));
+    ct->componentPen1=nm::CreatePen(1,2,RGB(1,2,3));
+    ct->componentPen2=nm::CreatePen(1,2,RGB(1,2,3));
+    ct->whiteBrush=nm::CreateSolidBrush(RGB(1,2,3));
 
+    im->history().clear();
     auto radioButton=make_shared<RadioButton>
     (
         false,
@@ -909,59 +1002,65 @@ TEST(component,RadioButton)
     );
     CHECK_FALSE(radioButton->active());
     CHECK_FALSE(radioButton->value());
-    CHECK_EQUAL(28,lg->history().size());
+    CHECK_EQUAL(28,im->history().size());
     CHECK_EQUAL
     (
         call
         (
             NAMED_ADDRESS(pt->SendMessageW),
             (HWND)0xa0,
-            TTM_ADDTOOLW,
-            0,
-            OMIT_ARGUMENT
+            (UINT)TTM_ADDTOOLW,
+            0u,
+            (LPARAM)OMIT_POINTER
         ),
-        lg->history().at(0)
+        im->history().at(0)
     );
     CHECK_EQUAL
     (
         call
-        (NAMED_ADDRESS(pt->SendMessageW),(HWND)0xa0,TTM_ACTIVATE,FALSE,0),
-        lg->history().at(1)
+        (
+            NAMED_ADDRESS(pt->SendMessageW),
+            (HWND)0xa0,
+            (UINT)TTM_ACTIVATE,
+            (UINT)FALSE,
+            0l
+        ),
+        im->history().at(1)
     );
     CHECK_EQUAL
     (
         call(NAMED_ADDRESS(pt->CreateCompatibleBitmap),(HDC)0x80,16,16),
-        lg->history().at(2)
+        im->history().at(2)
     );
     CHECK_EQUAL
     (
         call(NAMED_ADDRESS(pt->CreateCompatibleDC),(HDC)0x80),
-        lg->history().at(3)
+        im->history().at(3)
     );
     CHECK_EQUAL
     (
         call(NAMED_ADDRESS(pt->SelectObject),(HDC)0x31,(HGDIOBJ)0x41),
-        lg->history().at(4)
+        im->history().at(4)
     );
     CHECK_EQUAL
     (
         call(NAMED_ADDRESS(pt->CreateCompatibleBitmap),(HDC)0x80,16,16),
-        lg->history().at(5)
+        im->history().at(5)
     );
     CHECK_EQUAL
     (
         call(NAMED_ADDRESS(pt->CreateCompatibleDC),(HDC)0x80),
-        lg->history().at(6)
+        im->history().at(6)
     );
     CHECK_EQUAL
     (
         call(NAMED_ADDRESS(pt->SelectObject),(HDC)0x32,(HGDIOBJ)0x42),
-        lg->history().at(7)
+        im->history().at(7)
     );
     CHECK_EQUAL
     (
         call(NAMED_ADDRESS(pt->LoadBitmap),(HINSTANCE)0x70,"hoge"),
-        lg->history().at(8)
+        im->history().at(8)
     );
     CHECK_EQUAL
     (
@@ -969,35 +1068,35 @@ TEST(component,RadioButton)
         (
             NAMED_ADDRESS(pt->GetObject),
             (HGDIOBJ)0x11,
-            sizeof(BITMAP),
-            OMIT_ARGUMENT
+            (int)sizeof(BITMAP),
+            (LPVOID)OMIT_POINTER
         ),
-        lg->history().at(9)
+        im->history().at(9)
     );
     CHECK_EQUAL
     (
         call(NAMED_ADDRESS(pt->CreateCompatibleDC),(HDC)0x80),
-        lg->history().at(10)
+        im->history().at(10)
     );
     CHECK_EQUAL
     (
         call(NAMED_ADDRESS(pt->SelectObject),(HDC)0x33,(HGDIOBJ)0x11),
-        lg->history().at(11)
+        im->history().at(11)
     );
     CHECK_EQUAL
     (
         call(NAMED_ADDRESS(pt->CreateCompatibleBitmap),(HDC)0x80,16,16),
-        lg->history().at(12)
+        im->history().at(12)
     );
     CHECK_EQUAL
     (
         call(NAMED_ADDRESS(pt->CreateCompatibleDC),(HDC)0x80),
-        lg->history().at(13)
+        im->history().at(13)
     );
     CHECK_EQUAL
     (
         call(NAMED_ADDRESS(pt->SelectObject),(HDC)0x34,(HGDIOBJ)0x43),
-        lg->history().at(14)
+        im->history().at(14)
     );
     CHECK_EQUAL
     (
@@ -1005,25 +1104,25 @@ TEST(component,RadioButton)
         (
             NAMED_ADDRESS(pt->FillRect),
             (HDC)0x34,
-            RECT({0,0,16,16}),
+            make_shared_pod<const RECT>(0,0,16,16).get(),
             (HBRUSH)0x64
         ),
-        lg->history().at(15)
+        im->history().at(15)
     );
     CHECK_EQUAL
     (
         call(NAMED_ADDRESS(pt->SelectObject),(HDC)0x34,(HGDIOBJ)0x51),
-        lg->history().at(16)
+        im->history().at(16)
     );
     CHECK_EQUAL
     (
         call(NAMED_ADDRESS(pt->SelectObject),(HDC)0x34,(HGDIOBJ)0x61),
-        lg->history().at(17)
+        im->history().at(17)
     );
     CHECK_EQUAL
     (
         call(NAMED_ADDRESS(pt->Ellipse),(HDC)0x34,0,0,16,16),
-        lg->history().at(18)
+        im->history().at(18)
     );
     CHECK_EQUAL
     (
@@ -1031,10 +1130,10 @@ TEST(component,RadioButton)
         (
             NAMED_ADDRESS(pt->FillRect),
             (HDC)0x32,
-            RECT({0,0,16,16}),
+            make_shared_pod<const RECT>(0,0,16,16).get(),
             (HBRUSH)0x62
         ),
-        lg->history().at(19)
+        im->history().at(19)
     );
     CHECK_EQUAL
     (
@@ -1051,7 +1150,7 @@ TEST(component,RadioButton)
             0,
             NOTSRCCOPY
         ),
-        lg->history().at(20)
+        im->history().at(20)
     );
     CHECK_EQUAL
     (
@@ -1068,7 +1167,7 @@ TEST(component,RadioButton)
             0,
             SRCAND
         ),
-        lg->history().at(21)
+        im->history().at(21)
     );
     CHECK_EQUAL
     (
@@ -1076,25 +1175,25 @@ TEST(component,RadioButton)
         (
             NAMED_ADDRESS(pt->FillRect),
             (HDC)0x31,
-            RECT({0,0,16,16}),
+            make_shared_pod<const RECT>(0,0,16,16).get(),
             (HBRUSH)0x61
         ),
-        lg->history().at(22)
+        im->history().at(22)
     );
     CHECK_EQUAL
     (
         call(NAMED_ADDRESS(pt->SelectObject),(HDC)0x31,(HGDIOBJ)0x52),
-        lg->history().at(23)
+        im->history().at(23)
     );
     CHECK_EQUAL
     (
         call(NAMED_ADDRESS(pt->SelectObject),(HDC)0x31,(HGDIOBJ)0x63),
-        lg->history().at(24)
+        im->history().at(24)
     );
     CHECK_EQUAL
     (
         call(NAMED_ADDRESS(pt->Ellipse),(HDC)0x31,0,0,16,16),
-        lg->history().at(25)
+        im->history().at(25)
     );
     CHECK_EQUAL
     (
@@ -1111,7 +1210,7 @@ TEST(component,RadioButton)
             0,
             SRCAND
         ),
-        lg->history().at(26)
+        im->history().at(26)
     );
     CHECK_EQUAL
     (
@@ -1128,27 +1227,28 @@ TEST(component,RadioButton)
             0,
             SRCPAINT
         ),
-        lg->history().at(27)
+        im->history().at(27)
     );
-    lg->history().clear();
 
-    lg->mockUpWithResult(NAMED_ADDRESS(pt->SendMessageW),(LRESULT)TRUE);
+    im->history().clear();
+    im->mockUpWithResult(NAMED_ADDRESS(pt->SendMessageW),(LRESULT)TRUE);
+    im->mockUpWithResult(NAMED_ADDRESS(pt->GetPixel),BLACK_COLOR);
     radioButton->relocate(SIZE({100,200}));
-    lg->history().clear();
 
+    im->history().clear();
     radioButton->activate(POINT({1,-2}));
     CHECK(radioButton->active());
-    CHECK_EQUAL(9,lg->history().size());
+    CHECK_EQUAL(9,im->history().size());
     CHECK_EQUAL
     (
         call
         (
             NAMED_ADDRESS(pt->FillRect),
             (HDC)0x32,
-            RECT({0,0,16,16}),
+            make_shared_pod<const RECT>(0,0,16,16).get(),
             (HBRUSH)0x63
         ),
-        lg->history().at(0)
+        im->history().at(0)
     );
     CHECK_EQUAL
     (
@@ -1165,7 +1265,7 @@ TEST(component,RadioButton)
             0,
             NOTSRCCOPY
         ),
-        lg->history().at(1)
+        im->history().at(1)
     );
     CHECK_EQUAL
     (
@@ -1182,7 +1282,7 @@ TEST(component,RadioButton)
             0,
             SRCAND
         ),
-        lg->history().at(2)
+        im->history().at(2)
     );
     CHECK_EQUAL
     (
@@ -1190,25 +1290,25 @@ TEST(component,RadioButton)
         (
             NAMED_ADDRESS(pt->FillRect),
             (HDC)0x31,
-            RECT({0,0,16,16}),
+            make_shared_pod<const RECT>(0,0,16,16).get(),
             (HBRUSH)0x61
         ),
-        lg->history().at(3)
+        im->history().at(3)
     );
     CHECK_EQUAL
     (
         call(NAMED_ADDRESS(pt->SelectObject),(HDC)0x31,(HGDIOBJ)0x53),
-        lg->history().at(4)
+        im->history().at(4)
     );
     CHECK_EQUAL
     (
         call(NAMED_ADDRESS(pt->SelectObject),(HDC)0x31,(HGDIOBJ)0x62),
-        lg->history().at(5)
+        im->history().at(5)
     );
     CHECK_EQUAL
     (
         call(NAMED_ADDRESS(pt->Ellipse),(HDC)0x31,0,0,16,16),
-        lg->history().at(6)
+        im->history().at(6)
     );
     CHECK_EQUAL
     (
@@ -1225,7 +1325,7 @@ TEST(component,RadioButton)
             0,
             SRCAND
         ),
-        lg->history().at(7)
+        im->history().at(7)
     );
     CHECK_EQUAL
     (
@@ -1242,23 +1342,23 @@ TEST(component,RadioButton)
             0,
             SRCPAINT
         ),
-        lg->history().at(8)
+        im->history().at(8)
     );
-    lg->history().clear();
 
-    radioButton->deactivate(POINT({32,152}));
+    im->history().clear();
+    radioButton->deactivate(POINT({31,151}));
     CHECK_FALSE(radioButton->value());
-    CHECK_EQUAL(9,lg->history().size());
+    CHECK_EQUAL(9,im->history().size());
     CHECK_EQUAL
     (
         call
         (
             NAMED_ADDRESS(pt->FillRect),
             (HDC)0x32,
-            RECT({0,0,16,16}),
+            make_shared_pod<const RECT>(0,0,16,16).get(),
             (HBRUSH)0x62
         ),
-        lg->history().at(0)
+        im->history().at(0)
     );
     CHECK_EQUAL
     (
@@ -1275,7 +1375,7 @@ TEST(component,RadioButton)
             0,
             NOTSRCCOPY
         ),
-        lg->history().at(1)
+        im->history().at(1)
     );
     CHECK_EQUAL
     (
@@ -1292,7 +1392,7 @@ TEST(component,RadioButton)
             0,
             SRCAND
         ),
-        lg->history().at(2)
+        im->history().at(2)
     );
     CHECK_EQUAL
     (
@@ -1300,25 +1400,25 @@ TEST(component,RadioButton)
         (
             NAMED_ADDRESS(pt->FillRect),
             (HDC)0x31,
-            RECT({0,0,16,16}),
+            make_shared_pod<const RECT>(0,0,16,16).get(),
             (HBRUSH)0x61
         ),
-        lg->history().at(3)
+        im->history().at(3)
     );
     CHECK_EQUAL
     (
         call(NAMED_ADDRESS(pt->SelectObject),(HDC)0x31,(HGDIOBJ)0x52),
-        lg->history().at(4)
+        im->history().at(4)
     );
     CHECK_EQUAL
     (
         call(NAMED_ADDRESS(pt->SelectObject),(HDC)0x31,(HGDIOBJ)0x63),
-        lg->history().at(5)
+        im->history().at(5)
     );
     CHECK_EQUAL
     (
         call(NAMED_ADDRESS(pt->Ellipse),(HDC)0x31,0,0,16,16),
-        lg->history().at(6)
+        im->history().at(6)
     );
     CHECK_EQUAL
     (
@@ -1335,7 +1435,7 @@ TEST(component,RadioButton)
             0,
             SRCAND
         ),
-        lg->history().at(7)
+        im->history().at(7)
     );
     CHECK_EQUAL
     (
@@ -1352,26 +1452,28 @@ TEST(component,RadioButton)
             0,
             SRCPAINT
         ),
-        lg->history().at(8)
+        im->history().at(8)
     );
-    lg->history().clear();
 
-    lg->mockUp(NAMED_ADDRESS(radioButton->change));
+    im->history().clear();
+    im->mockUp(NAMED_ADDRESS(radioButton->change));
     radioButton->deactivate(POINT({40,160}));
     CHECK(radioButton->value());
-    CHECK_EQUAL(10,lg->history().size());
+    CHECK_EQUAL(11,im->history().size());
     CHECK_EQUAL
-    (call(NAMED_ADDRESS(radioButton->change)),lg->history().at(0));
+    (call(NAMED_ADDRESS(pt->GetPixel),(HDC)0x34,8,8),im->history().at(0));
+    CHECK_EQUAL
+    (call(NAMED_ADDRESS(radioButton->change)),im->history().at(1));
     CHECK_EQUAL
     (
         call
         (
             NAMED_ADDRESS(pt->FillRect),
             (HDC)0x32,
-            RECT({0,0,16,16}),
+            make_shared_pod<const RECT>(0,0,16,16).get(),
             (HBRUSH)0x63
         ),
-        lg->history().at(1)
+        im->history().at(2)
     );
     CHECK_EQUAL
     (
@@ -1388,7 +1490,7 @@ TEST(component,RadioButton)
             0,
             NOTSRCCOPY
         ),
-        lg->history().at(2)
+        im->history().at(3)
     );
     CHECK_EQUAL
     (
@@ -1405,7 +1507,7 @@ TEST(component,RadioButton)
             0,
             SRCAND
         ),
-        lg->history().at(3)
+        im->history().at(4)
     );
     CHECK_EQUAL
     (
@@ -1413,25 +1515,25 @@ TEST(component,RadioButton)
         (
             NAMED_ADDRESS(pt->FillRect),
             (HDC)0x31,
-            RECT({0,0,16,16}),
+            make_shared_pod<const RECT>(0,0,16,16).get(),
             (HBRUSH)0x61
         ),
-        lg->history().at(4)
+        im->history().at(5)
     );
     CHECK_EQUAL
     (
         call(NAMED_ADDRESS(pt->SelectObject),(HDC)0x31,(HGDIOBJ)0x53),
-        lg->history().at(5)
+        im->history().at(6)
     );
     CHECK_EQUAL
     (
         call(NAMED_ADDRESS(pt->SelectObject),(HDC)0x31,(HGDIOBJ)0x62),
-        lg->history().at(6)
+        im->history().at(7)
     );
     CHECK_EQUAL
     (
         call(NAMED_ADDRESS(pt->Ellipse),(HDC)0x31,0,0,16,16),
-        lg->history().at(7)
+        im->history().at(8)
     );
     CHECK_EQUAL
     (
@@ -1448,7 +1550,7 @@ TEST(component,RadioButton)
             0,
             SRCAND
         ),
-        lg->history().at(8)
+        im->history().at(9)
     );
     CHECK_EQUAL
     (
@@ -1465,25 +1567,25 @@ TEST(component,RadioButton)
             0,
             SRCPAINT
         ),
-        lg->history().at(9)
+        im->history().at(10)
     );
-    lg->history().clear();
 
+    im->history().clear();
     radioButton->value(false);
     CHECK_FALSE(radioButton->value());
-    CHECK_EQUAL(10,lg->history().size());
+    CHECK_EQUAL(10,im->history().size());
     CHECK_EQUAL
-    (call(NAMED_ADDRESS(radioButton->change)),lg->history().at(0));
+    (call(NAMED_ADDRESS(radioButton->change)),im->history().at(0));
     CHECK_EQUAL
     (
         call
         (
             NAMED_ADDRESS(pt->FillRect),
             (HDC)0x32,
-            RECT({0,0,16,16}),
+            make_shared_pod<const RECT>(0,0,16,16).get(),
             (HBRUSH)0x62
         ),
-        lg->history().at(1)
+        im->history().at(1)
     );
     CHECK_EQUAL
     (
@@ -1500,7 +1602,7 @@ TEST(component,RadioButton)
             0,
             NOTSRCCOPY
         ),
-        lg->history().at(2)
+        im->history().at(2)
     );
     CHECK_EQUAL
     (
@@ -1517,7 +1619,7 @@ TEST(component,RadioButton)
             0,
             SRCAND
         ),
-        lg->history().at(3)
+        im->history().at(3)
     );
     CHECK_EQUAL
     (
@@ -1525,25 +1627,25 @@ TEST(component,RadioButton)
         (
             NAMED_ADDRESS(pt->FillRect),
             (HDC)0x31,
-            RECT({0,0,16,16}),
+            make_shared_pod<const RECT>(0,0,16,16).get(),
             (HBRUSH)0x61
         ),
-        lg->history().at(4)
+        im->history().at(4)
     );
     CHECK_EQUAL
     (
         call(NAMED_ADDRESS(pt->SelectObject),(HDC)0x31,(HGDIOBJ)0x52),
-        lg->history().at(5)
+        im->history().at(5)
     );
     CHECK_EQUAL
     (
         call(NAMED_ADDRESS(pt->SelectObject),(HDC)0x31,(HGDIOBJ)0x63),
-        lg->history().at(6)
+        im->history().at(6)
     );
     CHECK_EQUAL
     (
         call(NAMED_ADDRESS(pt->Ellipse),(HDC)0x31,0,0,16,16),
-        lg->history().at(7)
+        im->history().at(7)
     );
     CHECK_EQUAL
     (
@@ -1560,7 +1662,7 @@ TEST(component,RadioButton)
             0,
             SRCAND
         ),
-        lg->history().at(8)
+        im->history().at(8)
     );
     CHECK_EQUAL
     (
@@ -1577,8 +1679,753 @@ TEST(component,RadioButton)
             0,
             SRCPAINT
         ),
-        lg->history().at(9)
+        im->history().at(9)
     );
+}
+
+TEST(component,Slider)
+{
+    im->mockUpWithBody(NAMED_ADDRESS(pt->SendMessageW),
+    [this] (HWND window,UINT message,WPARAM wParam,LPARAM lParam)->LRESULT
+    {
+        switch(im->count(NAMED_ADDRESS(pt->SendMessageW)))
+        {
+        case 1:
+            CHECK_EQUAL
+            (
+                describe(TOOLINFOW(
+                {
+                    TTTOOLINFOW_V2_SIZE,
+                    TTF_SUBCLASS,
+                    (HWND)0x90,
+                    7,
+                    RECT({0,0,0,0}),
+                    NULL,
+                    (LPWSTR)L"fuga",
+                    0,
+                    (LPVOID)NULL
+                })),
+                describe((TOOLINFOW*)lParam)
+            );
+            break;
+        };
+        return TRUE;
+    });
+    im->mockUpWithBody(NAMED_ADDRESS(pt->LoadBitmap),
+    [this] (HINSTANCE instance,LPCTSTR name)->HBITMAP
+    {return (HBITMAP)(0x10+im->count(NAMED_ADDRESS(pt->LoadBitmap)));});
+    im->mockUpWithBody(NAMED_ADDRESS(pt->GetObject),
+    [this] (HGDIOBJ object,int sizeOfBuffer,LPVOID buffer)->int
+    {
+        *(BITMAP*)buffer=BITMAP(
+        {
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            (LPVOID)(0x20+im->count(NAMED_ADDRESS(pt->GetObject)))
+        });
+        return sizeof(BITMAP);
+    });
+    im->mockUpWithBody(NAMED_ADDRESS(pt->CreateCompatibleDC),
+    [this] (HDC dc)->HDC
+    {
+        return (HDC)(0x30+im->count
+        (NAMED_ADDRESS(pt->CreateCompatibleDC)));
+    });
+    im->mockUpWithResult(NAMED_ADDRESS(pt->SelectObject),(HGDIOBJ)NULL);
+    im->mockUpWithBody(NAMED_ADDRESS(pt->CreateCompatibleBitmap),
+    [this] (HDC destDC,int width,int height)->HBITMAP
+    {
+        return (HBITMAP)(0x40+im->count
+        (NAMED_ADDRESS(pt->CreateCompatibleBitmap)));
+    });
+    im->mockUpWithResult(NAMED_ADDRESS(pt->FillRect),TRUE);
+    im->mockUpWithResult(NAMED_ADDRESS(pt->Ellipse),TRUE);
+    im->mockUpWithResult(NAMED_ADDRESS(pt->BitBlt),TRUE);
+    im->mockUpWithBody(NAMED_ADDRESS(pt->CreatePen),
+    [this] (int style,int width,COLORREF color)->HPEN
+    {return (HPEN)(0x50+im->count(NAMED_ADDRESS(pt->CreatePen)));});
+    im->mockUpWithBody(NAMED_ADDRESS(pt->CreateSolidBrush),
+    [this] (COLORREF color)->HBRUSH
+    {
+        return (HBRUSH)(0x60+im->count
+        (NAMED_ADDRESS(pt->CreateSolidBrush)));
+    });
+    im->mockUpWithResult(NAMED_ADDRESS(pt->CreateFont),(HFONT)0xb0);
+    im->mockUpWithResult(NAMED_ADDRESS(pt->SetBkMode),1);
+    im->mockUpWithResult(NAMED_ADDRESS(pt->SetTextColor),RGB(1,2,3));
+    im->mockUpWithResult(NAMED_ADDRESS(pt->DrawText),1);
+    im->mockUpWithResult(NAMED_ADDRESS(pt->GetSystemMetrics),300);
+    im->mockUpWithResult(NAMED_ADDRESS(pt->GetKeyState),(SHORT)0);
+    im->mockUpWithResult(NAMED_ADDRESS(pt->DeleteDC),TRUE);
+    im->mockUpWithResult(NAMED_ADDRESS(pt->DeleteObject),TRUE);
+
+    ps->componentColor1=RGB(11,12,13);
+    ps->componentColor2=RGB(21,22,23);
+    ct->instance=(HINSTANCE)0x70;
+    ct->blackBrush=nm::CreateSolidBrush(RGB(1,2,3));
+    ct->blackPen=nm::CreatePen(1,2,RGB(1,2,3));
+    ct->componentBrush1=nm::CreateSolidBrush(RGB(1,2,3));
+    ct->componentBrush2=nm::CreateSolidBrush(RGB(1,2,3));
+    ct->componentPen1=nm::CreatePen(1,2,RGB(1,2,3));
+    ct->componentPen2=nm::CreatePen(1,2,RGB(1,2,3));
+    ct->whiteBrush=nm::CreateSolidBrush(RGB(1,2,3));
+    ct->font=nm::CreateFont(1,2,3,4,5,6,7,8,9,10,11,12,13,"foo");
+
+    im->history().clear();
+    function<string(int value)> getText;
+    im->mockUpWithResult(NAMED_ADDRESS(getText),string("piyo"));
+    auto slider=make_shared<Slider>
+    (
+        100,
+        200,
+        150,
+        getText,
+        "hoge",
+        (HDC)0x80,
+        POINT({1,-2}),
+        (HWND)0x90,
+        (HWND)0xa0,
+        7,
+        L"fuga"
+    );
+    CHECK_FALSE(slider->active());
+    CHECK_EQUAL(57,im->history().size());
+    CHECK_EQUAL
+    (
+        call
+        (
+            NAMED_ADDRESS(pt->SendMessageW),
+            (HWND)0xa0,
+            (UINT)TTM_ADDTOOLW,
+            0u,
+            (LPARAM)OMIT_POINTER
+        ),
+        im->history().at(0)
+    );
+    CHECK_EQUAL
+    (
+        call
+        (
+            NAMED_ADDRESS(pt->SendMessageW),
+            (HWND)0xa0,
+            (UINT)TTM_ACTIVATE,
+            (UINT)FALSE,
+            0l
+        ),
+        im->history().at(1)
+    );
+    CHECK_EQUAL
+    (
+        call(NAMED_ADDRESS(pt->GetSystemMetrics),SM_CXSCREEN),
+        im->history().at(2)
+    );
+    CHECK_EQUAL
+    (
+        call(NAMED_ADDRESS(pt->CreateCompatibleBitmap),(HDC)0x80,300,4),
+        im->history().at(3)
+    );
+    CHECK_EQUAL
+    (
+        call(NAMED_ADDRESS(pt->CreateCompatibleDC),(HDC)0x80),
+        im->history().at(4)
+    );
+    CHECK_EQUAL
+    (
+        call(NAMED_ADDRESS(pt->SelectObject),(HDC)0x31,(HGDIOBJ)0x41),
+        im->history().at(5)
+    );
+    CHECK_EQUAL
+    (
+        call(NAMED_ADDRESS(pt->CreateCompatibleBitmap),(HDC)0x80,16,16),
+        im->history().at(6)
+    );
+    CHECK_EQUAL
+    (
+        call(NAMED_ADDRESS(pt->CreateCompatibleDC),(HDC)0x80),
+        im->history().at(7)
+    );
+    CHECK_EQUAL
+    (
+        call(NAMED_ADDRESS(pt->SelectObject),(HDC)0x32,(HGDIOBJ)0x42),
+        im->history().at(8)
+    );
+    CHECK_EQUAL
+    (
+        call(NAMED_ADDRESS(pt->CreateCompatibleBitmap),(HDC)0x80,16,16),
+        im->history().at(9)
+    );
+    CHECK_EQUAL
+    (
+        call(NAMED_ADDRESS(pt->CreateCompatibleDC),(HDC)0x80),
+        im->history().at(10)
+    );
+    CHECK_EQUAL
+    (
+        call(NAMED_ADDRESS(pt->SelectObject),(HDC)0x33,(HGDIOBJ)0x43),
+        im->history().at(11)
+    );
+    CHECK_EQUAL
+    (
+        call(NAMED_ADDRESS(pt->LoadBitmap),(HINSTANCE)0x70,"hoge"),
+        im->history().at(12)
+    );
+    CHECK_EQUAL
+    (
+        call
+        (
+            NAMED_ADDRESS(pt->GetObject),
+            (HGDIOBJ)0x11,
+            (int)sizeof(BITMAP),
+            (LPVOID)OMIT_POINTER
+        ),
+        im->history().at(13)
+    );
+    CHECK_EQUAL
+    (
+        call(NAMED_ADDRESS(pt->CreateCompatibleDC),(HDC)0x80),
+        im->history().at(14)
+    );
+    CHECK_EQUAL
+    (
+        call(NAMED_ADDRESS(pt->SelectObject),(HDC)0x34,(HGDIOBJ)0x11),
+        im->history().at(15)
+    );
+    CHECK_EQUAL
+    (
+        call(NAMED_ADDRESS(pt->CreateCompatibleBitmap),(HDC)0x80,16,16),
+        im->history().at(16)
+    );
+    CHECK_EQUAL
+    (
+        call(NAMED_ADDRESS(pt->CreateCompatibleDC),(HDC)0x80),
+        im->history().at(17)
+    );
+    CHECK_EQUAL
+    (
+        call(NAMED_ADDRESS(pt->SelectObject),(HDC)0x35,(HGDIOBJ)0x44),
+        im->history().at(18)
+    );
+    CHECK_EQUAL
+    (
+        call(NAMED_ADDRESS(pt->CreateCompatibleBitmap),(HDC)0x80,32,16),
+        im->history().at(19)
+    );
+    CHECK_EQUAL
+    (
+        call(NAMED_ADDRESS(pt->CreateCompatibleDC),(HDC)0x80),
+        im->history().at(20)
+    );
+    CHECK_EQUAL
+    (
+        call(NAMED_ADDRESS(pt->SelectObject),(HDC)0x36,(HGDIOBJ)0x45),
+        im->history().at(21)
+    );
+    CHECK_EQUAL
+    (
+        call(NAMED_ADDRESS(pt->CreateCompatibleBitmap),(HDC)0x80,32,16),
+        im->history().at(22)
+    );
+    CHECK_EQUAL
+    (
+        call(NAMED_ADDRESS(pt->CreateCompatibleDC),(HDC)0x80),
+        im->history().at(23)
+    );
+    CHECK_EQUAL
+    (
+        call(NAMED_ADDRESS(pt->SelectObject),(HDC)0x37,(HGDIOBJ)0x46),
+        im->history().at(24)
+    );
+    CHECK_EQUAL
+    (
+        call
+        (
+            NAMED_ADDRESS(pt->FillRect),
+            (HDC)0x35,
+            make_shared_pod<const RECT>(0,0,16,16).get(),
+            (HBRUSH)0x64
+        ),
+        im->history().at(25)
+    );
+    CHECK_EQUAL
+    (
+        call(NAMED_ADDRESS(pt->SelectObject),(HDC)0x35,(HGDIOBJ)0x51),
+        im->history().at(26)
+    );
+    CHECK_EQUAL
+    (
+        call(NAMED_ADDRESS(pt->SelectObject),(HDC)0x35,(HGDIOBJ)0x61),
+        im->history().at(27)
+    );
+    CHECK_EQUAL
+    (
+        call(NAMED_ADDRESS(pt->Ellipse),(HDC)0x35,0,0,16,16),
+        im->history().at(28)
+    );
+    CHECK_EQUAL
+    (
+        call(NAMED_ADDRESS(pt->SelectObject),(HDC)0x36,(HGDIOBJ)0xb0),
+        im->history().at(29)
+    );
+    CHECK_EQUAL
+    (
+        call(NAMED_ADDRESS(pt->SetBkMode),(HDC)0x36,TRANSPARENT),
+        im->history().at(30)
+    );
+    CHECK_EQUAL
+    (
+        call(NAMED_ADDRESS(pt->SelectObject),(HDC)0x37,(HGDIOBJ)0xb0),
+        im->history().at(31)
+    );
+    CHECK_EQUAL
+    (
+        call(NAMED_ADDRESS(pt->SetBkMode),(HDC)0x37,TRANSPARENT),
+        im->history().at(32)
+    );
+    CHECK_EQUAL
+    (
+        call
+        (
+            NAMED_ADDRESS(pt->FillRect),
+            (HDC)0x33,
+            make_shared_pod<const RECT>(0,0,16,16).get(),
+            (HBRUSH)0x62
+        ),
+        im->history().at(33)
+    );
+    CHECK_EQUAL
+    (
+        call
+        (
+            NAMED_ADDRESS(pt->BitBlt),
+            (HDC)0x32,
+            0,
+            0,
+            16,
+            16,
+            (HDC)0x34,
+            0,
+            0,
+            NOTSRCCOPY
+        ),
+        im->history().at(34)
+    );
+    CHECK_EQUAL
+    (
+        call
+        (
+            NAMED_ADDRESS(pt->BitBlt),
+            (HDC)0x33,
+            0,
+            0,
+            16,
+            16,
+            (HDC)0x32,
+            0,
+            0,
+            SRCAND
+        ),
+        im->history().at(35)
+    );
+    CHECK_EQUAL
+    (
+        call
+        (
+            NAMED_ADDRESS(pt->FillRect),
+            (HDC)0x32,
+            make_shared_pod<const RECT>(0,0,16,16).get(),
+            (HBRUSH)0x61
+        ),
+        im->history().at(36)
+    );
+    CHECK_EQUAL
+    (
+        call(NAMED_ADDRESS(pt->SelectObject),(HDC)0x32,(HGDIOBJ)0x52),
+        im->history().at(37)
+    );
+    CHECK_EQUAL
+    (
+        call(NAMED_ADDRESS(pt->SelectObject),(HDC)0x32,(HGDIOBJ)0x63),
+        im->history().at(38)
+    );
+    CHECK_EQUAL
+    (
+        call(NAMED_ADDRESS(pt->Ellipse),(HDC)0x32,0,0,16,16),
+        im->history().at(39)
+    );
+    CHECK_EQUAL
+    (
+        call
+        (
+            NAMED_ADDRESS(pt->BitBlt),
+            (HDC)0x32,
+            0,
+            0,
+            16,
+            16,
+            (HDC)0x34,
+            0,
+            0,
+            SRCAND
+        ),
+        im->history().at(40)
+    );
+    CHECK_EQUAL
+    (
+        call
+        (
+            NAMED_ADDRESS(pt->BitBlt),
+            (HDC)0x32,
+            0,
+            0,
+            16,
+            16,
+            (HDC)0x33,
+            0,
+            0,
+            SRCPAINT
+        ),
+        im->history().at(41)
+    );
+    CHECK_EQUAL(call(NAMED_ADDRESS(getText),150),im->history().at(42));
+    CHECK_EQUAL
+    (
+        call
+        (
+            NAMED_ADDRESS(pt->FillRect),
+            (HDC)0x36,
+            make_shared_pod<const RECT>(0,0,32,16).get(),
+            (HBRUSH)0x61
+        ),
+        im->history().at(43)
+    );
+    CHECK_EQUAL
+    (
+        call
+        (
+            NAMED_ADDRESS(pt->FillRect),
+            (HDC)0x37,
+            make_shared_pod<const RECT>(0,0,32,16).get(),
+            (HBRUSH)0x64
+        ),
+        im->history().at(44)
+    );
+    CHECK_EQUAL
+    (
+        call(NAMED_ADDRESS(pt->SetTextColor),(HDC)0x36,RGB(11,12,13)),
+        im->history().at(45)
+    );
+    CHECK_EQUAL
+    (
+        call(NAMED_ADDRESS(pt->SetTextColor),(HDC)0x37,RGB(0,0,0)),
+        im->history().at(46)
+    );
+    CHECK_EQUAL
+    (
+        call
+        (
+            NAMED_ADDRESS(pt->DrawText),
+            (HDC)0x36,
+            "piyo",
+            4,
+            make_shared_pod<RECT>(0,0,31,16).get(),
+            (UINT)DT_BOTTOM|DT_RIGHT|DT_SINGLELINE
+        ),
+        im->history().at(47)
+    );
+    CHECK_EQUAL
+    (
+        call
+        (
+            NAMED_ADDRESS(pt->DrawText),
+            (HDC)0x37,
+            "piyo",
+            4,
+            make_shared_pod<RECT>(0,0,31,16).get(),
+            (UINT)DT_BOTTOM|DT_RIGHT|DT_SINGLELINE
+        ),
+        im->history().at(48)
+    );
+    CHECK_EQUAL
+    (
+        call
+        (
+            NAMED_ADDRESS(pt->DrawText),
+            (HDC)0x36,
+            "piyo",
+            4,
+            make_shared_pod<RECT>(0,0,31,14).get(),
+            (UINT)DT_BOTTOM|DT_RIGHT|DT_SINGLELINE
+        ),
+        im->history().at(49)
+    );
+    CHECK_EQUAL
+    (
+        call
+        (
+            NAMED_ADDRESS(pt->DrawText),
+            (HDC)0x37,
+            "piyo",
+            4,
+            make_shared_pod<RECT>(0,0,31,14).get(),
+            (UINT)DT_BOTTOM|DT_RIGHT|DT_SINGLELINE
+        ),
+        im->history().at(50)
+    );
+    CHECK_EQUAL
+    (
+        call
+        (
+            NAMED_ADDRESS(pt->DrawText),
+            (HDC)0x36,
+            "piyo",
+            4,
+            make_shared_pod<RECT>(0,0,32,15).get(),
+            (UINT)DT_BOTTOM|DT_RIGHT|DT_SINGLELINE
+        ),
+        im->history().at(51)
+    );
+    CHECK_EQUAL
+    (
+        call
+        (
+            NAMED_ADDRESS(pt->DrawText),
+            (HDC)0x37,
+            "piyo",
+            4,
+            make_shared_pod<RECT>(0,0,32,15).get(),
+            (UINT)DT_BOTTOM|DT_RIGHT|DT_SINGLELINE
+        ),
+        im->history().at(52)
+    );
+    CHECK_EQUAL
+    (
+        call
+        (
+            NAMED_ADDRESS(pt->DrawText),
+            (HDC)0x36,
+            "piyo",
+            4,
+            make_shared_pod<RECT>(0,0,30,15).get(),
+            (UINT)DT_BOTTOM|DT_RIGHT|DT_SINGLELINE
+        ),
+        im->history().at(53)
+    );
+    CHECK_EQUAL
+    (
+        call
+        (
+            NAMED_ADDRESS(pt->DrawText),
+            (HDC)0x37,
+            "piyo",
+            4,
+            make_shared_pod<RECT>(0,0,30,15).get(),
+            (UINT)DT_BOTTOM|DT_RIGHT|DT_SINGLELINE
+        ),
+        im->history().at(54)
+    );
+    CHECK_EQUAL
+    (
+        call(NAMED_ADDRESS(pt->SetTextColor),(HDC)0x36,RGB(21,22,23)),
+        im->history().at(55)
+    );
+    CHECK_EQUAL
+    (
+        call
+        (
+            NAMED_ADDRESS(pt->DrawText),
+            (HDC)0x36,
+            "piyo",
+            4,
+            make_shared_pod<RECT>(0,0,31,15).get(),
+            (UINT)DT_BOTTOM|DT_RIGHT|DT_SINGLELINE
+        ),
+        im->history().at(56)
+    );
+
+    im->history().clear();
+    im->mockUpWithBody(NAMED_ADDRESS(pt->SendMessageW),
+    [this] (HWND window,UINT message,WPARAM wParam,LPARAM lParam)->LRESULT
+    {
+        CHECK_EQUAL
+        (
+            describe(TOOLINFOW(
+            {
+                TTTOOLINFOW_V2_SIZE,
+                TTF_SUBCLASS,
+                (HWND)0x90,
+                7,
+                RECT({32,52,184,68}),
+                NULL,
+                (LPWSTR)L"fuga",
+                0,
+                (LPVOID)NULL
+            })),
+            describe((TOOLINFOW*)lParam)
+        );
+        return TRUE;
+    });
+    slider->relocate(SIZE({200,100}));
+    CHECK_EQUAL(3,im->history().size());
+    CHECK_EQUAL
+    (
+        call
+        (
+            NAMED_ADDRESS(pt->FillRect),
+            (HDC)0x31,
+            make_shared_pod<const RECT>(0,0,104,4).get(),
+            (HBRUSH)0x62
+        ),
+        im->history().at(0)
+    );
+    CHECK_EQUAL
+    (
+        call
+        (
+            NAMED_ADDRESS(pt->FillRect),
+            (HDC)0x31,
+            make_shared_pod<const RECT>(1,1,103,3).get(),
+            (HBRUSH)0x63
+        ),
+        im->history().at(1)
+    );
+    CHECK_EQUAL
+    (
+        call
+        (
+            NAMED_ADDRESS(pt->SendMessageW),
+            (HWND)0xa0,
+            (UINT)TTM_NEWTOOLRECTW,
+            0u,
+            (LPARAM)OMIT_POINTER
+        ),
+        im->history().at(2)
+    );
+
+    im->history().clear();
+    im->mockUpWithResult(NAMED_ADDRESS(pt->GetPixel),WHITE_COLOR);
+    CHECK_FALSE(slider->hitTest(POINT({84,52})));
+    CHECK_FALSE(slider->hitTest(POINT({99,67})));
+    CHECK_EQUAL(2,im->history().size());
+    CHECK_EQUAL
+    (
+        call(NAMED_ADDRESS(pt->GetPixel),(HDC)0x35,0,0),
+        im->history().at(0)
+    );
+    CHECK_EQUAL
+    (
+        call(NAMED_ADDRESS(pt->GetPixel),(HDC)0x35,15,15),
+        im->history().at(1)
+    );
+
+    im->history().clear();
+    im->mockUpWithResult(NAMED_ADDRESS(pt->GetPixel),BLACK_COLOR);
+    CHECK_FALSE(slider->hitTest(POINT({83,52})));
+    CHECK_FALSE(slider->hitTest(POINT({84,51})));
+    CHECK(slider->hitTest(POINT({84,52})));
+    CHECK(slider->hitTest(POINT({99,67})));
+    CHECK_FALSE(slider->hitTest(POINT({100,67})));
+    CHECK_FALSE(slider->hitTest(POINT({99,68})));
+    CHECK_FALSE(slider->hitTest(POINT({39,58})));
+    CHECK_FALSE(slider->hitTest(POINT({40,57})));
+    CHECK(slider->hitTest(POINT({40,58})));
+    CHECK(slider->hitTest(POINT({143,61})));
+    CHECK_FALSE(slider->hitTest(POINT({144,61})));
+    CHECK_FALSE(slider->hitTest(POINT({143,62})));
+    CHECK_EQUAL(2,im->history().size());
+    CHECK_EQUAL
+    (
+        call(NAMED_ADDRESS(pt->GetPixel),(HDC)0x35,0,0),
+        im->history().at(0)
+    );
+    CHECK_EQUAL
+    (
+        call(NAMED_ADDRESS(pt->GetPixel),(HDC)0x35,15,15),
+        im->history().at(1)
+    );
+
+    im->history().clear();
+    im->mockUpWithResult(NAMED_ADDRESS(pt->GetPixel),WHITE_COLOR);
+    CHECK_FALSE(slider->hitTestTool(POINT({84,52})));
+    CHECK_FALSE(slider->hitTestTool(POINT({99,67})));
+    CHECK_FALSE(slider->hitTestTool(POINT({152,52})));
+    CHECK_FALSE(slider->hitTestTool(POINT({183,67})));
+    CHECK_EQUAL(4,im->history().size());
+    CHECK_EQUAL
+    (
+        call(NAMED_ADDRESS(pt->GetPixel),(HDC)0x35,0,0),
+        im->history().at(0)
+    );
+    CHECK_EQUAL
+    (
+        call(NAMED_ADDRESS(pt->GetPixel),(HDC)0x35,15,15),
+        im->history().at(1)
+    );
+    CHECK_EQUAL
+    (
+        call(NAMED_ADDRESS(pt->GetPixel),(HDC)0x37,0,0),
+        im->history().at(2)
+    );
+    CHECK_EQUAL
+    (
+        call(NAMED_ADDRESS(pt->GetPixel),(HDC)0x37,31,15),
+        im->history().at(3)
+    );
+
+    im->history().clear();
+    im->mockUpWithResult(NAMED_ADDRESS(pt->GetPixel),BLACK_COLOR);
+    CHECK_FALSE(slider->hitTestTool(POINT({83,52})));
+    CHECK_FALSE(slider->hitTestTool(POINT({84,51})));
+    CHECK(slider->hitTestTool(POINT({84,52})));
+    CHECK(slider->hitTestTool(POINT({99,67})));
+    CHECK_FALSE(slider->hitTestTool(POINT({100,67})));
+    CHECK_FALSE(slider->hitTestTool(POINT({99,68})));
+    CHECK_FALSE(slider->hitTestTool(POINT({39,58})));
+    CHECK_FALSE(slider->hitTestTool(POINT({40,57})));
+    CHECK(slider->hitTestTool(POINT({40,58})));
+    CHECK(slider->hitTestTool(POINT({143,61})));
+    CHECK_FALSE(slider->hitTestTool(POINT({144,61})));
+    CHECK_FALSE(slider->hitTestTool(POINT({143,62})));
+    CHECK_FALSE(slider->hitTestTool(POINT({151,52})));
+    CHECK_FALSE(slider->hitTestTool(POINT({152,51})));
+    CHECK(slider->hitTestTool(POINT({152,52})));
+    CHECK(slider->hitTestTool(POINT({183,67})));
+    CHECK_FALSE(slider->hitTestTool(POINT({184,67})));
+    CHECK_FALSE(slider->hitTestTool(POINT({183,68})));
+    CHECK_EQUAL(4,im->history().size());
+    CHECK_EQUAL
+    (
+        call(NAMED_ADDRESS(pt->GetPixel),(HDC)0x35,0,0),
+        im->history().at(0)
+    );
+    CHECK_EQUAL
+    (
+        call(NAMED_ADDRESS(pt->GetPixel),(HDC)0x35,15,15),
+        im->history().at(1)
+    );
+    CHECK_EQUAL
+    (
+        call(NAMED_ADDRESS(pt->GetPixel),(HDC)0x37,0,0),
+        im->history().at(2)
+    );
+    CHECK_EQUAL
+    (
+        call(NAMED_ADDRESS(pt->GetPixel),(HDC)0x37,31,15),
+        im->history().at(3)
+    );
+
+    //im->history().clear();
+    //function<void()> change;
+    //im->mockUp(NAMED_ADDRESS(change));
+    //slider->activate(POINT({84,52}));
+    //CHECK(slider->active());
+
+    //cout<<endl;
+    //for(size_t i=0;i<im->history().size();i++)
+    //    cout<<describe("[",i,"]:",im->history().at(i))<<endl;
 }
 
 }

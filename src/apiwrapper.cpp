@@ -195,6 +195,13 @@ bool GetMessage(LPMSG message,HWND window,UINT first,UINT last)
     return result!=0;
 }
 
+COLORREF GetPixel(HDC dc,int x,int y)
+{
+    const COLORREF color=pt->GetPixel(dc,x,y);
+    if(color==CLR_INVALID) throw api_error("GetPixel");
+    return color;
+}
+
 int GetObject(HGDIOBJ object,int sizeOfBuffer,LPVOID buffer)
 {
     const int got=pt->GetObject(object,sizeOfBuffer,buffer);

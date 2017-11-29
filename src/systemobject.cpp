@@ -9,14 +9,14 @@ namespace nm
 DeleteDC::DeleteDC(HDC handle):
     Finalizer([handle] {pt->DeleteDC(handle);}),handle_(handle) {}
 
-HDC DeleteDC::handle() {return handle_;}
+HDC DeleteDC::handle() const {return handle_;}
 
 DeleteObject::DeleteObject(HGDIOBJ handle):
     Finalizer([handle] {pt->DeleteObject(handle);}),handle_(handle) {}
 
-HGDIOBJ DeleteObject::handle() {return handle_;}
+HGDIOBJ DeleteObject::handle() const {return handle_;}
 
-HBITMAP Buffer::bitmap() {return (HBITMAP)bitmap_->handle();}
+HBITMAP Buffer::bitmap() const {return (HBITMAP)bitmap_->handle();}
 
 shared_ptr<Buffer> Buffer::create(const SIZE&size,HDC destDC)
 {
@@ -26,7 +26,7 @@ shared_ptr<Buffer> Buffer::create(const SIZE&size,HDC destDC)
     return shared_ptr<Buffer>(new Buffer(bitmap,dc,size));
 }
 
-HDC Buffer::dc() {return dc_->handle();}
+HDC Buffer::dc() const {return dc_->handle();}
 
 shared_ptr<Buffer> Buffer::load(HINSTANCE instance,LPCTSTR name,HDC destDC)
 {
@@ -40,7 +40,7 @@ shared_ptr<Buffer> Buffer::load(HINSTANCE instance,LPCTSTR name,HDC destDC)
     (new Buffer(bitmap,dc,SIZE({bmp.bmWidth,bmp.bmHeight})));
 }
 
-const SIZE&Buffer::size() {return size_;}
+const SIZE&Buffer::size() const {return size_;}
 
 Buffer::Buffer
 (
@@ -53,18 +53,18 @@ EndPaint::EndPaint(HWND window,PAINTSTRUCT*paint,HDC handle):
     Finalizer([window,paint] {pt->EndPaint(window,paint);}),
     handle_(handle) {}
 
-HDC EndPaint::handle() {return handle_;}
+HDC EndPaint::handle() const {return handle_;}
 
 ReleaseDC::ReleaseDC(HWND window,HDC handle):
     Finalizer([window,handle] {pt->ReleaseDC(window,handle);}),
     handle_(handle) {}
 
-HDC ReleaseDC::handle() {return handle_;}
+HDC ReleaseDC::handle() const {return handle_;}
 
 TimeEndPeriod::TimeEndPeriod(UINT value):
     Finalizer([value] {pt->timeEndPeriod(value);}),value_(value) {}
 
-UINT TimeEndPeriod::value() {return value_;}
+UINT TimeEndPeriod::value() const {return value_;}
 
 TimeKillEvent::TimeKillEvent(UINT timerID):
     Finalizer([timerID] {pt->timeKillEvent(timerID);}) {}

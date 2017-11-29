@@ -23,8 +23,8 @@ bool call::operator==(const call&rhs) const
         {
             if
             (
-                arguments_.at(i)!=OMIT_ARGUMENT&&
-                rhs.arguments_.at(i)!=OMIT_ARGUMENT&&
+                integer(arguments_.at(i),0)!=OMIT_POINTER&&
+                integer(rhs.arguments_.at(i),0)!=OMIT_POINTER&&
                 arguments_.at(i)!=rhs.arguments_.at(i)
             )
             {
@@ -52,7 +52,7 @@ ostream&operator<<(ostream&os,const call&call_)
     return os<<oss.str();
 }
 
-vector<call>&logger::history() {return history_;}
+vector<call>&Imitator::history() {return history_;}
 
 void describe_each_to(vector<string>&strs) {}
 
@@ -293,5 +293,7 @@ bool operator==(const RECT&lhs,const RECT&rhs)
 
 bool operator==(const SIZE&lhs,const SIZE&rhs)
 {return lhs.cx==rhs.cx&&lhs.cy==rhs.cy;}
+
+const string OMIT_POINTER_STR=describe(hex,showbase,OMIT_POINTER);
 
 }

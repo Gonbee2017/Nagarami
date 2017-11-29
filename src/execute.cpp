@@ -14,148 +14,18 @@
 namespace nm
 {
 
-properties::properties()
-{
-    setter_map_["alpha"]=[this] (const string&value)
-    {try {alpha=integer(value);} catch(...) {}};
-    setter_map_["back_color1"]=[this] (const string&value)
-    {try {back_color1=integer(value);} catch(...) {}};
-    setter_map_["back_color2"]=[this] (const string&value)
-    {try {back_color2=integer(value);} catch(...) {}};
-    setter_map_["component_color1"]=[this] (const string&value)
-    {try {component_color1=integer(value);} catch(...) {}};
-    setter_map_["component_color2"]=[this] (const string&value)
-    {try {component_color2=integer(value);} catch(...) {}};
-    setter_map_["control_mode_alt"]=[this] (const string&value)
-    {try {control_mode_alt=integer(value);} catch(...) {}};
-    setter_map_["control_mode_ctrl"]=[this] (const string&value)
-    {try {control_mode_ctrl=integer(value);} catch(...) {}};
-    setter_map_["control_mode_shift"]=[this] (const string&value)
-    {try {control_mode_shift=integer(value);} catch(...) {}};
-    setter_map_["fps"]=[this] (const string&value)
-    {try {fps=integer(value);} catch(...) {}};
-    setter_map_["halftone"]=[this] (const string&value)
-    {try {halftone=integer(value);} catch(...) {}};
-    setter_map_["hole"]=[this] (const string&value)
-    {try {hole=integer(value);} catch(...) {}};
-    setter_map_["scale"]=[this] (const string&value)
-    {try {scale=integer(value);} catch(...) {}};
-    setter_map_["view_base.x"]=[this] (const string&value)
-    {try {view_base.x=floating_point_number(value);} catch(...) {}};
-    setter_map_["view_base.y"]=[this] (const string&value)
-    {try {view_base.y=floating_point_number(value);} catch(...) {}};
-    setter_map_["window_pos.x"]=[this] (const string&value)
-    {try {window_pos.x=integer(value);} catch(...) {}};
-    setter_map_["window_pos.y"]=[this] (const string&value)
-    {try {window_pos.y=integer(value);} catch(...) {}};
-    setter_map_["window_size.cx"]=[this] (const string&value)
-    {try {window_size.cx=integer(value);} catch(...) {}};
-    setter_map_["window_size.cy"]=[this] (const string&value)
-    {try {window_size.cy=integer(value);} catch(...) {}};
-}
+Context::Context():error("") {}
 
-void properties::adjust()
+void Context::initialize(HINSTANCE instance)
 {
-    fps=min(max(fps,(UINT)1),(UINT)60);
-    hole=min(max(hole,(LONG)0),MAXIMUM_HOLE);
-    scale=min(max(scale,(LONG)0),MAXIMUM_SCALE);
-    const SIZE desktopSize=desktop_size();
-    window_size.cx=
-        min(max(window_size.cx,MINIMUM_WINDOW_WIDTH),desktopSize.cx);
-    window_size.cy=
-        min(max(window_size.cy,MINIMUM_WINDOW_WIDTH),desktopSize.cy);
-    window_pos.x=min(max(window_pos.x,-window_size.cx+1),desktopSize.cx-1);
-    window_pos.y=min(max(window_pos.y,-window_size.cy+1),desktopSize.cy-1);
-}
-
-void properties::initialize()
-{
-    alpha=DEFAULT_ALPHA;
-    back_color1=DEFAULT_BACK_COLOR1;
-    back_color2=DEFAULT_BACK_COLOR2;
-    component_color1=DEFAULT_COMPONENT_COLOR1;
-    component_color2=DEFAULT_COMPONENT_COLOR2;
-    control_mode_alt=DEFAULT_CONTROL_MODE_ALT;
-    control_mode_ctrl=DEFAULT_CONTROL_MODE_CTRL;
-    control_mode_shift=DEFAULT_CONTROL_MODE_SHIFT;
-    fps=DEFAULT_FPS;
-    halftone=DEFAULT_HALFTONE;
-    hole=DEFAULT_HOLE;
-    scale=DEFAULT_SCALE;
-    view_base=POINT_DOUBLE({0,0});
-    const SIZE desktopSize=desktop_size();
-    window_size=desktopSize/DEFAULT_WINDOW_SIZE_DIVISOR;
-    window_pos=point(desktopSize-window_size)/2;
-}
-
-vector<string> properties::lines() const
-{
-    vector<string> result;
-    result.push_back(describe("alpha","=",(UINT)alpha));
-    result.push_back(describe
-    ("back_color1","=",hex,showbase,back_color1));
-    result.push_back(describe
-    ("back_color2","=",hex,showbase,back_color2));
-    result.push_back(describe
-    ("component_color1","=",hex,showbase,component_color1));
-    result.push_back(describe
-    ("component_color2","=",hex,showbase,component_color2));
-    result.push_back(describe
-    ("control_mode_alt","=",control_mode_alt));
-    result.push_back(describe
-    ("control_mode_ctrl","=",control_mode_ctrl));
-    result.push_back(describe
-    ("control_mode_shift","=",control_mode_shift));
-    result.push_back(describe("fps","=",fps));
-    result.push_back(describe("halftone","=",halftone));
-    result.push_back(describe("hole","=",hole));
-    result.push_back(describe("scale","=",scale));
-    result.push_back(describe("view_base.x","=",view_base.x));
-    result.push_back(describe("view_base.y","=",view_base.y));
-    result.push_back(describe("window_pos.x","=",window_pos.x));
-    result.push_back(describe("window_pos.y","=",window_pos.y));
-    result.push_back(describe("window_size.cx","=",window_size.cx));
-    result.push_back(describe("window_size.cy","=",window_size.cy));
-    return result;
-}
-
-void properties::load(const vector<string>&expressions)
-{
-    for(const string&expression:expressions)
-    {
-        string name,value;
-        decompose(parse(expression),&name,&value);
-        const auto setter=setter_map_.find(name);
-        if(setter!=setter_map_.end()) setter->second(value);
-    }
-}
-
-pair<string,string> properties::parse(const string&expression)
-{
-    const string::size_type pos=expression.find('=');
-    string name,value;
-    if(pos!=string::npos)
-    {
-        name=expression.substr(0,pos);
-        value=expression.substr(pos+1);
-    } else name=expression;
-    return make_pair(name,value);
-}
-
-context::context():ps(make_shared<properties>()),error("") {}
-
-void context::initialize(HINSTANCE instance)
-{
-    ps->initialize();
-    almost_black_brush=nm::CreateSolidBrush(ALMOST_BLACK_COLOR);
-    back_brush1=nm::CreateSolidBrush(ps->back_color1);
-    back_brush2=nm::CreateSolidBrush(ps->back_color2);
-    black_pen=nm::CreatePen(PS_SOLID,0,BLACK_COLOR);
-    black_brush=nm::CreateSolidBrush(BLACK_COLOR);
-    component_pen1=nm::CreatePen(PS_SOLID,0,ps->component_color1);
-    component_brush1=nm::CreateSolidBrush(ps->component_color1);
-    component_pen2=nm::CreatePen(PS_SOLID,0,ps->component_color2);
-    component_brush2=nm::CreateSolidBrush(ps->component_color2);
+    backBrush1=nm::CreateSolidBrush(ps->backColor1);
+    backBrush2=nm::CreateSolidBrush(ps->backColor2);
+    blackPen=nm::CreatePen(PS_SOLID,0,BLACK_COLOR);
+    blackBrush=nm::CreateSolidBrush(BLACK_COLOR);
+    componentBrush1=nm::CreateSolidBrush(ps->componentColor1);
+    componentBrush2=nm::CreateSolidBrush(ps->componentColor2);
+    componentPen1=nm::CreatePen(PS_SOLID,0,ps->componentColor1);
+    componentPen2=nm::CreatePen(PS_SOLID,0,ps->componentColor2);
     font=nm::CreateFont
     (
         UNIT_LENGTH-4,
@@ -174,11 +44,12 @@ void context::initialize(HINSTANCE instance)
         NULL
     );
     this->instance=instance;
+    opaqueBrush=nm::CreateSolidBrush(OPAQUE_COLOR);
     target=NULL;
-    white_brush=nm::CreateSolidBrush(WHITE_COLOR);
+    whiteBrush=nm::CreateSolidBrush(WHITE_COLOR);
 }
 
-void port::import()
+void Port::import()
 {
     this->BeginPaint=&::BeginPaint;
     this->BitBlt=&::BitBlt;
@@ -206,6 +77,7 @@ void port::import()
     this->GetLastError=&::GetLastError;
     this->GetMessage=&::GetMessage;
     this->GetObject=&::GetObject;
+    this->GetPixel=&::GetPixel;
     this->GetSystemMetrics=&::GetSystemMetrics;
     this->GetWindowPlacement=&::GetWindowPlacement;
     this->IsIconic=&::IsIconic;
@@ -244,12 +116,144 @@ void port::import()
     this->timeSetEvent=&::timeSetEvent;
 }
 
+Properties::Properties()
+{
+    setter_map_["alpha"]=[this] (const string&value)
+    {integer(&alpha,value);};
+    setter_map_["backColor1"]=[this] (const string&value)
+    {integer(&backColor1,value);};
+    setter_map_["backColor2"]=[this] (const string&value)
+    {integer(&backColor2,value);};
+    setter_map_["componentColor1"]=[this] (const string&value)
+    {integer(&componentColor1,value);};
+    setter_map_["componentColor2"]=[this] (const string&value)
+    {integer(&componentColor2,value);};
+    setter_map_["controlModeAlt"]=[this] (const string&value)
+    {integer(&controlModeAlt,value);};
+    setter_map_["controlModeCtrl"]=[this] (const string&value)
+    {integer(&controlModeCtrl,value);};
+    setter_map_["controlModeShift"]=[this] (const string&value)
+    {integer(&controlModeShift,value);};
+    setter_map_["fps"]=[this] (const string&value)
+    {integer(&fps,value);};
+    setter_map_["halftone"]=[this] (const string&value)
+    {integer(&halftone,value);};
+    setter_map_["hole"]=[this] (const string&value)
+    {integer(&hole,value);};
+    setter_map_["psFileName"]=[this] (const string&value)
+    {psFileName=value;};
+    setter_map_["scale"]=[this] (const string&value)
+    {integer(&scale,value);};
+    setter_map_["viewBase.x"]=[this] (const string&value)
+    {floating_point_number(&viewBase.x,value);};
+    setter_map_["viewBase.y"]=[this] (const string&value)
+    {floating_point_number(&viewBase.y,value);};
+    setter_map_["windowPos.x"]=[this] (const string&value)
+    {integer(&windowPos.x,value);};
+    setter_map_["windowPos.y"]=[this] (const string&value)
+    {integer(&windowPos.y,value);};
+    setter_map_["windowSize.cx"]=[this] (const string&value)
+    {integer(&windowSize.cx,value);};
+    setter_map_["windowSize.cy"]=[this] (const string&value)
+    {integer(&windowSize.cy,value);};
+}
+
+void Properties::adjust()
+{
+    fps=min(max(fps,(UINT)1),(UINT)60);
+    hole=min(max(hole,(LONG)0),MAXIMUM_HOLE);
+    scale=min(max(scale,(LONG)0),MAXIMUM_SCALE);
+    const SIZE desktopSize=desktop_size();
+    windowSize.cx=
+        min(max(windowSize.cx,MINIMUM_WINDOW_WIDTH),desktopSize.cx);
+    windowSize.cy=
+        min(max(windowSize.cy,MINIMUM_WINDOW_HEIGHT),desktopSize.cy);
+    windowPos.x=min(max(windowPos.x,-windowSize.cx+1),desktopSize.cx-1);
+    windowPos.y=min(max(windowPos.y,-windowSize.cy+1),desktopSize.cy-1);
+}
+
+void Properties::initialize()
+{
+    alpha=DEFAULT_ALPHA;
+    backColor1=DEFAULT_BACK_COLOR1;
+    backColor2=DEFAULT_BACK_COLOR2;
+    componentColor1=DEFAULT_COMPONENT_COLOR1;
+    componentColor2=DEFAULT_COMPONENT_COLOR2;
+    controlModeAlt=DEFAULT_CONTROL_MODE_ALT;
+    controlModeCtrl=DEFAULT_CONTROL_MODE_CTRL;
+    controlModeShift=DEFAULT_CONTROL_MODE_SHIFT;
+    fps=DEFAULT_FPS;
+    halftone=DEFAULT_HALFTONE;
+    hole=DEFAULT_HOLE;
+    psFileName=
+        describe(DEFAULT_PS_FILE_BASE,'.',DEFAULT_PS_FILE_EXTENSION);
+    scale=DEFAULT_SCALE;
+    viewBase=POINT_DOUBLE({0,0});
+    const SIZE desktopSize=desktop_size();
+    windowSize=desktopSize/DEFAULT_WINDOW_SIZE_DIVISOR;
+    windowPos=point(desktopSize-windowSize)/2;
+}
+
+vector<string> Properties::lines() const
+{
+    vector<string> result;
+    result.push_back(describe("alpha","=",(UINT)alpha));
+    result.push_back(describe
+    ("backColor1","=",hex,showbase,backColor1));
+    result.push_back(describe
+    ("backColor2","=",hex,showbase,backColor2));
+    result.push_back(describe
+    ("componentColor1","=",hex,showbase,componentColor1));
+    result.push_back(describe
+    ("componentColor2","=",hex,showbase,componentColor2));
+    result.push_back(describe
+    ("controlModeAlt","=",controlModeAlt));
+    result.push_back(describe
+    ("controlModeCtrl","=",controlModeCtrl));
+    result.push_back(describe
+    ("controlModeShift","=",controlModeShift));
+    result.push_back(describe("fps","=",fps));
+    result.push_back(describe("halftone","=",halftone));
+    result.push_back(describe("hole","=",hole));
+    result.push_back(describe("scale","=",scale));
+    result.push_back(describe("viewBase.x","=",viewBase.x));
+    result.push_back(describe("viewBase.y","=",viewBase.y));
+    result.push_back(describe("windowPos.x","=",windowPos.x));
+    result.push_back(describe("windowPos.y","=",windowPos.y));
+    result.push_back(describe("windowSize.cx","=",windowSize.cx));
+    result.push_back(describe("windowSize.cy","=",windowSize.cy));
+    return result;
+}
+
+void Properties::load(const vector<string>&expressions)
+{
+    for(const string&expression:expressions)
+    {
+        string name,value;
+        decompose(parse(expression),&name,&value);
+        const auto setter=setter_map_.find(name);
+        if(setter!=setter_map_.end()) setter->second(value);
+    }
+}
+
+pair<string,string> Properties::parse(const string&expression)
+{
+    const string::size_type pos=expression.find('=');
+    string name,value;
+    if(pos!=string::npos)
+    {
+        name=expression.substr(0,pos);
+        value=expression.substr(pos+1);
+    } else name=expression;
+    return make_pair(name,value);
+}
+
 bool control_mode()
 {
     return
-        (!ct->ps->control_mode_alt||pt->GetKeyState(VK_MENU)<0)&&
-        (!ct->ps->control_mode_ctrl||pt->GetKeyState(VK_CONTROL)<0)&&
-        (!ct->ps->control_mode_shift||pt->GetKeyState(VK_SHIFT)<0);
+        (!ps->controlModeAlt||pt->GetKeyState(VK_MENU)<0)&&
+        (!ps->controlModeCtrl||pt->GetKeyState(VK_CONTROL)<0)&&
+        (!ps->controlModeShift||pt->GetKeyState(VK_SHIFT)<0);
 }
 
 int execute
@@ -263,15 +267,16 @@ int execute
     int result=0;
     try
     {
+        ps->initialize();
         ct->initialize(instance);
         load_properties(commandLine);
-        ct->ps->adjust();
+        ps->adjust();
         Window::registerClass();
         const auto main_window=make_shared<MainWindow>();
         pt->ShowWindow(main_window->handle(),commandShow);
         const auto timePeriod=nm::timeBeginPeriod(minimum_time_period());
         const auto timer=make_shared<Timer>
-        (1000/ct->ps->fps,timePeriod->value(),main_window->handle());
+        (1000/ps->fps,timePeriod->value(),main_window->handle());
         MSG msg;
         while(nm::GetMessage(&msg,NULL,0,0)) nm::DispatchMessage(&msg);
         save_properties();
@@ -296,9 +301,9 @@ int execute
 
 void load_properties(const string&commandLine)
 {
-    const auto psIS=pt->input_file(PS_FILE_NAME,ios::in);
-    if(*psIS) ct->ps->load(getlines(*psIS));
-    ct->ps->load(tokenize(commandLine," "));
+    ps->load(tokenize(commandLine," "));
+    const auto psIS=pt->input_file(ps->psFileName,ios::in);
+    if(*psIS) ps->load(get_lines(*psIS));
 }
 
 UINT minimum_time_period()
@@ -310,12 +315,12 @@ UINT minimum_time_period()
 
 void save_properties()
 {
-    const auto psOS=pt->output_file(PS_FILE_NAME,ios::out|ios::trunc);
-    if(*psOS) putlines(*psOS,ct->ps->lines());
+    const auto psOS=pt->output_file(ps->psFileName,ios::out|ios::trunc);
+    if(*psOS) put_lines(*psOS,ps->lines());
 }
 
-const string PS_FILE_NAME=describe(APPLICATION_NAME,".",PS_FILE_EXTENSION);
-shared_ptr<port> pt;
-shared_ptr<context> ct;
+shared_ptr<Port> pt;
+shared_ptr<Properties> ps;
+shared_ptr<Context> ct;
 
 }

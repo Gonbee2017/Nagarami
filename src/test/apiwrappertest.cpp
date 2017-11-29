@@ -11,50 +11,52 @@ TEST_GROUP(apiwrapper)
 {
     TEST_SETUP()
     {
-        lg=make_shared<logger>();
-        pt=make_shared<port>();
-        ct=make_shared<context>();
+        im=make_shared<Imitator>();
+        pt=make_shared<Port>();
+        ct=make_shared<Context>();
     }
     TEST_TEARDOWN()
     {
         ct.reset();
         pt.reset();
-        lg.reset();
+        im.reset();
     }
-    shared_ptr<logger> lg;
+    shared_ptr<Imitator> im;
 };
 
 TEST(apiwrapper,BeginPaint_fail)
 {
-    lg->mockUpWithResult(NAMED_ADDRESS(pt->BeginPaint),(HDC)NULL);
-    lg->mockUpWithResult(NAMED_ADDRESS(pt->GetLastError),(DWORD)1);
+    im->mockUpWithResult(NAMED_ADDRESS(pt->BeginPaint),(HDC)NULL);
+    im->mockUpWithResult(NAMED_ADDRESS(pt->GetLastError),(DWORD)1);
     PAINTSTRUCT paint;
     CHECK_THROWS_API_ERROR
     ("BeginPaint",1,nm::BeginPaint((HWND)0x10,&paint));
-    CHECK_EQUAL(2,lg->history().size());
+    CHECK_EQUAL(2,im->history().size());
     CHECK_EQUAL
     (
         call
         (
             NAMED_ADDRESS(pt->BeginPaint),
             (HWND)0x10,
-            PAINTSTRUCT({(HDC)0x0,FALSE,RECT({0,0,0,0}),FALSE,FALSE})
+            make_shared_pod<PAINTSTRUCT>
+            ((HDC)0x0,FALSE,RECT({0,0,0,0}),FALSE,FALSE).get()
         ),
-        lg->history().at(0)
+        im->history().at(0)
     );
-    CHECK_EQUAL(call(NAMED_ADDRESS(pt->GetLastError)),lg->history().at(1));
+    CHECK_EQUAL
+    (call(NAMED_ADDRESS(pt->GetLastError)),im->history().at(1));
 }
 
 TEST(apiwrapper,BeginPaint_success)
 {
-    lg->mockUpWithBody(NAMED_ADDRESS(pt->BeginPaint),
+    im->mockUpWithBody(NAMED_ADDRESS(pt->BeginPaint),
     [] (HWND window,PAINTSTRUCT*paint)->HDC
     {
         *paint=PAINTSTRUCT
         ({(HDC)0x10,TRUE,RECT({1,-2,-3,5}),FALSE,TRUE});
         return (HDC)0x10;
     });
-    lg->mockUpWithResult(NAMED_ADDRESS(pt->EndPaint),TRUE);
+    im->mockUpWithResult(NAMED_ADDRESS(pt->EndPaint),TRUE);
     PAINTSTRUCT paint;
     auto dc=nm::BeginPaint((HWND)0x20,&paint);
     CHECK_EQUAL
@@ -64,35 +66,37 @@ TEST(apiwrapper,BeginPaint_success)
         describe(paint)
     );
     CHECK_EQUAL((HDC)0x10,dc->handle());
-    CHECK_EQUAL(1,lg->history().size());
+    CHECK_EQUAL(1,im->history().size());
     CHECK_EQUAL
     (
         call
         (
             NAMED_ADDRESS(pt->BeginPaint),
             (HWND)0x20,
-            PAINTSTRUCT({(HDC)0x0,FALSE,RECT({0,0,0,0}),FALSE,FALSE})
+            make_shared_pod<PAINTSTRUCT>
+            ((HDC)0x0,FALSE,RECT({0,0,0,0}),FALSE,FALSE).get()
         ),
-        lg->history().at(0)
+        im->history().at(0)
     );
     dc.reset();
-    CHECK_EQUAL(2,lg->history().size());
+    CHECK_EQUAL(2,im->history().size());
     CHECK_EQUAL
     (
         call
         (
             NAMED_ADDRESS(pt->EndPaint),
             (HWND)0x20,
-            PAINTSTRUCT({(HDC)0x10,TRUE,RECT({1,-2,-3,5}),FALSE,TRUE})
+            make_shared_pod<const PAINTSTRUCT>
+            ((HDC)0x10,TRUE,RECT({1,-2,-3,5}),FALSE,TRUE).get()
         ),
-        lg->history().at(1)
+        im->history().at(1)
     );
 }
 
 TEST(apiwrapper,BitBlt_fail)
 {
-    lg->mockUpWithResult(NAMED_ADDRESS(pt->BitBlt),FALSE);
-    lg->mockUpWithResult(NAMED_ADDRESS(pt->GetLastError),(DWORD)1);
+    im->mockUpWithResult(NAMED_ADDRESS(pt->BitBlt),FALSE);
+    im->mockUpWithResult(NAMED_ADDRESS(pt->GetLastError),(DWORD)1);
     CHECK_THROWS_API_ERROR
     (
         "BitBlt",
@@ -110,7 +114,7 @@ TEST(apiwrapper,BitBlt_fail)
             SRCCOPY
         )
     );
-    CHECK_EQUAL(2,lg->history().size());
+    CHECK_EQUAL(2,im->history().size());
     CHECK_EQUAL
     (
         call
@@ -126,15 +130,15 @@ TEST(apiwrapper,BitBlt_fail)
             13,
             SRCCOPY
         ),
-        lg->history().at(0)
+        im->history().at(0)
     );
     CHECK_EQUAL
-    (call(NAMED_ADDRESS(pt->GetLastError)),lg->history().at(1));
+    (call(NAMED_ADDRESS(pt->GetLastError)),im->history().at(1));
 }
 
 TEST(apiwrapper,BitBlt_success)
 {
-    lg->mockUpWithResult(NAMED_ADDRESS(pt->BitBlt),TRUE);
+    im->mockUpWithResult(NAMED_ADDRESS(pt->BitBlt),TRUE);
     nm::BitBlt
     (
         (HDC)0x10,
@@ -147,7 +151,7 @@ TEST(apiwrapper,BitBlt_success)
         13,
         SRCCOPY
     );
-    CHECK_EQUAL(1,lg->history().size());
+    CHECK_EQUAL(1,im->history().size());
     CHECK_EQUAL
     (
         call
@@ -163,104 +167,104 @@ TEST(apiwrapper,BitBlt_success)
             13,
             SRCCOPY
         ),
-        lg->history().at(0)
+        im->history().at(0)
     );
 }
 
 TEST(apiwrapper,CreateCompatibleBitmap_fail)
 {
-    lg->mockUpWithResult
+    im->mockUpWithResult
     (NAMED_ADDRESS(pt->CreateCompatibleBitmap),(HBITMAP)NULL);
-    lg->mockUpWithResult(NAMED_ADDRESS(pt->GetLastError),(DWORD)1);
+    im->mockUpWithResult(NAMED_ADDRESS(pt->GetLastError),(DWORD)1);
     CHECK_THROWS_API_ERROR
     (
         "CreateCompatibleBitmap",
         1,
         nm::CreateCompatibleBitmap((HDC)0x10,1,-2)
     );
-    CHECK_EQUAL(2,lg->history().size());
+    CHECK_EQUAL(2,im->history().size());
     CHECK_EQUAL
     (
         call(NAMED_ADDRESS(pt->CreateCompatibleBitmap),(HDC)0x10,1,-2),
-        lg->history().at(0)
+        im->history().at(0)
     );
     CHECK_EQUAL
-    (call(NAMED_ADDRESS(pt->GetLastError)),lg->history().at(1));
+    (call(NAMED_ADDRESS(pt->GetLastError)),im->history().at(1));
 }
 
 TEST(apiwrapper,CreateCompatibleBitmap_success)
 {
-    lg->mockUpWithResult
+    im->mockUpWithResult
     (NAMED_ADDRESS(pt->CreateCompatibleBitmap),(HBITMAP)0x10);
-    lg->mockUpWithResult(NAMED_ADDRESS(pt->DeleteObject),TRUE);
+    im->mockUpWithResult(NAMED_ADDRESS(pt->DeleteObject),TRUE);
     auto dc=nm::CreateCompatibleBitmap((HDC)0x20,1,-2);
     CHECK_EQUAL((HDC)0x10,dc->handle());
-    CHECK_EQUAL(1,lg->history().size());
+    CHECK_EQUAL(1,im->history().size());
     CHECK_EQUAL
     (
         call(NAMED_ADDRESS(pt->CreateCompatibleBitmap),(HDC)0x20,1,-2),
-        lg->history().at(0)
+        im->history().at(0)
     );
     dc.reset();
-    CHECK_EQUAL(2,lg->history().size());
+    CHECK_EQUAL(2,im->history().size());
     CHECK_EQUAL
     (
         call(NAMED_ADDRESS(pt->DeleteObject),(HGDIOBJ)0x10),
-        lg->history().at(1)
+        im->history().at(1)
     );
 }
 
 TEST(apiwrapper,CreateCompatibleDC_fail)
 {
-    lg->mockUpWithResult
+    im->mockUpWithResult
     (NAMED_ADDRESS(pt->CreateCompatibleDC),(HDC)NULL);
-    lg->mockUpWithResult(NAMED_ADDRESS(pt->GetLastError),(DWORD)1);
+    im->mockUpWithResult(NAMED_ADDRESS(pt->GetLastError),(DWORD)1);
     CHECK_THROWS_API_ERROR
     (
         "CreateCompatibleDC",
         1,
         nm::CreateCompatibleDC((HDC)0x10)
     );
-    CHECK_EQUAL(2,lg->history().size());
+    CHECK_EQUAL(2,im->history().size());
     CHECK_EQUAL
     (
         call(NAMED_ADDRESS(pt->CreateCompatibleDC),(HDC)0x10),
-        lg->history().at(0)
+        im->history().at(0)
     );
     CHECK_EQUAL
-    (call(NAMED_ADDRESS(pt->GetLastError)),lg->history().at(1));
+    (call(NAMED_ADDRESS(pt->GetLastError)),im->history().at(1));
 }
 
 TEST(apiwrapper,CreateCompatibleDC_success)
 {
-    lg->mockUpWithResult
+    im->mockUpWithResult
     (NAMED_ADDRESS(pt->CreateCompatibleDC),(HDC)0x10);
-    lg->mockUpWithResult(NAMED_ADDRESS(pt->DeleteDC),TRUE);
+    im->mockUpWithResult(NAMED_ADDRESS(pt->DeleteDC),TRUE);
     auto dc=nm::CreateCompatibleDC((HDC)0x20);
     CHECK_EQUAL((HDC)0x10,dc->handle());
-    CHECK_EQUAL(1,lg->history().size());
+    CHECK_EQUAL(1,im->history().size());
     CHECK_EQUAL
     (
         call(NAMED_ADDRESS(pt->CreateCompatibleDC),(HDC)0x20),
-        lg->history().at(0)
+        im->history().at(0)
     );
     dc.reset();
-    CHECK_EQUAL(2,lg->history().size());
+    CHECK_EQUAL(2,im->history().size());
     CHECK_EQUAL
-    (call(NAMED_ADDRESS(pt->DeleteDC),(HDC)0x10),lg->history().at(1));
+    (call(NAMED_ADDRESS(pt->DeleteDC),(HDC)0x10),im->history().at(1));
 }
 
 TEST(apiwrapper,CreateFont_fail)
 {
-    lg->mockUpWithResult(NAMED_ADDRESS(pt->CreateFont),(HFONT)NULL);
-    lg->mockUpWithResult(NAMED_ADDRESS(pt->GetLastError),(DWORD)1);
+    im->mockUpWithResult(NAMED_ADDRESS(pt->CreateFont),(HFONT)NULL);
+    im->mockUpWithResult(NAMED_ADDRESS(pt->GetLastError),(DWORD)1);
     CHECK_THROWS_API_ERROR
     (
         "CreateFont",
         1,
         nm::CreateFont(1,2,3,4,5,6,7,8,9,10,11,12,13,"hoge")
     );
-    CHECK_EQUAL(2,lg->history().size());
+    CHECK_EQUAL(2,im->history().size());
     CHECK_EQUAL
     (
         call
@@ -271,30 +275,29 @@ TEST(apiwrapper,CreateFont_fail)
             3,
             4,
             5,
-            6,
-            7,
-            8,
-            9,
-            10,
-            11,
-            12,
-            13,
+            6ul,
+            7ul,
+            8ul,
+            9ul,
+            10ul,
+            11ul,
+            12ul,
+            13ul,
             "hoge"
         ),
-        lg->history().at(0)
+        im->history().at(0)
     );
     CHECK_EQUAL
-    (call(NAMED_ADDRESS(pt->GetLastError)),lg->history().at(1));
+    (call(NAMED_ADDRESS(pt->GetLastError)),im->history().at(1));
 }
 
 TEST(apiwrapper,CreateFont_success)
 {
-    lg->mockUpWithResult(NAMED_ADDRESS(pt->CreateFont),(HFONT)0x10);
-    lg->mockUpWithResult(NAMED_ADDRESS(pt->DeleteObject),TRUE);
-    auto font=
-        nm::CreateFont(1,2,3,4,5,6,7,8,9,10,11,12,13,"hoge");
+    im->mockUpWithResult(NAMED_ADDRESS(pt->CreateFont),(HFONT)0x10);
+    im->mockUpWithResult(NAMED_ADDRESS(pt->DeleteObject),TRUE);
+    auto font=nm::CreateFont(1,2,3,4,5,6,7,8,9,10,11,12,13,"hoge");
     CHECK_EQUAL((HGDIOBJ)0x10,font->handle());
-    CHECK_EQUAL(1,lg->history().size());
+    CHECK_EQUAL(1,im->history().size());
     CHECK_EQUAL
     (
         call
@@ -305,149 +308,149 @@ TEST(apiwrapper,CreateFont_success)
             3,
             4,
             5,
-            6,
-            7,
-            8,
-            9,
-            10,
-            11,
-            12,
-            13,
+            6ul,
+            7ul,
+            8ul,
+            9ul,
+            10ul,
+            11ul,
+            12ul,
+            13ul,
             "hoge"
         ),
-        lg->history().at(0)
+        im->history().at(0)
     );
     font.reset();
-    CHECK_EQUAL(2,lg->history().size());
+    CHECK_EQUAL(2,im->history().size());
     CHECK_EQUAL
     (
         call(NAMED_ADDRESS(pt->DeleteObject),(HGDIOBJ)0x10),
-        lg->history().at(1)
+        im->history().at(1)
     );
 }
 
 TEST(apiwrapper,CreatePatternBrush_fail)
 {
-    lg->mockUpWithResult
+    im->mockUpWithResult
     (NAMED_ADDRESS(pt->CreatePatternBrush),(HBRUSH)NULL);
-    lg->mockUpWithResult(NAMED_ADDRESS(pt->GetLastError),(DWORD)1);
+    im->mockUpWithResult(NAMED_ADDRESS(pt->GetLastError),(DWORD)1);
     CHECK_THROWS_API_ERROR
     (
         "CreatePatternBrush",
         1,
         nm::CreatePatternBrush((HBITMAP)0x10)
     );
-    CHECK_EQUAL(2,lg->history().size());
+    CHECK_EQUAL(2,im->history().size());
     CHECK_EQUAL
     (
         call(NAMED_ADDRESS(pt->CreatePatternBrush),(HBITMAP)0x10),
-        lg->history().at(0)
+        im->history().at(0)
     );
     CHECK_EQUAL
-    (call(NAMED_ADDRESS(pt->GetLastError)),lg->history().at(1));
+    (call(NAMED_ADDRESS(pt->GetLastError)),im->history().at(1));
 }
 
 TEST(apiwrapper,CreatePatternBrush_success)
 {
-    lg->mockUpWithResult
+    im->mockUpWithResult
     (NAMED_ADDRESS(pt->CreatePatternBrush),(HBRUSH)0x10);
-    lg->mockUpWithResult(NAMED_ADDRESS(pt->DeleteObject),TRUE);
+    im->mockUpWithResult(NAMED_ADDRESS(pt->DeleteObject),TRUE);
     auto brush=nm::CreatePatternBrush((HBITMAP)0x20);
     CHECK_EQUAL((HGDIOBJ)0x10,brush->handle());
-    CHECK_EQUAL(1,lg->history().size());
+    CHECK_EQUAL(1,im->history().size());
     CHECK_EQUAL
     (
         call(NAMED_ADDRESS(pt->CreatePatternBrush),(HBITMAP)0x20),
-        lg->history().at(0)
+        im->history().at(0)
     );
     brush.reset();
-    CHECK_EQUAL(2,lg->history().size());
+    CHECK_EQUAL(2,im->history().size());
     CHECK_EQUAL
     (
         call(NAMED_ADDRESS(pt->DeleteObject),(HGDIOBJ)0x10),
-        lg->history().at(1)
+        im->history().at(1)
     );
 }
 
 TEST(apiwrapper,CreatePen_fail)
 {
-    lg->mockUpWithResult(NAMED_ADDRESS(pt->CreatePen),(HPEN)NULL);
-    lg->mockUpWithResult(NAMED_ADDRESS(pt->GetLastError),(DWORD)1);
+    im->mockUpWithResult(NAMED_ADDRESS(pt->CreatePen),(HPEN)NULL);
+    im->mockUpWithResult(NAMED_ADDRESS(pt->GetLastError),(DWORD)1);
     CHECK_THROWS_API_ERROR
     ("CreatePen",1,nm::CreatePen(1,2,RGB(1,2,3)));
-    CHECK_EQUAL(2,lg->history().size());
+    CHECK_EQUAL(2,im->history().size());
     CHECK_EQUAL
     (
         call(NAMED_ADDRESS(pt->CreatePen),1,2,RGB(1,2,3)),
-        lg->history().at(0)
+        im->history().at(0)
     );
     CHECK_EQUAL
-    (call(NAMED_ADDRESS(pt->GetLastError)),lg->history().at(1));
+    (call(NAMED_ADDRESS(pt->GetLastError)),im->history().at(1));
 }
 
 TEST(apiwrapper,CreatePen_success)
 {
-    lg->mockUpWithResult(NAMED_ADDRESS(pt->CreatePen),(HPEN)0x10);
-    lg->mockUpWithResult(NAMED_ADDRESS(pt->DeleteObject),TRUE);
+    im->mockUpWithResult(NAMED_ADDRESS(pt->CreatePen),(HPEN)0x10);
+    im->mockUpWithResult(NAMED_ADDRESS(pt->DeleteObject),TRUE);
     auto pen=nm::CreatePen(1,2,RGB(1,2,3));
     CHECK_EQUAL((HGDIOBJ)0x10,pen->handle());
-    CHECK_EQUAL(1,lg->history().size());
+    CHECK_EQUAL(1,im->history().size());
     CHECK_EQUAL
     (
         call(NAMED_ADDRESS(pt->CreatePen),1,2,RGB(1,2,3)),
-        lg->history().at(0)
+        im->history().at(0)
     );
     pen.reset();
-    CHECK_EQUAL(2,lg->history().size());
+    CHECK_EQUAL(2,im->history().size());
     CHECK_EQUAL
     (
         call(NAMED_ADDRESS(pt->DeleteObject),(HGDIOBJ)0x10),
-        lg->history().at(1)
+        im->history().at(1)
     );
 }
 
 TEST(apiwrapper,CreateSolidBrush_fail)
 {
-    lg->mockUpWithResult
+    im->mockUpWithResult
     (NAMED_ADDRESS(pt->CreateSolidBrush),(HBRUSH)NULL);
-    lg->mockUpWithResult(NAMED_ADDRESS(pt->GetLastError),(DWORD)1);
+    im->mockUpWithResult(NAMED_ADDRESS(pt->GetLastError),(DWORD)1);
     CHECK_THROWS_API_ERROR
     ("CreateSolidBrush",1,nm::CreateSolidBrush(RGB(1,2,3)));
-    CHECK_EQUAL(2,lg->history().size());
+    CHECK_EQUAL(2,im->history().size());
     CHECK_EQUAL
     (
         call(NAMED_ADDRESS(pt->CreateSolidBrush),RGB(1,2,3)),
-        lg->history().at(0)
+        im->history().at(0)
     );
     CHECK_EQUAL
-    (call(NAMED_ADDRESS(pt->GetLastError)),lg->history().at(1));
+    (call(NAMED_ADDRESS(pt->GetLastError)),im->history().at(1));
 }
 
 TEST(apiwrapper,CreateSolidBrush_success)
 {
-    lg->mockUpWithResult
+    im->mockUpWithResult
     (NAMED_ADDRESS(pt->CreateSolidBrush),(HBRUSH)0x10);
-    lg->mockUpWithResult(NAMED_ADDRESS(pt->DeleteObject),TRUE);
+    im->mockUpWithResult(NAMED_ADDRESS(pt->DeleteObject),TRUE);
     auto brush=nm::CreateSolidBrush(RGB(1,2,3));
     CHECK_EQUAL((HGDIOBJ)0x10,brush->handle());
-    CHECK_EQUAL(1,lg->history().size());
+    CHECK_EQUAL(1,im->history().size());
     CHECK_EQUAL
     (
         call(NAMED_ADDRESS(pt->CreateSolidBrush),RGB(1,2,3)),
-        lg->history().at(0)
+        im->history().at(0)
     );
     brush.reset();
-    CHECK_EQUAL(2,lg->history().size());
+    CHECK_EQUAL(2,im->history().size());
     CHECK_EQUAL
     (
         call(NAMED_ADDRESS(pt->DeleteObject),(HGDIOBJ)0x10),
-        lg->history().at(1)
+        im->history().at(1)
     );
 }
 
 TEST(apiwrapper,CreateWindowEx_error)
 {
-    lg->mockUpWithResult
+    im->mockUpWithResult
     (NAMED_ADDRESS(pt->CreateWindowEx),(HWND)NULL);
     ct->error=runtime_error("hoge");
     CHECK_THROWS_RUNTIME_ERROR
@@ -469,16 +472,16 @@ TEST(apiwrapper,CreateWindowEx_error)
             (LPVOID)0x40
         )
     );
-    CHECK_EQUAL(1,lg->history().size());
+    CHECK_EQUAL(1,im->history().size());
     CHECK_EQUAL
     (
         call
         (
             NAMED_ADDRESS(pt->CreateWindowEx),
-            1,
+            1ul,
             "fuga",
             "piyo",
-            2,
+            2ul,
             3,
             4,
             5,
@@ -488,15 +491,15 @@ TEST(apiwrapper,CreateWindowEx_error)
             (HINSTANCE)0x30,
             (LPVOID)0x40
         ),
-        lg->history().at(0)
+        im->history().at(0)
     );
 }
 
 TEST(apiwrapper,CreateWindowEx_fail)
 {
-    lg->mockUpWithResult
+    im->mockUpWithResult
     (NAMED_ADDRESS(pt->CreateWindowEx),(HWND)NULL);
-    lg->mockUpWithResult(NAMED_ADDRESS(pt->GetLastError),(DWORD)1);
+    im->mockUpWithResult(NAMED_ADDRESS(pt->GetLastError),(DWORD)1);
     CHECK_THROWS_API_ERROR
     (
         "CreateWindowEx",
@@ -517,16 +520,16 @@ TEST(apiwrapper,CreateWindowEx_fail)
             (LPVOID)0x40
         )
     );
-    CHECK_EQUAL(2,lg->history().size());
+    CHECK_EQUAL(2,im->history().size());
     CHECK_EQUAL
     (
         call
         (
             NAMED_ADDRESS(pt->CreateWindowEx),
-            1,
+            1ul,
             "hoge",
             "fuga",
-            2,
+            2ul,
             3,
             4,
             5,
@@ -536,15 +539,15 @@ TEST(apiwrapper,CreateWindowEx_fail)
             (HINSTANCE)0x30,
             (LPVOID)0x40
         ),
-        lg->history().at(0)
+        im->history().at(0)
     );
     CHECK_EQUAL
-    (call(NAMED_ADDRESS(pt->GetLastError)),lg->history().at(1));
+    (call(NAMED_ADDRESS(pt->GetLastError)),im->history().at(1));
 }
 
 TEST(apiwrapper,CreateWindowEx_success)
 {
-    lg->mockUpWithResult
+    im->mockUpWithResult
     (NAMED_ADDRESS(pt->CreateWindowEx),(HWND)0x10);
     CHECK_EQUAL
     (
@@ -565,16 +568,16 @@ TEST(apiwrapper,CreateWindowEx_success)
             (LPVOID)0x50
         )
     );
-    CHECK_EQUAL(1,lg->history().size());
+    CHECK_EQUAL(1,im->history().size());
     CHECK_EQUAL
     (
         call
         (
             NAMED_ADDRESS(pt->CreateWindowEx),
-            1,
+            1ul,
             "hoge",
             "fuga",
-            2,
+            2ul,
             3,
             4,
             5,
@@ -584,55 +587,57 @@ TEST(apiwrapper,CreateWindowEx_success)
             (HINSTANCE)0x40,
             (LPVOID)0x50
         ),
-        lg->history().at(0)
+        im->history().at(0)
     );
 }
 
 TEST(apiwrapper,DispatchMessage_fail)
 {
-    lg->mockUpWithResult
+    im->mockUpWithResult
     (NAMED_ADDRESS(pt->DispatchMessage),(LRESULT)1);
     MSG message({(HWND)0x10,1,2,3,4,POINT({1,-2})});
     ct->error=runtime_error("hoge");
     CHECK_THROWS_RUNTIME_ERROR("hoge",nm::DispatchMessage(&message));
-    CHECK_EQUAL(1,lg->history().size());
+    CHECK_EQUAL(1,im->history().size());
     CHECK_EQUAL
     (
         call
         (
             NAMED_ADDRESS(pt->DispatchMessage),
-            MSG({(HWND)0x10,1,2,3,4,POINT({1,-2})})
+            make_shared_pod<const MSG>
+            ((HWND)0x10,1,2,3,4,POINT({1,-2})).get()
         ),
-        lg->history().at(0)
+        im->history().at(0)
     );
 }
 
 TEST(apiwrapper,DispatchMessage_success)
 {
-    lg->mockUpWithResult
+    im->mockUpWithResult
     (NAMED_ADDRESS(pt->DispatchMessage),(LRESULT)1);
     MSG message({(HWND)0x10,1,2,3,4,POINT({1,-2})});
     CHECK_EQUAL(1,nm::DispatchMessage(&message));
-    CHECK_EQUAL(1,lg->history().size());
+    CHECK_EQUAL(1,im->history().size());
     CHECK_EQUAL
     (
         call
         (
             NAMED_ADDRESS(pt->DispatchMessage),
-            MSG({(HWND)0x10,1,2,3,4,POINT({1,-2})})
+            make_shared_pod<const MSG>
+            ((HWND)0x10,1,2,3,4,POINT({1,-2})).get()
         ),
-        lg->history().at(0)
+        im->history().at(0)
     );
 }
 
 TEST(apiwrapper,DrawText_fail)
 {
-    lg->mockUpWithResult(NAMED_ADDRESS(pt->DrawText),0);
-    lg->mockUpWithResult(NAMED_ADDRESS(pt->GetLastError),(DWORD)1);
+    im->mockUpWithResult(NAMED_ADDRESS(pt->DrawText),0);
+    im->mockUpWithResult(NAMED_ADDRESS(pt->GetLastError),(DWORD)1);
     RECT rect({1,-2,-3,5});
     CHECK_THROWS_API_ERROR
     ("DrawText",1,nm::DrawText((HDC)0x10,"hoge",1,&rect,2));
-    CHECK_EQUAL(2,lg->history().size());
+    CHECK_EQUAL(2,im->history().size());
     CHECK_EQUAL
     (
         call
@@ -641,21 +646,21 @@ TEST(apiwrapper,DrawText_fail)
             (HDC)0x10,
             "hoge",
             1,
-            RECT({1,-2,-3,5}),
-            2
+            make_shared_pod<RECT>(1,-2,-3,5).get(),
+            2u
         ),
-        lg->history().at(0)
+        im->history().at(0)
     );
     CHECK_EQUAL
-    (call(NAMED_ADDRESS(pt->GetLastError)),lg->history().at(1));
+    (call(NAMED_ADDRESS(pt->GetLastError)),im->history().at(1));
 }
 
 TEST(apiwrapper,DrawText_success)
 {
-    lg->mockUpWithResult(NAMED_ADDRESS(pt->DrawText),1);
+    im->mockUpWithResult(NAMED_ADDRESS(pt->DrawText),1);
     RECT rect({1,-2,-3,5});
     CHECK_EQUAL(1,nm::DrawText((HDC)0x10,"hoge",1,&rect,2));
-    CHECK_EQUAL(1,lg->history().size());
+    CHECK_EQUAL(1,im->history().size());
     CHECK_EQUAL
     (
         call
@@ -664,103 +669,108 @@ TEST(apiwrapper,DrawText_success)
             (HDC)0x10,
             "hoge",
             1,
-            RECT({1,-2,-3,5}),
-            2
+            make_shared_pod<RECT>(1,-2,-3,5).get(),
+            2u
         ),
-        lg->history().at(0)
+        im->history().at(0)
     );
 }
 
 TEST(apiwrapper,Ellipse_fail)
 {
-    lg->mockUpWithResult(NAMED_ADDRESS(pt->Ellipse),FALSE);
-    lg->mockUpWithResult(NAMED_ADDRESS(pt->GetLastError),(DWORD)1);
+    im->mockUpWithResult(NAMED_ADDRESS(pt->Ellipse),FALSE);
+    im->mockUpWithResult(NAMED_ADDRESS(pt->GetLastError),(DWORD)1);
     CHECK_THROWS_API_ERROR
     ("Ellipse",1,nm::Ellipse((HDC)0x10,1,2,3,4));
-    CHECK_EQUAL(2,lg->history().size());
+    CHECK_EQUAL(2,im->history().size());
     CHECK_EQUAL
     (
         call(NAMED_ADDRESS(pt->Ellipse),(HDC)0x10,1,2,3,4),
-        lg->history().at(0)
+        im->history().at(0)
     );
     CHECK_EQUAL
-    (call(NAMED_ADDRESS(pt->GetLastError)),lg->history().at(1));
+    (call(NAMED_ADDRESS(pt->GetLastError)),im->history().at(1));
 }
 
 TEST(apiwrapper,Ellipse_success)
 {
-    lg->mockUpWithResult(NAMED_ADDRESS(pt->Ellipse),TRUE);
+    im->mockUpWithResult(NAMED_ADDRESS(pt->Ellipse),TRUE);
     nm::Ellipse((HDC)0x10,1,2,3,4);
-    CHECK_EQUAL(1,lg->history().size());
+    CHECK_EQUAL(1,im->history().size());
     CHECK_EQUAL
     (
         call(NAMED_ADDRESS(pt->Ellipse),(HDC)0x10,1,2,3,4),
-        lg->history().at(0)
+        im->history().at(0)
     );
 }
 
 TEST(apiwrapper,FillRect_fail)
 {
-    lg->mockUpWithResult(NAMED_ADDRESS(pt->FillRect),FALSE);
-    lg->mockUpWithResult(NAMED_ADDRESS(pt->GetLastError),(DWORD)1);
+    im->mockUpWithResult(NAMED_ADDRESS(pt->FillRect),FALSE);
+    im->mockUpWithResult(NAMED_ADDRESS(pt->GetLastError),(DWORD)1);
     RECT rect({1,-2,-3,5});
     CHECK_THROWS_API_ERROR
     ("FillRect",1,nm::FillRect((HDC)0x10,&rect,(HBRUSH)0x20));
-    CHECK_EQUAL(2,lg->history().size());
+    CHECK_EQUAL(2,im->history().size());
     CHECK_EQUAL
     (
         call
         (
             NAMED_ADDRESS(pt->FillRect),
             (HDC)0x10,
-            RECT({1,-2,-3,5}),
+            make_shared_pod<const RECT>(1,-2,-3,5).get(),
             (HBRUSH)0x20
         ),
-        lg->history().at(0)
+        im->history().at(0)
     );
     CHECK_EQUAL
-    (call(NAMED_ADDRESS(pt->GetLastError)),lg->history().at(1));
+    (call(NAMED_ADDRESS(pt->GetLastError)),im->history().at(1));
 }
 
 TEST(apiwrapper,FillRect_success)
 {
-    lg->mockUpWithResult(NAMED_ADDRESS(pt->FillRect),TRUE);
+    im->mockUpWithResult(NAMED_ADDRESS(pt->FillRect),TRUE);
     RECT rect({1,-2,-3,5});
     nm::FillRect((HDC)0x10,&rect,(HBRUSH)0x20);
-    CHECK_EQUAL(1,lg->history().size());
+    CHECK_EQUAL(1,im->history().size());
     CHECK_EQUAL
     (
         call
         (
             NAMED_ADDRESS(pt->FillRect),
             (HDC)0x10,
-            RECT({1,-2,-3,5}),
+            make_shared_pod<const RECT>(1,-2,-3,5).get(),
             (HBRUSH)0x20
         ),
-        lg->history().at(0)
+        im->history().at(0)
     );
 }
 
 TEST(apiwrapper,GetClientRect_fail)
 {
-    lg->mockUpWithResult(NAMED_ADDRESS(pt->GetClientRect),FALSE);
-    lg->mockUpWithResult(NAMED_ADDRESS(pt->GetLastError),(DWORD)1);
+    im->mockUpWithResult(NAMED_ADDRESS(pt->GetClientRect),FALSE);
+    im->mockUpWithResult(NAMED_ADDRESS(pt->GetLastError),(DWORD)1);
     RECT rect;
     CHECK_THROWS_API_ERROR
     ("GetClientRect",1,nm::GetClientRect((HWND)0x10,&rect));
-    CHECK_EQUAL(2,lg->history().size());
+    CHECK_EQUAL(2,im->history().size());
     CHECK_EQUAL
     (
-        call(NAMED_ADDRESS(pt->GetClientRect),(HWND)0x10,RECT({0,0,0,0})),
-        lg->history().at(0)
+        call
+        (
+            NAMED_ADDRESS(pt->GetClientRect),
+            (HWND)0x10,
+            make_shared_pod<RECT>(0,0,0,0).get()
+        ),
+        im->history().at(0)
     );
     CHECK_EQUAL
-    (call(NAMED_ADDRESS(pt->GetLastError)),lg->history().at(1));
+    (call(NAMED_ADDRESS(pt->GetLastError)),im->history().at(1));
 }
 
 TEST(apiwrapper,GetClientRect_success)
 {
-    lg->mockUpWithBody(NAMED_ADDRESS(pt->GetClientRect),
+    im->mockUpWithBody(NAMED_ADDRESS(pt->GetClientRect),
     [] (HWND window,LPRECT rect)->BOOL
     {
         *rect=RECT({1,-2,-3,5});
@@ -769,33 +779,42 @@ TEST(apiwrapper,GetClientRect_success)
     RECT rect;
     nm::GetClientRect((HWND)0x10,&rect);
     CHECK_EQUAL(RECT({1,-2,-3,5}),rect);
-    CHECK_EQUAL(1,lg->history().size());
+    CHECK_EQUAL(1,im->history().size());
     CHECK_EQUAL
     (
-        call(NAMED_ADDRESS(pt->GetClientRect),(HWND)0x10,RECT({0,0,0,0})),
-        lg->history().at(0)
+        call
+        (
+            NAMED_ADDRESS(pt->GetClientRect),
+            (HWND)0x10,
+            make_shared_pod<RECT>(0,0,0,0).get()
+        ),
+        im->history().at(0)
     );
 }
 
 TEST(apiwrapper,GetCursorPos_fail)
 {
-    lg->mockUpWithResult(NAMED_ADDRESS(pt->GetCursorPos),FALSE);
-    lg->mockUpWithResult(NAMED_ADDRESS(pt->GetLastError),(DWORD)1);
+    im->mockUpWithResult(NAMED_ADDRESS(pt->GetCursorPos),FALSE);
+    im->mockUpWithResult(NAMED_ADDRESS(pt->GetLastError),(DWORD)1);
     POINT pos;
     CHECK_THROWS_API_ERROR("GetCursorPos",1,nm::GetCursorPos(&pos));
-    CHECK_EQUAL(2,lg->history().size());
+    CHECK_EQUAL(2,im->history().size());
     CHECK_EQUAL
     (
-        call(NAMED_ADDRESS(pt->GetCursorPos),POINT({0,0})),
-        lg->history().at(0)
+        call
+        (
+            NAMED_ADDRESS(pt->GetCursorPos),
+            make_shared_pod<POINT>(0,0).get()
+        ),
+        im->history().at(0)
     );
     CHECK_EQUAL
-    (call(NAMED_ADDRESS(pt->GetLastError)),lg->history().at(1));
+    (call(NAMED_ADDRESS(pt->GetLastError)),im->history().at(1));
 }
 
 TEST(apiwrapper,GetCursorPos_success)
 {
-    lg->mockUpWithBody(NAMED_ADDRESS(pt->GetCursorPos),
+    im->mockUpWithBody(NAMED_ADDRESS(pt->GetCursorPos),
     [] (LPPOINT pos)->BOOL
     {
         *pos=POINT({1,-2});
@@ -804,71 +823,75 @@ TEST(apiwrapper,GetCursorPos_success)
     POINT pos;
     nm::GetCursorPos(&pos);
     CHECK_EQUAL(POINT({1,-2}),pos);
-    CHECK_EQUAL(1,lg->history().size());
+    CHECK_EQUAL(1,im->history().size());
     CHECK_EQUAL
     (
-        call(NAMED_ADDRESS(pt->GetCursorPos),POINT({0,0})),
-        lg->history().at(0)
+        call
+        (
+            NAMED_ADDRESS(pt->GetCursorPos),
+            make_shared_pod<POINT>(0,0).get()
+        ),
+        im->history().at(0)
     );
 }
 
 TEST(apiwrapper,GetDC_fail)
 {
-    lg->mockUpWithResult(NAMED_ADDRESS(pt->GetDC),(HDC)NULL);
-    lg->mockUpWithResult(NAMED_ADDRESS(pt->GetLastError),(DWORD)1);
+    im->mockUpWithResult(NAMED_ADDRESS(pt->GetDC),(HDC)NULL);
+    im->mockUpWithResult(NAMED_ADDRESS(pt->GetLastError),(DWORD)1);
     CHECK_THROWS_API_ERROR("GetDC",1,nm::GetDC((HWND)0x10));
-    CHECK_EQUAL(2,lg->history().size());
+    CHECK_EQUAL(2,im->history().size());
     CHECK_EQUAL
-    (call(NAMED_ADDRESS(pt->GetDC),(HWND)0x10),lg->history().at(0));
+    (call(NAMED_ADDRESS(pt->GetDC),(HWND)0x10),im->history().at(0));
     CHECK_EQUAL
-    (call(NAMED_ADDRESS(pt->GetLastError)),lg->history().at(1));
+    (call(NAMED_ADDRESS(pt->GetLastError)),im->history().at(1));
 }
 
 TEST(apiwrapper,GetDC_success)
 {
-    lg->mockUpWithResult(NAMED_ADDRESS(pt->GetDC),(HDC)0x10);
-    lg->mockUpWithResult(NAMED_ADDRESS(pt->ReleaseDC),1);
+    im->mockUpWithResult(NAMED_ADDRESS(pt->GetDC),(HDC)0x10);
+    im->mockUpWithResult(NAMED_ADDRESS(pt->ReleaseDC),1);
     auto dc=nm::GetDC((HWND)0x20);
     CHECK_EQUAL((HDC)0x10,dc->handle());
-    CHECK_EQUAL(1,lg->history().size());
+    CHECK_EQUAL(1,im->history().size());
     CHECK_EQUAL
-    (call(NAMED_ADDRESS(pt->GetDC),(HWND)0x20),lg->history().at(0));
+    (call(NAMED_ADDRESS(pt->GetDC),(HWND)0x20),im->history().at(0));
     dc.reset();
-    CHECK_EQUAL(2,lg->history().size());
+    CHECK_EQUAL(2,im->history().size());
     CHECK_EQUAL
     (
         call(NAMED_ADDRESS(pt->ReleaseDC),(HWND)0x20,(HDC)0x10),
-        lg->history().at(1)
+        im->history().at(1)
     );
 }
 
 TEST(apiwrapper,GetMessage_fail)
 {
-    lg->mockUpWithResult(NAMED_ADDRESS(pt->GetMessage),-1);
-    lg->mockUpWithResult(NAMED_ADDRESS(pt->GetLastError),(DWORD)1);
+    im->mockUpWithResult(NAMED_ADDRESS(pt->GetMessage),-1);
+    im->mockUpWithResult(NAMED_ADDRESS(pt->GetLastError),(DWORD)1);
     MSG message;
     CHECK_THROWS_API_ERROR
     ("GetMessage",1,nm::GetMessage(&message,(HWND)0x10,1,2));
-    CHECK_EQUAL(2,lg->history().size());
+    CHECK_EQUAL(2,im->history().size());
     CHECK_EQUAL
     (
         call
         (
             NAMED_ADDRESS(pt->GetMessage),
-            MSG({(HWND)0x0,0,0,0,0,POINT({0,0})}),
+            make_shared_pod<MSG>((HWND)0x0,0,0,0,0,POINT({0,0})).get(),
             (HWND)0x10,
-            1,
-            2
+            1u,
+            2u
         ),
-        lg->history().at(0)
+        im->history().at(0)
     );
     CHECK_EQUAL
-    (call(NAMED_ADDRESS(pt->GetLastError)),lg->history().at(1));
+    (call(NAMED_ADDRESS(pt->GetLastError)),im->history().at(1));
 }
 
 TEST(apiwrapper,GetMessage_continue)
 {
-    lg->mockUpWithBody(NAMED_ADDRESS(pt->GetMessage),
+    im->mockUpWithBody(NAMED_ADDRESS(pt->GetMessage),
     [] (LPMSG message,HWND window,UINT first,UINT last)->BOOL
     {
         *message=MSG({(HWND)0x10,1,2,3,4,POINT({1,-2})});
@@ -881,24 +904,24 @@ TEST(apiwrapper,GetMessage_continue)
         describe(MSG({(HWND)0x10,1,2,3,4,POINT({1,-2})})),
         describe(message)
     );
-    CHECK_EQUAL(1,lg->history().size());
+    CHECK_EQUAL(1,im->history().size());
     CHECK_EQUAL
     (
         call
         (
             NAMED_ADDRESS(pt->GetMessage),
-            MSG({(HWND)0x0,0,0,0,0,POINT({0,0})}),
+            make_shared_pod<MSG>((HWND)0x0,0,0,0,0,POINT({0,0})).get(),
             (HWND)0x20,
-            1,
-            2
+            1u,
+            2u
         ),
-        lg->history().at(0)
+        im->history().at(0)
     );
 }
 
 TEST(apiwrapper,GetMessage_quit)
 {
-    lg->mockUpWithBody(NAMED_ADDRESS(pt->GetMessage),
+    im->mockUpWithBody(NAMED_ADDRESS(pt->GetMessage),
     [] (LPMSG message,HWND window,UINT first,UINT last)->BOOL
     {
         *message=MSG({(HWND)0x10,1,2,3,4,POINT({1,-2})});
@@ -911,77 +934,101 @@ TEST(apiwrapper,GetMessage_quit)
         describe(MSG({(HWND)0x10,1,2,3,4,POINT({1,-2})})),
         describe(message)
     );
-    CHECK_EQUAL(1,lg->history().size());
+    CHECK_EQUAL(1,im->history().size());
     CHECK_EQUAL
     (
         call
         (
             NAMED_ADDRESS(pt->GetMessage),
-            MSG({(HWND)0x0,0,0,0,0,POINT({0,0})}),
+            make_shared_pod<MSG>((HWND)0x0,0,0,0,0,POINT({0,0})).get(),
             (HWND)0x20,
-            1,
-            2
+            1u,
+            2u
         ),
-        lg->history().at(0)
+        im->history().at(0)
     );
 }
 
 TEST(apiwrapper,GetObject_fail)
 {
-    lg->mockUpWithResult(NAMED_ADDRESS(pt->GetObject),0);
-    lg->mockUpWithResult(NAMED_ADDRESS(pt->GetLastError),(DWORD)1);
+    im->mockUpWithResult(NAMED_ADDRESS(pt->GetObject),0);
+    im->mockUpWithResult(NAMED_ADDRESS(pt->GetLastError),(DWORD)1);
     CHECK_THROWS_API_ERROR
     ("GetObject",1,nm::GetObject((HGDIOBJ)0x10,1,(LPVOID)0x20));
-    CHECK_EQUAL(2,lg->history().size());
+    CHECK_EQUAL(2,im->history().size());
     CHECK_EQUAL
     (
         call(NAMED_ADDRESS(pt->GetObject),(HGDIOBJ)0x10,1,(LPVOID)0x20),
-        lg->history().at(0)
+        im->history().at(0)
     );
     CHECK_EQUAL
-    (call(NAMED_ADDRESS(pt->GetLastError)),lg->history().at(1));
+    (call(NAMED_ADDRESS(pt->GetLastError)),im->history().at(1));
 }
 
 TEST(apiwrapper,GetObject_success)
 {
-    lg->mockUpWithResult(NAMED_ADDRESS(pt->GetObject),1);
+    im->mockUpWithResult(NAMED_ADDRESS(pt->GetObject),1);
     MSG message;
     CHECK_EQUAL(1,nm::GetObject((HGDIOBJ)0x10,1,(LPVOID)0x20));
-    CHECK_EQUAL(1,lg->history().size());
+    CHECK_EQUAL(1,im->history().size());
     CHECK_EQUAL
     (
         call(NAMED_ADDRESS(pt->GetObject),(HGDIOBJ)0x10,1,(LPVOID)0x20),
-        lg->history().at(0)
+        im->history().at(0)
     );
+}
+
+TEST(apiwrapper,GetPixel_fail)
+{
+    im->mockUpWithResult
+    (NAMED_ADDRESS(pt->GetPixel),(COLORREF)CLR_INVALID);
+    im->mockUpWithResult(NAMED_ADDRESS(pt->GetLastError),(DWORD)1);
+    CHECK_THROWS_API_ERROR
+    ("GetPixel",1,nm::GetPixel((HDC)0x10,1,2));
+    CHECK_EQUAL(2,im->history().size());
+    CHECK_EQUAL
+    (call(NAMED_ADDRESS(pt->GetPixel),(HDC)0x10,1,2),im->history().at(0));
+    CHECK_EQUAL
+    (call(NAMED_ADDRESS(pt->GetLastError)),im->history().at(1));
+}
+
+TEST(apiwrapper,GetPixel_success)
+{
+    im->mockUpWithResult(NAMED_ADDRESS(pt->GetPixel),RGB(1,2,3));
+    MSG message;
+    CHECK_EQUAL(RGB(1,2,3),nm::GetPixel((HDC)0x10,1,2));
+    CHECK_EQUAL(1,im->history().size());
+    CHECK_EQUAL
+    (call(NAMED_ADDRESS(pt->GetPixel),(HDC)0x10,1,2),im->history().at(0));
 }
 
 TEST(apiwrapper,GetSystemMetrics_fail)
 {
-    lg->mockUpWithResult(NAMED_ADDRESS(pt->GetSystemMetrics),0);
-    lg->mockUpWithResult(NAMED_ADDRESS(pt->GetLastError),(DWORD)1);
+    im->mockUpWithResult(NAMED_ADDRESS(pt->GetSystemMetrics),0);
+    im->mockUpWithResult(NAMED_ADDRESS(pt->GetLastError),(DWORD)1);
     CHECK_THROWS_API_ERROR
     ("GetSystemMetrics",1,nm::GetSystemMetrics(1));
-    CHECK_EQUAL(2,lg->history().size());
+    CHECK_EQUAL(2,im->history().size());
     CHECK_EQUAL
-    (call(NAMED_ADDRESS(pt->GetSystemMetrics),1),lg->history().at(0));
+    (call(NAMED_ADDRESS(pt->GetSystemMetrics),1),im->history().at(0));
     CHECK_EQUAL
-    (call(NAMED_ADDRESS(pt->GetLastError)),lg->history().at(1));
+    (call(NAMED_ADDRESS(pt->GetLastError)),im->history().at(1));
 }
 
 TEST(apiwrapper,GetSystemMetrics_success)
 {
-    lg->mockUpWithResult(NAMED_ADDRESS(pt->GetSystemMetrics),1);
+    im->mockUpWithResult(NAMED_ADDRESS(pt->GetSystemMetrics),1);
     MSG message;
     CHECK_EQUAL(1,nm::GetSystemMetrics(1));
-    CHECK_EQUAL(1,lg->history().size());
+    CHECK_EQUAL(1,im->history().size());
     CHECK_EQUAL
-    (call(NAMED_ADDRESS(pt->GetSystemMetrics),1),lg->history().at(0));
+    (call(NAMED_ADDRESS(pt->GetSystemMetrics),1),im->history().at(0));
 }
 
 TEST(apiwrapper,GetWindowPlacement_fail)
 {
-    lg->mockUpWithResult(NAMED_ADDRESS(pt->GetWindowPlacement),FALSE);
-    lg->mockUpWithResult(NAMED_ADDRESS(pt->GetLastError),(DWORD)1);
+    im->mockUpWithResult(NAMED_ADDRESS(pt->GetWindowPlacement),FALSE);
+    im->mockUpWithResult(NAMED_ADDRESS(pt->GetLastError),(DWORD)1);
     WINDOWPLACEMENT placement;
     CHECK_THROWS_API_ERROR
     (
@@ -989,32 +1036,32 @@ TEST(apiwrapper,GetWindowPlacement_fail)
         1,
         nm::GetWindowPlacement((HWND)0x10,&placement)
     );
-    CHECK_EQUAL(2,lg->history().size());
+    CHECK_EQUAL(2,im->history().size());
     CHECK_EQUAL
     (
         call
         (
             NAMED_ADDRESS(pt->GetWindowPlacement),
             (HWND)0x10,
-            WINDOWPLACEMENT(
-            {
+            make_shared_pod<WINDOWPLACEMENT>
+            (
                 sizeof(WINDOWPLACEMENT),
                 0,
                 0,
                 POINT({0,0}),
                 POINT({0,0}),
                 RECT({0,0,0,0})
-            })
+            ).get()
         ),
-        lg->history().at(0)
+        im->history().at(0)
     );
     CHECK_EQUAL
-    (call(NAMED_ADDRESS(pt->GetLastError)),lg->history().at(1));
+    (call(NAMED_ADDRESS(pt->GetLastError)),im->history().at(1));
 }
 
 TEST(apiwrapper,GetWindowPlacement_success)
 {
-    lg->mockUpWithBody(NAMED_ADDRESS(pt->GetWindowPlacement),
+    im->mockUpWithBody(NAMED_ADDRESS(pt->GetWindowPlacement),
     [] (HWND window,WINDOWPLACEMENT*placement)->BOOL
     {
         *placement=WINDOWPLACEMENT
@@ -1032,139 +1079,139 @@ TEST(apiwrapper,GetWindowPlacement_success)
         ),
         describe(placement)
     );
-    CHECK_EQUAL(1,lg->history().size());
+    CHECK_EQUAL(1,im->history().size());
     CHECK_EQUAL
     (
         call
         (
             NAMED_ADDRESS(pt->GetWindowPlacement),
             (HWND)0x10,
-            WINDOWPLACEMENT(
-            {
+            make_shared_pod<WINDOWPLACEMENT>
+            (
                 sizeof(WINDOWPLACEMENT),
                 0,
                 0,
                 POINT({0,0}),
                 POINT({0,0}),
                 RECT({0,0,0,0})
-            })
+            ).get()
         ),
-        lg->history().at(0)
+        im->history().at(0)
     );
 }
 
 TEST(apiwrapper,LoadBitmap_fail)
 {
-    lg->mockUpWithResult(NAMED_ADDRESS(pt->LoadBitmap),(HBITMAP)NULL);
-    lg->mockUpWithResult(NAMED_ADDRESS(pt->GetLastError),(DWORD)1);
+    im->mockUpWithResult(NAMED_ADDRESS(pt->LoadBitmap),(HBITMAP)NULL);
+    im->mockUpWithResult(NAMED_ADDRESS(pt->GetLastError),(DWORD)1);
     CHECK_THROWS_API_ERROR
     ("LoadBitmap",1,nm::LoadBitmap((HINSTANCE)0x10,"hoge"));
-    CHECK_EQUAL(2,lg->history().size());
+    CHECK_EQUAL(2,im->history().size());
     CHECK_EQUAL
     (
         call(NAMED_ADDRESS(pt->LoadBitmap),(HINSTANCE)0x10,"hoge"),
-        lg->history().at(0)
+        im->history().at(0)
     );
     CHECK_EQUAL
-    (call(NAMED_ADDRESS(pt->GetLastError)),lg->history().at(1));
+    (call(NAMED_ADDRESS(pt->GetLastError)),im->history().at(1));
 }
 
 TEST(apiwrapper,LoadBitmap_success)
 {
-    lg->mockUpWithResult(NAMED_ADDRESS(pt->LoadBitmap),(HBITMAP)0x10);
-    lg->mockUpWithResult(NAMED_ADDRESS(pt->DeleteObject),TRUE);
+    im->mockUpWithResult(NAMED_ADDRESS(pt->LoadBitmap),(HBITMAP)0x10);
+    im->mockUpWithResult(NAMED_ADDRESS(pt->DeleteObject),TRUE);
     auto bitmap=nm::LoadBitmap((HINSTANCE)0x20,"hoge");
     CHECK_EQUAL((HGDIOBJ)0x10,bitmap->handle());
-    CHECK_EQUAL(1,lg->history().size());
+    CHECK_EQUAL(1,im->history().size());
     CHECK_EQUAL
     (
         call(NAMED_ADDRESS(pt->LoadBitmap),(HINSTANCE)0x20,"hoge"),
-        lg->history().at(0)
+        im->history().at(0)
     );
     bitmap.reset();
-    CHECK_EQUAL(2,lg->history().size());
+    CHECK_EQUAL(2,im->history().size());
     CHECK_EQUAL
     (
         call(NAMED_ADDRESS(pt->DeleteObject),(HGDIOBJ)0x10),
-        lg->history().at(1)
+        im->history().at(1)
     );
 }
 
 TEST(apiwrapper,LoadCursor_fail)
 {
-    lg->mockUpWithResult(NAMED_ADDRESS(pt->LoadCursor),(HCURSOR)NULL);
-    lg->mockUpWithResult(NAMED_ADDRESS(pt->GetLastError),(DWORD)1);
+    im->mockUpWithResult(NAMED_ADDRESS(pt->LoadCursor),(HCURSOR)NULL);
+    im->mockUpWithResult(NAMED_ADDRESS(pt->GetLastError),(DWORD)1);
     CHECK_THROWS_API_ERROR
     ("LoadCursor",1,nm::LoadCursor((HINSTANCE)0x10,"hoge"));
-    CHECK_EQUAL(2,lg->history().size());
+    CHECK_EQUAL(2,im->history().size());
     CHECK_EQUAL
     (
         call(NAMED_ADDRESS(pt->LoadCursor),(HINSTANCE)0x10,"hoge"),
-        lg->history().at(0)
+        im->history().at(0)
     );
     CHECK_EQUAL
-    (call(NAMED_ADDRESS(pt->GetLastError)),lg->history().at(1));
+    (call(NAMED_ADDRESS(pt->GetLastError)),im->history().at(1));
 }
 
 TEST(apiwrapper,LoadCursor_success)
 {
-    lg->mockUpWithResult(NAMED_ADDRESS(pt->LoadCursor),(HCURSOR)0x10);
+    im->mockUpWithResult(NAMED_ADDRESS(pt->LoadCursor),(HCURSOR)0x10);
     CHECK_EQUAL
     ((HCURSOR)0x10,nm::LoadCursor((HINSTANCE)0x20,"hoge"));
-    CHECK_EQUAL(1,lg->history().size());
+    CHECK_EQUAL(1,im->history().size());
     CHECK_EQUAL
     (
         call(NAMED_ADDRESS(pt->LoadCursor),(HINSTANCE)0x20,"hoge"),
-        lg->history().at(0)
+        im->history().at(0)
     );
 }
 
 TEST(apiwrapper,PostMessage_fail)
 {
-    lg->mockUpWithResult(NAMED_ADDRESS(pt->PostMessage),FALSE);
-    lg->mockUpWithResult(NAMED_ADDRESS(pt->GetLastError),(DWORD)1);
+    im->mockUpWithResult(NAMED_ADDRESS(pt->PostMessage),FALSE);
+    im->mockUpWithResult(NAMED_ADDRESS(pt->GetLastError),(DWORD)1);
     CHECK_THROWS_API_ERROR
     ("PostMessage",1,nm::PostMessage((HWND)0x10,1,2,3));
-    CHECK_EQUAL(2,lg->history().size());
+    CHECK_EQUAL(2,im->history().size());
     CHECK_EQUAL
     (
         call
         (
             NAMED_ADDRESS(pt->PostMessage),
             (HWND)0x10,
-            1,
-            2,
-            3
+            1u,
+            2u,
+            3l
         ),
-        lg->history().at(0)
+        im->history().at(0)
     );
     CHECK_EQUAL
-    (call(NAMED_ADDRESS(pt->GetLastError)),lg->history().at(1));
+    (call(NAMED_ADDRESS(pt->GetLastError)),im->history().at(1));
 }
 
 TEST(apiwrapper,PostMessage_success)
 {
-    lg->mockUpWithResult(NAMED_ADDRESS(pt->PostMessage),TRUE);
+    im->mockUpWithResult(NAMED_ADDRESS(pt->PostMessage),TRUE);
     nm::PostMessage((HWND)0x10,1,2,3);
-    CHECK_EQUAL(1,lg->history().size());
+    CHECK_EQUAL(1,im->history().size());
     CHECK_EQUAL
     (
         call
         (
             NAMED_ADDRESS(pt->PostMessage),
             (HWND)0x10,
-            1,
-            2,
-            3
+            1u,
+            2u,
+            3l
         ),
-        lg->history().at(0)
+        im->history().at(0)
     );
 }
 
 TEST(apiwrapper,RedrawWindow_fail)
 {
-    lg->mockUpWithResult(NAMED_ADDRESS(pt->RedrawWindow),FALSE);
-    lg->mockUpWithResult(NAMED_ADDRESS(pt->GetLastError),(DWORD)1);
+    im->mockUpWithResult(NAMED_ADDRESS(pt->RedrawWindow),FALSE);
+    im->mockUpWithResult(NAMED_ADDRESS(pt->GetLastError),(DWORD)1);
     RECT rect({1,-2,-3,5});
     CHECK_THROWS_API_ERROR
     (
@@ -1172,48 +1219,48 @@ TEST(apiwrapper,RedrawWindow_fail)
         1,
         nm::RedrawWindow((HWND)0x10,&rect,(HRGN)0x20,1)
     );
-    CHECK_EQUAL(2,lg->history().size());
+    CHECK_EQUAL(2,im->history().size());
     CHECK_EQUAL
     (
         call
         (
             NAMED_ADDRESS(pt->RedrawWindow),
             (HWND)0x10,
-            RECT({1,-2,-3,5}),
+            make_shared_pod<const RECT>(1,-2,-3,5).get(),
             (HRGN)0x20,
-            1
+            1u
         ),
-        lg->history().at(0)
+        im->history().at(0)
     );
     CHECK_EQUAL
-    (call(NAMED_ADDRESS(pt->GetLastError)),lg->history().at(1));
+    (call(NAMED_ADDRESS(pt->GetLastError)),im->history().at(1));
 }
 
 TEST(apiwrapper,RedrawWindow_success)
 {
-    lg->mockUpWithResult(NAMED_ADDRESS(pt->RedrawWindow),TRUE);
+    im->mockUpWithResult(NAMED_ADDRESS(pt->RedrawWindow),TRUE);
     RECT rect({1,-2,-3,5});
     nm::RedrawWindow((HWND)0x10,&rect,(HRGN)0x20,1);
-    CHECK_EQUAL(1,lg->history().size());
+    CHECK_EQUAL(1,im->history().size());
     CHECK_EQUAL
     (
         call
         (
             NAMED_ADDRESS(pt->RedrawWindow),
             (HWND)0x10,
-            RECT({1,-2,-3,5}),
+            make_shared_pod<const RECT>(1,-2,-3,5).get(),
             (HRGN)0x20,
-            1
+            1u
         ),
-        lg->history().at(0)
+        im->history().at(0)
     );
 }
 
 TEST(apiwrapper,RegisterClassEx_fail)
 {
-    lg->mockUpWithResult
+    im->mockUpWithResult
     (NAMED_ADDRESS(pt->RegisterClassEx),(ATOM)0);
-    lg->mockUpWithResult(NAMED_ADDRESS(pt->GetLastError),(DWORD)1);
+    im->mockUpWithResult(NAMED_ADDRESS(pt->GetLastError),(DWORD)1);
     WNDCLASSEX clazz(
     {
         1,
@@ -1231,14 +1278,14 @@ TEST(apiwrapper,RegisterClassEx_fail)
     });
     CHECK_THROWS_API_ERROR
     ("RegisterClassEx",1,nm::RegisterClassEx(&clazz));
-    CHECK_EQUAL(2,lg->history().size());
+    CHECK_EQUAL(2,im->history().size());
     CHECK_EQUAL
     (
         call
         (
             NAMED_ADDRESS(pt->RegisterClassEx),
-            WNDCLASSEX(
-            {
+            make_shared_pod<const WNDCLASSEX>
+            (
                 1,
                 2,
                 (WNDPROC)0x10,
@@ -1251,17 +1298,17 @@ TEST(apiwrapper,RegisterClassEx_fail)
                 "hoge",
                 "fuga",
                 (HICON)0x60
-            })
+            ).get()
         ),
-        lg->history().at(0)
+        im->history().at(0)
     );
     CHECK_EQUAL
-    (call(NAMED_ADDRESS(pt->GetLastError)),lg->history().at(1));
+    (call(NAMED_ADDRESS(pt->GetLastError)),im->history().at(1));
 }
 
 TEST(apiwrapper,RegisterClassEx_success)
 {
-    lg->mockUpWithResult
+    im->mockUpWithResult
     (NAMED_ADDRESS(pt->RegisterClassEx),(ATOM)1);
     WNDCLASSEX clazz(
     {
@@ -1279,14 +1326,14 @@ TEST(apiwrapper,RegisterClassEx_success)
         (HICON)0x60
     });
     CHECK_EQUAL((ATOM)1,nm::RegisterClassEx(&clazz));
-    CHECK_EQUAL(1,lg->history().size());
+    CHECK_EQUAL(1,im->history().size());
     CHECK_EQUAL
     (
         call
         (
             NAMED_ADDRESS(pt->RegisterClassEx),
-            WNDCLASSEX(
-            {
+            make_shared_pod<const WNDCLASSEX>
+            (
                 1,
                 2,
                 (WNDPROC)0x10,
@@ -1299,53 +1346,58 @@ TEST(apiwrapper,RegisterClassEx_success)
                 "hoge",
                 "fuga",
                 (HICON)0x60
-            })
+            ).get()
         ),
-        lg->history().at(0)
+        im->history().at(0)
     );
 }
 
 TEST(apiwrapper,ReleaseCapture_fail)
 {
-    lg->mockUpWithResult(NAMED_ADDRESS(pt->ReleaseCapture),FALSE);
-    lg->mockUpWithResult(NAMED_ADDRESS(pt->GetLastError),(DWORD)1);
+    im->mockUpWithResult(NAMED_ADDRESS(pt->ReleaseCapture),FALSE);
+    im->mockUpWithResult(NAMED_ADDRESS(pt->GetLastError),(DWORD)1);
     CHECK_THROWS_API_ERROR("ReleaseCapture",1,nm::ReleaseCapture());
-    CHECK_EQUAL(2,lg->history().size());
+    CHECK_EQUAL(2,im->history().size());
     CHECK_EQUAL
-    (call(NAMED_ADDRESS(pt->ReleaseCapture)),lg->history().at(0));
+    (call(NAMED_ADDRESS(pt->ReleaseCapture)),im->history().at(0));
     CHECK_EQUAL
-    (call(NAMED_ADDRESS(pt->GetLastError)),lg->history().at(1));
+    (call(NAMED_ADDRESS(pt->GetLastError)),im->history().at(1));
 }
 
 TEST(apiwrapper,ReleaseCapture_success)
 {
-    lg->mockUpWithResult(NAMED_ADDRESS(pt->ReleaseCapture),TRUE);
+    im->mockUpWithResult(NAMED_ADDRESS(pt->ReleaseCapture),TRUE);
     nm::ReleaseCapture();
-    CHECK_EQUAL(1,lg->history().size());
+    CHECK_EQUAL(1,im->history().size());
     CHECK_EQUAL
-    (call(NAMED_ADDRESS(pt->ReleaseCapture)),lg->history().at(0));
+    (call(NAMED_ADDRESS(pt->ReleaseCapture)),im->history().at(0));
 }
 
 TEST(apiwrapper,ScreenToClient_fail)
 {
-    lg->mockUpWithResult(NAMED_ADDRESS(pt->ScreenToClient),FALSE);
-    lg->mockUpWithResult(NAMED_ADDRESS(pt->GetLastError),(DWORD)1);
+    im->mockUpWithResult(NAMED_ADDRESS(pt->ScreenToClient),FALSE);
+    im->mockUpWithResult(NAMED_ADDRESS(pt->GetLastError),(DWORD)1);
     POINT pos({1,-2});
     CHECK_THROWS_API_ERROR
     ("ScreenToClient",1,nm::ScreenToClient((HWND)0x10,&pos));
-    CHECK_EQUAL(2,lg->history().size());
+    CHECK_EQUAL(2,im->history().size());
     CHECK_EQUAL
     (
-        call(NAMED_ADDRESS(pt->ScreenToClient),(HWND)0x10,POINT({1,-2})),
-        lg->history().at(0)
+        call
+        (
+            NAMED_ADDRESS(pt->ScreenToClient),
+            (HWND)0x10,
+            make_shared_pod<POINT>(1,-2).get()
+        ),
+        im->history().at(0)
     );
     CHECK_EQUAL
-    (call(NAMED_ADDRESS(pt->GetLastError)),lg->history().at(1));
+    (call(NAMED_ADDRESS(pt->GetLastError)),im->history().at(1));
 }
 
 TEST(apiwrapper,ScreenToClient_success)
 {
-    lg->mockUpWithBody(NAMED_ADDRESS(pt->ScreenToClient),
+    im->mockUpWithBody(NAMED_ADDRESS(pt->ScreenToClient),
     [] (HWND window,LPPOINT pos)->BOOL
     {
         *pos=POINT({-3,5});
@@ -1354,55 +1406,60 @@ TEST(apiwrapper,ScreenToClient_success)
     POINT pos({1,-2});
     nm::ScreenToClient((HWND)0x10,&pos);
     CHECK_EQUAL(POINT({-3,5}),pos);
-    CHECK_EQUAL(1,lg->history().size());
+    CHECK_EQUAL(1,im->history().size());
     CHECK_EQUAL
     (
-        call(NAMED_ADDRESS(pt->ScreenToClient),(HWND)0x10,POINT({1,-2})),
-        lg->history().at(0)
+        call
+        (
+            NAMED_ADDRESS(pt->ScreenToClient),
+            (HWND)0x10,
+            make_shared_pod<POINT>(1,-2).get()
+        ),
+        im->history().at(0)
     );
 }
 
 TEST(apiwrapper,SetBkMode_fail)
 {
-    lg->mockUpWithResult(NAMED_ADDRESS(pt->SetBkMode),0);
-    lg->mockUpWithResult(NAMED_ADDRESS(pt->GetLastError),(DWORD)1);
+    im->mockUpWithResult(NAMED_ADDRESS(pt->SetBkMode),0);
+    im->mockUpWithResult(NAMED_ADDRESS(pt->GetLastError),(DWORD)1);
     CHECK_THROWS_API_ERROR("SetBkMode",1,nm::SetBkMode((HDC)0x10,1));
-    CHECK_EQUAL(2,lg->history().size());
+    CHECK_EQUAL(2,im->history().size());
     CHECK_EQUAL
-    (call(NAMED_ADDRESS(pt->SetBkMode),(HDC)0x10,1),lg->history().at(0));
+    (call(NAMED_ADDRESS(pt->SetBkMode),(HDC)0x10,1),im->history().at(0));
     CHECK_EQUAL
-    (call(NAMED_ADDRESS(pt->GetLastError)),lg->history().at(1));
+    (call(NAMED_ADDRESS(pt->GetLastError)),im->history().at(1));
 }
 
 TEST(apiwrapper,SetBkMode_success)
 {
-    lg->mockUpWithResult(NAMED_ADDRESS(pt->SetBkMode),1);
+    im->mockUpWithResult(NAMED_ADDRESS(pt->SetBkMode),1);
     CHECK_EQUAL(1,nm::SetBkMode((HDC)0x10,2));
-    CHECK_EQUAL(1,lg->history().size());
+    CHECK_EQUAL(1,im->history().size());
     CHECK_EQUAL
-    (call(NAMED_ADDRESS(pt->SetBkMode),(HDC)0x10,2),lg->history().at(0));
+    (call(NAMED_ADDRESS(pt->SetBkMode),(HDC)0x10,2),im->history().at(0));
 }
 
 TEST(apiwrapper,SetBrushOrgEx_fail)
 {
-    lg->mockUpWithResult(NAMED_ADDRESS(pt->SetBrushOrgEx),FALSE);
-    lg->mockUpWithResult(NAMED_ADDRESS(pt->GetLastError),(DWORD)1);
+    im->mockUpWithResult(NAMED_ADDRESS(pt->SetBrushOrgEx),FALSE);
+    im->mockUpWithResult(NAMED_ADDRESS(pt->GetLastError),(DWORD)1);
     CHECK_THROWS_API_ERROR
     ("SetBrushOrgEx",1,nm::SetBrushOrgEx((HDC)0x10,1,2,NULL));
-    CHECK_EQUAL(2,lg->history().size());
+    CHECK_EQUAL(2,im->history().size());
     CHECK_EQUAL
     (
         call
         (NAMED_ADDRESS(pt->SetBrushOrgEx),(HDC)0x10,1,2,(LPPOINT)NULL),
-        lg->history().at(0)
+        im->history().at(0)
     );
     CHECK_EQUAL
-    (call(NAMED_ADDRESS(pt->GetLastError)),lg->history().at(1));
+    (call(NAMED_ADDRESS(pt->GetLastError)),im->history().at(1));
 }
 
 TEST(apiwrapper,SetBrushOrgEx_success)
 {
-    lg->mockUpWithBody(NAMED_ADDRESS(pt->SetBrushOrgEx),
+    im->mockUpWithBody(NAMED_ADDRESS(pt->SetBrushOrgEx),
     [] (HDC dc,int x,int y,LPPOINT oldPos)->BOOL
     {
         *oldPos=POINT({-3,5});
@@ -1411,104 +1468,111 @@ TEST(apiwrapper,SetBrushOrgEx_success)
     POINT oldPos;
     nm::SetBrushOrgEx((HDC)0x10,1,2,&oldPos);
     CHECK_EQUAL(POINT({-3,5}),oldPos);
-    CHECK_EQUAL(1,lg->history().size());
+    CHECK_EQUAL(1,im->history().size());
     CHECK_EQUAL
     (
-        call(NAMED_ADDRESS(pt->SetBrushOrgEx),(HDC)0x10,1,2,POINT({0,0})),
-        lg->history().at(0)
+        call
+        (
+            NAMED_ADDRESS(pt->SetBrushOrgEx),
+            (HDC)0x10,
+            1,
+            2,
+            make_shared_pod<POINT>(0,0).get()
+        ),
+        im->history().at(0)
     );
 }
 
 TEST(apiwrapper,SetForegroundWindow_fail)
 {
-    lg->mockUpWithResult
+    im->mockUpWithResult
     (NAMED_ADDRESS(pt->SetForegroundWindow),FALSE);
-    lg->mockUpWithResult(NAMED_ADDRESS(pt->GetLastError),(DWORD)1);
+    im->mockUpWithResult(NAMED_ADDRESS(pt->GetLastError),(DWORD)1);
     POINT oldPos;
     CHECK_THROWS_API_ERROR
     ("SetForegroundWindow",1,nm::SetForegroundWindow((HWND)0x10));
-    CHECK_EQUAL(2,lg->history().size());
+    CHECK_EQUAL(2,im->history().size());
     CHECK_EQUAL
     (
         call(NAMED_ADDRESS(pt->SetForegroundWindow),(HWND)0x10),
-        lg->history().at(0)
+        im->history().at(0)
     );
     CHECK_EQUAL
-    (call(NAMED_ADDRESS(pt->GetLastError)),lg->history().at(1));
+    (call(NAMED_ADDRESS(pt->GetLastError)),im->history().at(1));
 }
 
 TEST(apiwrapper,SetForegroundWindow_success)
 {
-    lg->mockUpWithResult(NAMED_ADDRESS(pt->SetForegroundWindow),TRUE);
+    im->mockUpWithResult(NAMED_ADDRESS(pt->SetForegroundWindow),TRUE);
     nm::SetForegroundWindow((HWND)0x10);
-    CHECK_EQUAL(1,lg->history().size());
+    CHECK_EQUAL(1,im->history().size());
     CHECK_EQUAL
     (
         call(NAMED_ADDRESS(pt->SetForegroundWindow),(HWND)0x10),
-        lg->history().at(0)
+        im->history().at(0)
     );
 }
 
 TEST(apiwrapper,SetStretchBltMode_fail)
 {
-    lg->mockUpWithResult(NAMED_ADDRESS(pt->SetStretchBltMode),0);
-    lg->mockUpWithResult(NAMED_ADDRESS(pt->GetLastError),(DWORD)1);
+    im->mockUpWithResult(NAMED_ADDRESS(pt->SetStretchBltMode),0);
+    im->mockUpWithResult(NAMED_ADDRESS(pt->GetLastError),(DWORD)1);
     CHECK_THROWS_API_ERROR
     ("SetStretchBltMode",1,nm::SetStretchBltMode((HDC)0x10,1));
-    CHECK_EQUAL(2,lg->history().size());
+    CHECK_EQUAL(2,im->history().size());
     CHECK_EQUAL
     (
         call(NAMED_ADDRESS(pt->SetStretchBltMode),(HDC)0x10,1),
-        lg->history().at(0)
+        im->history().at(0)
     );
     CHECK_EQUAL
-    (call(NAMED_ADDRESS(pt->GetLastError)),lg->history().at(1));
+    (call(NAMED_ADDRESS(pt->GetLastError)),im->history().at(1));
 }
 
 TEST(apiwrapper,SetStretchBltMode_success)
 {
-    lg->mockUpWithResult(NAMED_ADDRESS(pt->SetStretchBltMode),1);
+    im->mockUpWithResult(NAMED_ADDRESS(pt->SetStretchBltMode),1);
     CHECK_EQUAL(1,nm::SetStretchBltMode((HDC)0x10,2));
-    CHECK_EQUAL(1,lg->history().size());
+    CHECK_EQUAL(1,im->history().size());
     CHECK_EQUAL
     (
         call(NAMED_ADDRESS(pt->SetStretchBltMode),(HDC)0x10,2),
-        lg->history().at(0)
+        im->history().at(0)
     );
 }
 
 TEST(apiwrapper,SetTextColor_fail)
 {
-    lg->mockUpWithResult
+    im->mockUpWithResult
     (NAMED_ADDRESS(pt->SetTextColor),(COLORREF)CLR_INVALID);
-    lg->mockUpWithResult(NAMED_ADDRESS(pt->GetLastError),(DWORD)1);
+    im->mockUpWithResult(NAMED_ADDRESS(pt->GetLastError),(DWORD)1);
     CHECK_THROWS_API_ERROR
     ("SetTextColor",1,nm::SetTextColor((HDC)0x10,RGB(1,2,3)));
-    CHECK_EQUAL(2,lg->history().size());
+    CHECK_EQUAL(2,im->history().size());
     CHECK_EQUAL
     (
         call(NAMED_ADDRESS(pt->SetTextColor),(HDC)0x10,RGB(1,2,3)),
-        lg->history().at(0)
+        im->history().at(0)
     );
     CHECK_EQUAL
-    (call(NAMED_ADDRESS(pt->GetLastError)),lg->history().at(1));
+    (call(NAMED_ADDRESS(pt->GetLastError)),im->history().at(1));
 }
 
 TEST(apiwrapper,SetTextColor_success)
 {
-    lg->mockUpWithResult(NAMED_ADDRESS(pt->SetTextColor),RGB(1,2,3));
+    im->mockUpWithResult(NAMED_ADDRESS(pt->SetTextColor),RGB(1,2,3));
     CHECK_EQUAL(RGB(1,2,3),nm::SetTextColor((HDC)0x10,RGB(4,5,6)));
-    CHECK_EQUAL(1,lg->history().size());
+    CHECK_EQUAL(1,im->history().size());
     CHECK_EQUAL
     (
         call(NAMED_ADDRESS(pt->SetTextColor),(HDC)0x10,RGB(4,5,6)),
-        lg->history().at(0)
+        im->history().at(0)
     );
 }
 
 TEST(apiwrapper,ShellExecute_fail)
 {
-    lg->mockUpWithResult(NAMED_ADDRESS(pt->ShellExecute),(HINSTANCE)32);
+    im->mockUpWithResult(NAMED_ADDRESS(pt->ShellExecute),(HINSTANCE)32);
     CHECK_THROWS_API_ERROR
     (
         "ShellExecute",
@@ -1523,7 +1587,7 @@ TEST(apiwrapper,ShellExecute_fail)
             2
         )
     );
-    CHECK_EQUAL(1,lg->history().size());
+    CHECK_EQUAL(1,im->history().size());
     CHECK_EQUAL
     (
         call
@@ -1536,13 +1600,13 @@ TEST(apiwrapper,ShellExecute_fail)
             "foo",
             2
         ),
-        lg->history().at(0)
+        im->history().at(0)
     );
 }
 
 TEST(apiwrapper,ShellExecute_success)
 {
-    lg->mockUpWithResult(NAMED_ADDRESS(pt->ShellExecute),(HINSTANCE)33);
+    im->mockUpWithResult(NAMED_ADDRESS(pt->ShellExecute),(HINSTANCE)33);
     CHECK_EQUAL
     (
         (HINSTANCE)33,
@@ -1556,7 +1620,7 @@ TEST(apiwrapper,ShellExecute_success)
             2
         )
     );
-    CHECK_EQUAL(1,lg->history().size());
+    CHECK_EQUAL(1,im->history().size());
     CHECK_EQUAL
     (
         call
@@ -1569,14 +1633,14 @@ TEST(apiwrapper,ShellExecute_success)
             "foo",
             2
         ),
-        lg->history().at(0)
+        im->history().at(0)
     );
 }
 
 TEST(apiwrapper,StretchBlt_fail)
 {
-    lg->mockUpWithResult(NAMED_ADDRESS(pt->StretchBlt),FALSE);
-    lg->mockUpWithResult(NAMED_ADDRESS(pt->GetLastError),(DWORD)1);
+    im->mockUpWithResult(NAMED_ADDRESS(pt->StretchBlt),FALSE);
+    im->mockUpWithResult(NAMED_ADDRESS(pt->GetLastError),(DWORD)1);
     CHECK_THROWS_API_ERROR
     (
         "StretchBlt",
@@ -1596,7 +1660,7 @@ TEST(apiwrapper,StretchBlt_fail)
             SRCCOPY
         )
     );
-    CHECK_EQUAL(2,lg->history().size());
+    CHECK_EQUAL(2,im->history().size());
     CHECK_EQUAL
     (
         call
@@ -1614,15 +1678,15 @@ TEST(apiwrapper,StretchBlt_fail)
             -34,
             SRCCOPY
         ),
-        lg->history().at(0)
+        im->history().at(0)
     );
     CHECK_EQUAL
-    (call(NAMED_ADDRESS(pt->GetLastError)),lg->history().at(1));
+    (call(NAMED_ADDRESS(pt->GetLastError)),im->history().at(1));
 }
 
 TEST(apiwrapper,StretchBlt_success)
 {
-    lg->mockUpWithResult(NAMED_ADDRESS(pt->StretchBlt),TRUE);
+    im->mockUpWithResult(NAMED_ADDRESS(pt->StretchBlt),TRUE);
     nm::StretchBlt
     (
         (HDC)0x10,
@@ -1637,7 +1701,7 @@ TEST(apiwrapper,StretchBlt_success)
         -34,
         SRCCOPY
     );
-    CHECK_EQUAL(1,lg->history().size());
+    CHECK_EQUAL(1,im->history().size());
     CHECK_EQUAL
     (
         call
@@ -1655,40 +1719,40 @@ TEST(apiwrapper,StretchBlt_success)
             -34,
             SRCCOPY
         ),
-        lg->history().at(0)
+        im->history().at(0)
     );
 }
 
 TEST(apiwrapper,timeBeginPeriod_fail)
 {
-    lg->mockUpWithResult
+    im->mockUpWithResult
     (NAMED_ADDRESS(pt->timeBeginPeriod),(MMRESULT)TIMERR_NOCANDO);
     CHECK_THROWS_API_ERROR
     ("timeBeginPeriod",TIMERR_NOCANDO,nm::timeBeginPeriod(1));
-    CHECK_EQUAL(1,lg->history().size());
+    CHECK_EQUAL(1,im->history().size());
     CHECK_EQUAL
-    (call(NAMED_ADDRESS(pt->timeBeginPeriod),1),lg->history().at(0));
+    (call(NAMED_ADDRESS(pt->timeBeginPeriod),1u),im->history().at(0));
 }
 
 TEST(apiwrapper,timeBeginPeriod_success)
 {
-    lg->mockUpWithResult
+    im->mockUpWithResult
     (NAMED_ADDRESS(pt->timeBeginPeriod),(MMRESULT)TIMERR_NOERROR);
-    lg->mockUpWithResult
+    im->mockUpWithResult
     (NAMED_ADDRESS(pt->timeEndPeriod),(MMRESULT)TIMERR_NOERROR);
     auto period=nm::timeBeginPeriod(1);
-    CHECK_EQUAL(1,lg->history().size());
+    CHECK_EQUAL(1,im->history().size());
     CHECK_EQUAL
-    (call(NAMED_ADDRESS(pt->timeBeginPeriod),1),lg->history().at(0));
+    (call(NAMED_ADDRESS(pt->timeBeginPeriod),1u),im->history().at(0));
     period.reset();
-    CHECK_EQUAL(2,lg->history().size());
+    CHECK_EQUAL(2,im->history().size());
     CHECK_EQUAL
-    (call(NAMED_ADDRESS(pt->timeEndPeriod),1),lg->history().at(1));
+    (call(NAMED_ADDRESS(pt->timeEndPeriod),1u),im->history().at(1));
 }
 
 TEST(apiwrapper,timeGetDevCaps_fail)
 {
-    lg->mockUpWithResult
+    im->mockUpWithResult
     (NAMED_ADDRESS(pt->timeGetDevCaps),(MMRESULT)TIMERR_STRUCT);
     TIMECAPS caps;
     CHECK_THROWS_API_ERROR
@@ -1697,22 +1761,22 @@ TEST(apiwrapper,timeGetDevCaps_fail)
         TIMERR_STRUCT,
         nm::timeGetDevCaps(&caps,sizeof(TIMECAPS))
     );
-    CHECK_EQUAL(1,lg->history().size());
+    CHECK_EQUAL(1,im->history().size());
     CHECK_EQUAL
     (
         call
         (
             NAMED_ADDRESS(pt->timeGetDevCaps),
-            TIMECAPS({0,0}),
+            make_shared_pod<TIMECAPS>(0,0).get(),
             sizeof(TIMECAPS)
         ),
-        lg->history().at(0)
+        im->history().at(0)
     );
 }
 
 TEST(apiwrapper,timeGetDevCaps_success)
 {
-    lg->mockUpWithBody(NAMED_ADDRESS(pt->timeGetDevCaps),
+    im->mockUpWithBody(NAMED_ADDRESS(pt->timeGetDevCaps),
     [] (LPTIMECAPS caps,UINT sizeOfCaps)->MMRESULT
     {
         *caps=TIMECAPS({1,2});
@@ -1721,50 +1785,64 @@ TEST(apiwrapper,timeGetDevCaps_success)
     TIMECAPS caps;
     nm::timeGetDevCaps(&caps,sizeof(TIMECAPS));
     CHECK_EQUAL(describe(TIMECAPS({1,2})),describe(caps));
-    CHECK_EQUAL(1,lg->history().size());
+    CHECK_EQUAL(1,im->history().size());
     CHECK_EQUAL
     (
         call
         (
             NAMED_ADDRESS(pt->timeGetDevCaps),
-            TIMECAPS({0,0}),
+            make_shared_pod<TIMECAPS>(0,0).get(),
             sizeof(TIMECAPS)
         ),
-        lg->history().at(0)
+        im->history().at(0)
     );
 }
 
 TEST(apiwrapper,timeSetEvent_fail)
 {
-    lg->mockUpWithResult(NAMED_ADDRESS(pt->timeSetEvent),(UINT)NULL);
+    im->mockUpWithResult(NAMED_ADDRESS(pt->timeSetEvent),(UINT)NULL);
     CHECK_THROWS_API_ERROR
     ("timeSetEvent",0,nm::timeSetEvent(1,2,(LPTIMECALLBACK)0x10,3,4));
-    CHECK_EQUAL(1,lg->history().size());
+    CHECK_EQUAL(1,im->history().size());
     CHECK_EQUAL
     (
         call
-        (NAMED_ADDRESS(pt->timeSetEvent),1,2,(LPTIMECALLBACK)0x10,3,4),
-        lg->history().at(0)
+        (
+            NAMED_ADDRESS(pt->timeSetEvent),
+            1u,
+            2u,
+            (LPTIMECALLBACK)0x10,
+            3ul,
+            4u
+        ),
+        im->history().at(0)
     );
 }
 
 TEST(apiwrapper,timeSetEvent_success)
 {
-    lg->mockUpWithResult(NAMED_ADDRESS(pt->timeSetEvent),(UINT)1);
-    lg->mockUpWithResult
+    im->mockUpWithResult(NAMED_ADDRESS(pt->timeSetEvent),(UINT)1);
+    im->mockUpWithResult
     (NAMED_ADDRESS(pt->timeKillEvent),(MMRESULT)TIMERR_NOERROR);
     auto event=nm::timeSetEvent(1,2,(LPTIMECALLBACK)0x10,3,4);
-    CHECK_EQUAL(1,lg->history().size());
+    CHECK_EQUAL(1,im->history().size());
     CHECK_EQUAL
     (
         call
-        (NAMED_ADDRESS(pt->timeSetEvent),1,2,(LPTIMECALLBACK)0x10,3,4),
-        lg->history().at(0)
+        (
+            NAMED_ADDRESS(pt->timeSetEvent),
+            1u,
+            2u,
+            (LPTIMECALLBACK)0x10,
+            3ul,
+            4u
+        ),
+        im->history().at(0)
     );
     event.reset();
-    CHECK_EQUAL(2,lg->history().size());
+    CHECK_EQUAL(2,im->history().size());
     CHECK_EQUAL
-    (call(NAMED_ADDRESS(pt->timeKillEvent),1),lg->history().at(1));
+    (call(NAMED_ADDRESS(pt->timeKillEvent),1u),im->history().at(1));
 }
 
 }

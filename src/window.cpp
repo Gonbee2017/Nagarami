@@ -101,10 +101,10 @@ MainWindow::MainWindow():
         APPLICATION_NAME,
         APPLICATION_NAME,
         WS_MAXIMIZEBOX|WS_MINIMIZEBOX|WS_POPUP,
-        ct->ps->window_pos.x,
-        ct->ps->window_pos.y,
-        ct->ps->window_size.cx,
-        ct->ps->window_size.cy,
+        ps->windowPos.x,
+        ps->windowPos.y,
+        ps->windowSize.cx,
+        ps->windowSize.cy,
         NULL,
         NULL,
         ct->instance,
@@ -113,7 +113,7 @@ MainWindow::MainWindow():
 }
 
 void MainWindow::onAlphaSliderChange()
-{ct->ps->alpha=(ALPHA_DIVISOR-alphaSlider_->value())*255/ALPHA_DIVISOR;}
+{ps->alpha=(ALPHA_DIVISOR-alphaSlider_->value())*255/ALPHA_DIVISOR;}
 
 void MainWindow::onCloseButtonClick()
 {nm::PostMessage(handle_,WM_CLOSE,0,0);}
@@ -132,8 +132,8 @@ LRESULT MainWindow::onDestroy
 {
     WINDOWPLACEMENT placement;
     nm::GetWindowPlacement(handle_,&placement);
-    ct->ps->window_pos=pos(placement.rcNormalPosition);
-    ct->ps->window_size=size(placement.rcNormalPosition);
+    ps->windowPos=pos(placement.rcNormalPosition);
+    ps->windowSize=size(placement.rcNormalPosition);
     if(toolTip_!=NULL) pt->DestroyWindow(toolTip_);
     if(!*ct->error.what()) pt->PostQuitMessage(0);
     return 0;
@@ -153,20 +153,19 @@ LRESULT MainWindow::onGetMinMaxInfo
 
 void MainWindow::onHalftoneButtonChange()
 {
-    HDC dc=viewBuffer_->dc();
     if(halftoneButton_->value())
     {
-        nm::SetStretchBltMode(dc,HALFTONE);
-        nm::SetBrushOrgEx(dc,0,0,NULL);
-    } else nm::SetStretchBltMode(dc,COLORONCOLOR);
-    ct->ps->halftone=halftoneButton_->value();
+        nm::SetStretchBltMode(buffer_->dc(),HALFTONE);
+        nm::SetBrushOrgEx(buffer_->dc(),0,0,NULL);
+    } else nm::SetStretchBltMode(buffer_->dc(),COLORONCOLOR);
+    ps->halftone=halftoneButton_->value();
 }
 
 void MainWindow::onHelpButtonClick()
 {nm::ShellExecute(handle_,"open",HELP_URL,NULL,NULL,SW_SHOWNORMAL);}
 
 void MainWindow::onHoleSliderChange()
-{ct->ps->hole=UNIT_LENGTH*holeSlider_->value();}
+{ps->hole=UNIT_LENGTH*holeSlider_->value();}
 
 LRESULT MainWindow::onLButtonDown
 (UINT message,WPARAM wParam,LPARAM lParam)
@@ -244,7 +243,7 @@ LRESULT MainWindow::onMouseWheel
 LRESULT MainWindow::onMove
 (UINT message,WPARAM wParam,LPARAM lParam)
 {
-    if(!pt->IsIconic(handle_)) ct->ps->window_pos=coordinates(lParam);
+    if(!pt->IsIconic(handle_)) ps->windowPos=coordinates(lParam);
     return 0;
 }
 
@@ -261,7 +260,7 @@ LRESULT MainWindow::onNCHitTest
             const RECT captionRect=rect
             (
                 POINT({FRAME_LENGTH,FRAME_LENGTH}),
-                ct->ps->window_size-SIZE({FRAME_LENGTH*2,FRAME_LENGTH*2})
+                ps->windowSize-SIZE({FRAME_LENGTH*2,FRAME_LENGTH*2})
             );
             if(cursorPos.x<captionRect.left)
             {
@@ -300,7 +299,7 @@ LRESULT MainWindow::onNCHitTest
 LRESULT MainWindow::onNCMouseMove
 (UINT message,WPARAM wParam,LPARAM lParam)
 {
-    if(ct->ps->hole>0)
+    if(ps->hole>0)
         nm::RedrawWindow(handle_,NULL,NULL,RDW_INVALIDATE|RDW_UPDATENOW);
     return 0;
 }
@@ -320,120 +319,18 @@ LRESULT MainWindow::onNCRButtonDown
 LRESULT MainWindow::onPaint
 (UINT message,WPARAM wParam,LPARAM lParam)
 {
-    PAINTSTRUCT paint;
-    const auto dc=nm::BeginPaint(handle_,&paint);
-    const POINT paintPos=pos(paint.rcPaint);
-    const SIZE paintSize=size(paint.rcPaint);
-    nm::FillRect
-    (buffer_->dc(),&paint.rcPaint,(HBRUSH)backBrush_->handle());
-    if
-    (
-        ct->target!=NULL&&
-        pt->IsWindow(ct->target)&&
-        pt->IsWindowVisible(ct->target)&&
-        !pt->IsIconic(ct->target)&&
-        ct->ps->scale>0
-    )
-    {
-        RECT targetRect;
-        nm::GetClientRect(ct->target,&targetRect);
-        const SIZE targetSize=size(targetRect);
-        const SIZE viewSize=targetSize*ct->ps->scale/100;
-        POINT viewPos=point(ct->ps->view_base);
-        if(viewSliding_) viewPos+=cursor_pos(handle_)-viewSlidingBase_;
-        const POINT viewEndPos=viewPos+point(viewSize);
-        const POINT destPos(
-        {
-            max(paint.rcPaint.left,viewPos.x),
-            max(paint.rcPaint.top,viewPos.y)
-        });
-        const SIZE destSize=SIZE(
-        {
-            min(paint.rcPaint.right,viewEndPos.x),
-            min(paint.rcPaint.bottom,viewEndPos.y)
-        })-size(destPos);
-        const RECT destRect=rect(destPos,destSize);
-        const POINT srcPos=POINT(
-        {
-            max(-viewPos.x,(LONG)0),
-            max(-viewPos.y,(LONG)0)
-        })*100/ct->ps->scale;
-        const SIZE srcSize=destSize*100/ct->ps->scale;
-        if(destSize.cx>0&&destSize.cy>0&&srcSize.cx>0&&srcSize.cy>0)
-        {
-            nm::FillRect
-            (
-                buffer_->dc(),
-                &destRect,
-                (HBRUSH)ct->almost_black_brush->handle()
-            );
-            nm::StretchBlt
-            (
-                viewBuffer_->dc(),
-                0,
-                0,
-                destSize.cx,
-                destSize.cy,
-                nm::GetDC(ct->target)->handle(),
-                srcPos.x,
-                srcPos.y,
-                srcSize.cx,
-                srcSize.cy,
-                SRCCOPY
-            );
-            nm::BitBlt
-            (
-                buffer_->dc(),
-                destPos.x,
-                destPos.y,
-                destSize.cx,
-                destSize.cy,
-                viewBuffer_->dc(),
-                0,
-                0,
-                SRCPAINT
-            );
-        }
-    }
-    if((!control_mode()||holeSlider_->active())&&ct->ps->hole>0)
-    {
-        POINT center;
-        if(!control_mode()) center=cursor_pos(handle_);
-        else center=point(paintSize/2);
-        pt->SelectObject(buffer_->dc(),ct->black_pen->handle());
-        pt->SelectObject(buffer_->dc(),ct->black_brush->handle());
-        const LONG radius=ct->ps->hole/2;
-        nm::Ellipse
-        (
-            buffer_->dc(),
-            center.x-radius,
-            center.y-radius,
-            center.x+radius,
-            center.y+radius
-        );
-    }
-    if(control_mode())
-    {
-        for(Component*component:components_)
-            component->paint(buffer_->dc());
-    }
-    nm::BitBlt
-    (
-        dc->handle(),
-        paintPos.x,
-        paintPos.y,
-        paintSize.cx,
-        paintSize.cy,
-        buffer_->dc(),
-        0,
-        0,
-        SRCCOPY
-    );
+    const auto dc=nm::BeginPaint(handle_,&paintStruct_);
+    paintBack();
+    paintBuffer();
+    paintHole();
+    paintComponent();
+    paintWindow();
     BYTE lwaAlpha=0;
-    DWORD lwaFlags=LWA_COLORKEY;
+    DWORD lwaFlags=0;
+    if(ps->hole>0) lwaFlags|=LWA_COLORKEY;
     if(!control_mode()||alphaSlider_->active())
     {
-        lwaAlpha=ct->ps->alpha;
+        lwaAlpha=ps->alpha;
         lwaFlags|=LWA_ALPHA;
     }
     nm::SetLayeredWindowAttributes(handle_,BLACK_COLOR,lwaAlpha,lwaFlags);
@@ -445,13 +342,13 @@ LRESULT MainWindow::onRButtonUp
 {
     nm::ReleaseCapture();
     viewSliding_=false;
-    ct->ps->view_base+=point_double(cursor_pos(handle_)-viewSlidingBase_);
+    ps->viewBase+=point_double(cursor_pos(handle_)-viewSlidingBase_);
     return 0;
 }
 
 void MainWindow::onResetButtonClick()
 {
-    ct->ps->view_base=POINT_DOUBLE({0,0});
+    ps->viewBase=POINT_DOUBLE({0,0});
     scaleSlider_->value(DEFAULT_SCALE/SCALE_DIVISOR);
     holeSlider_->value(DEFAULT_HOLE/UNIT_LENGTH);
     alphaSlider_->value
@@ -462,14 +359,14 @@ void MainWindow::onResetButtonClick()
 
 void MainWindow::onScaleSliderChange()
 {
-    LONG oldScale=ct->ps->scale;
+    LONG oldScale=ps->scale;
     LONG newScale=scaleSlider_->value()*SCALE_DIVISOR;
-    ct->ps->scale=newScale;
+    ps->scale=newScale;
     oldScale=max(oldScale,(LONG)1);
     newScale=max(newScale,(LONG)1);
     const double ratio=(double)newScale/oldScale;
-    if(ct->ps->view_base.x<0) ct->ps->view_base.x*=ratio;
-    if(ct->ps->view_base.y<0) ct->ps->view_base.y*=ratio;
+    if(ps->viewBase.x<0) ps->viewBase.x*=ratio;
+    if(ps->viewBase.y<0) ps->viewBase.y*=ratio;
 }
 
 LRESULT MainWindow::onSize
@@ -477,9 +374,9 @@ LRESULT MainWindow::onSize
 {
     if(wParam!=SIZE_MINIMIZED)
     {
-        ct->ps->window_size=size(lParam);
+        ps->windowSize=size(lParam);
         for(Component*component:components_)
-            component->relocate(ct->ps->window_size);
+            component->relocate(ps->windowSize);
         const bool maximized=wParam==SIZE_MAXIMIZED;
         if(maximized!=maximizeButton_->value())
             maximizeButton_->value(maximized);
@@ -505,6 +402,164 @@ LRESULT MainWindow::onUserTimer
     return 0;
 }
 
+void MainWindow::paintBack()
+{
+    nm::FillRect
+    (
+        buffer_->dc(),
+        &paintStruct_.rcPaint,
+        (HBRUSH)backBrush_->handle()
+    );
+}
+
+void MainWindow::paintBuffer()
+{
+    if
+    (
+        ct->target!=NULL&&
+        pt->IsWindow(ct->target)&&
+        pt->IsWindowVisible(ct->target)&&
+        !pt->IsIconic(ct->target)&&
+        ps->scale>0
+    )
+    {
+        RECT targetRect;
+        nm::GetClientRect(ct->target,&targetRect);
+        const SIZE targetSize=size(targetRect);
+        const SIZE viewSize=targetSize*ps->scale/100;
+        POINT viewPos=point(ps->viewBase);
+        if(viewSliding_)
+            viewPos+=
+                cursor_pos(handle_)-
+                viewSlidingBase_;
+        const POINT viewEndPos=viewPos+point(viewSize);
+        paintDestPos_=POINT(
+        {
+            max(paintStruct_.rcPaint.left,viewPos.x),
+            max(paintStruct_.rcPaint.top,viewPos.y)
+        });
+        paintDestSize_=SIZE(
+        {
+            min(paintStruct_.rcPaint.right,viewEndPos.x),
+            min(paintStruct_.rcPaint.bottom,viewEndPos.y)
+        })-size(paintDestPos_);
+        paintSrcPos_=POINT(
+        {
+            max(-viewPos.x,(LONG)0),
+            max(-viewPos.y,(LONG)0)
+        })*100/ps->scale;
+        paintSrcSize_=paintDestSize_*100/ps->scale;
+        if(paintDestSize_.cx>0&&paintDestSize_.cy>0&&paintSrcSize_.cx>0&&paintSrcSize_.cy>0)
+        {
+            paintTarget();
+            paintOpacity();
+        }
+    }
+}
+
+void MainWindow::paintComponent()
+{
+    if(control_mode())
+    {
+        for(Component*component:components_)
+            component->paint(buffer_->dc());
+    }
+}
+
+void MainWindow::paintHole()
+{
+    if((!control_mode()||holeSlider_->active())&&ps->hole>0)
+    {
+        POINT center;
+        if(!control_mode()) center=cursor_pos(handle_);
+        else center=point(size(paintStruct_.rcPaint)/2);
+        pt->SelectObject
+        (buffer_->dc(),ct->blackPen->handle());
+        pt->SelectObject
+        (buffer_->dc(),ct->blackBrush->handle());
+        const LONG radius=ps->hole/2;
+        nm::Ellipse
+        (
+            buffer_->dc(),
+            center.x-radius,
+            center.y-radius,
+            center.x+radius,
+            center.y+radius
+        );
+    }
+}
+
+void MainWindow::paintOpacity()
+{
+    if(ps->hole>0)
+    {
+        nm::BitBlt
+        (
+            buffer_->dc(),
+            paintDestPos_.x,
+            paintDestPos_.y,
+            paintDestSize_.cx,
+            paintDestSize_.cy,
+            opaqueBuffer_->dc(),
+            0,
+            0,
+            SRCPAINT
+        );
+    }
+}
+
+void MainWindow::paintTarget()
+{
+    if(ps->scale==100)
+    {
+        nm::BitBlt
+        (
+            buffer_->dc(),
+            paintDestPos_.x,
+            paintDestPos_.y,
+            paintDestSize_.cx,
+            paintDestSize_.cy,
+            nm::GetDC(ct->target)->handle(),
+            paintSrcPos_.x,
+            paintSrcPos_.y,
+            SRCCOPY
+        );
+    } else
+    {
+        nm::StretchBlt
+        (
+            buffer_->dc(),
+            paintDestPos_.x,
+            paintDestPos_.y,
+            paintDestSize_.cx,
+            paintDestSize_.cy,
+            nm::GetDC(ct->target)->handle(),
+            paintSrcPos_.x,
+            paintSrcPos_.y,
+            paintSrcSize_.cx,
+            paintSrcSize_.cy,
+            SRCCOPY
+        );
+    }
+}
+
+void MainWindow::paintWindow()
+{
+    const SIZE paintSize=size(paintStruct_.rcPaint);
+    nm::BitBlt
+    (
+        paintStruct_.hdc,
+        paintStruct_.rcPaint.left,
+        paintStruct_.rcPaint.top,
+        paintSize.cx,
+        paintSize.cy,
+        buffer_->dc(),
+        0,
+        0,
+        SRCCOPY
+    );
+}
+
 void MainWindow::initializeBackBrush()
 {
     auto dc=nm::GetDC(handle_);
@@ -514,7 +569,7 @@ void MainWindow::initializeBackBrush()
     auto backBuffer=Buffer::create(maskBuffer->size(),dc->handle());
     RECT backRect=rect(POINT({0,0}),maskBuffer->size());
     nm::FillRect
-    (foreBuffer->dc(),&backRect,(HBRUSH)ct->back_brush1->handle());
+    (foreBuffer->dc(),&backRect,(HBRUSH)ct->backBrush1->handle());
     nm::BitBlt
     (
         backBuffer->dc(),
@@ -540,7 +595,7 @@ void MainWindow::initializeBackBrush()
         SRCAND
     );
     nm::FillRect
-    (backBuffer->dc(),&backRect,(HBRUSH)ct->back_brush2->handle());
+    (backBuffer->dc(),&backRect,(HBRUSH)ct->backBrush2->handle());
     nm::BitBlt
     (
         backBuffer->dc(),
@@ -570,10 +625,13 @@ void MainWindow::initializeBackBrush()
 
 void MainWindow::initializeBuffers()
 {
-    auto dc=nm::GetDC(handle_);
-    SIZE desktopSize=desktop_size();
+    const auto dc=nm::GetDC(handle_);
+    const SIZE desktopSize=desktop_size();
     buffer_=Buffer::create(desktopSize,dc->handle());
-    viewBuffer_=Buffer::create(desktopSize,dc->handle());
+    opaqueBuffer_=Buffer::create(desktopSize,dc->handle());
+    const RECT desktopRect=rect(POINT({0,0}),desktopSize);
+    nm::FillRect
+    (opaqueBuffer_->dc(),&desktopRect,(HBRUSH)ct->opaqueBrush->handle());
 }
 
 void MainWindow::initializeComponents()
@@ -597,7 +655,7 @@ void MainWindow::initializeComponents()
     (
         0,
         ALPHA_DIVISOR,
-        ALPHA_DIVISOR-(int)round(ct->ps->alpha*ALPHA_DIVISOR/(double)255),
+        ALPHA_DIVISOR-(int)round(ps->alpha*ALPHA_DIVISOR/(double)255),
         [] (const int&value)->string
         {return describe(value*100/ALPHA_DIVISOR,"%");},
         MAKEINTRESOURCE(IDB_ALPHA),
@@ -636,7 +694,7 @@ void MainWindow::initializeComponents()
     components_.push_back(foregroundButton_.get());
     halftoneButton_=make_shared<RadioButton>
     (
-        ct->ps->halftone,
+        ps->halftone,
         MAKEINTRESOURCE(IDB_HALFTONE),
         buffer_->dc(),
         HALFTONE_BUTTON_CELL_POS,
@@ -664,7 +722,7 @@ void MainWindow::initializeComponents()
     (
         0,
         MAXIMUM_HOLE/UNIT_LENGTH,
-        ct->ps->hole/UNIT_LENGTH,
+        ps->hole/UNIT_LENGTH,
         [] (const int&value)->string
         {return describe(UNIT_LENGTH*value,"p");},
         MAKEINTRESOURCE(IDB_HOLE),
@@ -730,7 +788,7 @@ void MainWindow::initializeComponents()
     (
         0,
         MAXIMUM_SCALE/SCALE_DIVISOR,
-        ct->ps->scale/SCALE_DIVISOR,
+        ps->scale/SCALE_DIVISOR,
         [] (const int&value)->string
         {return describe(value*SCALE_DIVISOR,"%");},
         MAKEINTRESOURCE(IDB_SCALE),

@@ -14,17 +14,17 @@ TEST_GROUP(helper)
 {
     TEST_SETUP()
     {
-        lg=make_shared<logger>();
-        pt=make_shared<port>();
-        ct=make_shared<context>();
+        im=make_shared<Imitator>();
+        pt=make_shared<Port>();
+        ct=make_shared<Context>();
     }
     TEST_TEARDOWN()
     {
         ct.reset();
         pt.reset();
-        lg.reset();
+        im.reset();
     }
-    shared_ptr<logger> lg;
+    shared_ptr<Imitator> im;
 };
 
 TEST(helper,bind_object)
@@ -76,30 +76,22 @@ TEST(helper,fill)
 TEST(helper,Finalizer)
 {
     function<void()> finalize;
-    lg->mockUp(NAMED_ADDRESS(finalize));
+    im->mockUp(NAMED_ADDRESS(finalize));
     auto finalizer=make_shared<Finalizer>(finalize);
-    CHECK_EQUAL(0,lg->history().size());
+    CHECK_EQUAL(0,im->history().size());
     finalizer.reset();
-    CHECK_EQUAL(1,lg->history().size());
-    CHECK_EQUAL(call(NAMED_ADDRESS(finalize)),lg->history().at(0));
+    CHECK_EQUAL(1,im->history().size());
+    CHECK_EQUAL(call(NAMED_ADDRESS(finalize)),im->history().at(0));
 }
 
 TEST(helper,api_error)
 {
-    lg->mockUpWithResult(NAMED_ADDRESS(pt->GetLastError),(DWORD)1);
+    im->mockUpWithResult(NAMED_ADDRESS(pt->GetLastError),(DWORD)1);
     CHECK_THROWS_API_ERROR("hoge",1,throw api_error("hoge"));
-    CHECK_EQUAL(1,lg->history().size());
+    CHECK_EQUAL(1,im->history().size());
     CHECK_EQUAL
-    (call(NAMED_ADDRESS(pt->GetLastError)),lg->history().at(0));
+    (call(NAMED_ADDRESS(pt->GetLastError)),im->history().at(0));
     CHECK_THROWS_API_ERROR("fuga",2,throw api_error("fuga",2));
-}
-
-TEST(helper,contain_circle)
-{
-    CHECK(contain(POINT({1,2}),SQUARE(1),POINT({2,2})));
-    CHECK_FALSE(contain(POINT({1,2}),SQUARE(1),POINT({2,3})));
-    CHECK(contain(POINT({-2,-4}),SQUARE(2),POINT({-3,-5})));
-    CHECK_FALSE(contain(POINT({-2,-4}),SQUARE(2),POINT({-4,-5})));
 }
 
 TEST(helper,contain_rect)
@@ -118,48 +110,81 @@ TEST(helper,coordinates)
 
 TEST(helper,cursor_pos)
 {
-    lg->mockUpWithBody(NAMED_ADDRESS(pt->GetCursorPos),
+    im->mockUpWithBody(NAMED_ADDRESS(pt->GetCursorPos),
     [] (LPPOINT point)->BOOL
     {
         *point=POINT({1,2});
         return TRUE;
     });
-    lg->mockUpWithBody(NAMED_ADDRESS(pt->ScreenToClient),
+    im->mockUpWithBody(NAMED_ADDRESS(pt->ScreenToClient),
     [] (HWND window,LPPOINT point)->BOOL
     {
         *point=POINT({-2,-4});
         return TRUE;
     });
     CHECK_EQUAL(POINT({-2,-4}),cursor_pos((HWND)0x10));
-    CHECK_EQUAL(2,lg->history().size());
+    CHECK_EQUAL(2,im->history().size());
     CHECK_EQUAL
     (
-        call(NAMED_ADDRESS(pt->GetCursorPos),POINT({0,0})),
-        lg->history().at(0)
+        call
+        (
+            NAMED_ADDRESS(pt->GetCursorPos),
+            make_shared_pod<POINT>(0,0).get()
+        ),
+        im->history().at(0)
     );
     CHECK_EQUAL
     (
-        call(NAMED_ADDRESS(pt->ScreenToClient),(HWND)0x10,POINT({1,2})),
-        lg->history().at(1)
+        call
+        (
+            NAMED_ADDRESS(pt->ScreenToClient),
+            (HWND)0x10,
+            make_shared_pod<POINT>(1,2).get()
+        ),
+        im->history().at(1)
+    );
+}
+
+TEST(helper,desktop_height)
+{
+    im->mockUpWithResult(NAMED_ADDRESS(pt->GetSystemMetrics),1);
+    CHECK_EQUAL(1,desktop_height());
+    CHECK_EQUAL(1,im->history().size());
+    CHECK_EQUAL
+    (
+        call(NAMED_ADDRESS(pt->GetSystemMetrics),SM_CYSCREEN),
+        im->history().at(0)
     );
 }
 
 TEST(helper,desktop_size)
 {
-    lg->mockUpWithBody(NAMED_ADDRESS(pt->GetSystemMetrics),
+    im->mockUpWithBody(NAMED_ADDRESS(pt->GetSystemMetrics),
     [this] (int index)->int
-    {return lg->count(NAMED_ADDRESS(pt->GetSystemMetrics));});
+    {return im->count(NAMED_ADDRESS(pt->GetSystemMetrics));});
     CHECK_EQUAL(SIZE({1,2}),desktop_size());
-    CHECK_EQUAL(2,lg->history().size());
+    CHECK_EQUAL(2,im->history().size());
     CHECK_EQUAL
     (
         call(NAMED_ADDRESS(pt->GetSystemMetrics),SM_CXSCREEN),
-        lg->history().at(0)
+        im->history().at(0)
     );
     CHECK_EQUAL
     (
         call(NAMED_ADDRESS(pt->GetSystemMetrics),SM_CYSCREEN),
-        lg->history().at(1)
+        im->history().at(1)
+    );
+}
+
+TEST(helper,desktop_width)
+{
+    im->mockUpWithResult(NAMED_ADDRESS(pt->GetSystemMetrics),1);
+    CHECK_EQUAL(1,desktop_width());
+    CHECK_EQUAL(1,im->history().size());
+    CHECK_EQUAL
+    (
+        call(NAMED_ADDRESS(pt->GetSystemMetrics),SM_CXSCREEN),
+        im->history().at(0)
     );
 }
 
@@ -172,9 +197,21 @@ TEST(helper,floating_point_number)
     );
     CHECK_EQUAL(1.5,floating_point_number("1.5"));
     CHECK_EQUAL(-2.25,floating_point_number("-2.25"));
+    CHECK_EQUAL(1.5,floating_point_number("a",1.5));
+    CHECK_EQUAL(-2.25,floating_point_number("-2.25",-3.125));
+    {
+        double number=1.5;
+        floating_point_number(&number,"a");
+        CHECK_EQUAL(1.5,number);
+    }
+    {
+        double number=1.5;
+        floating_point_number(&number,"-2.25");
+        CHECK_EQUAL(-2.25,number);
+    }
 }
 
-TEST(helper,getlines)
+TEST(helper,get_lines)
 {
     istringstream iss
     (
@@ -182,7 +219,7 @@ TEST(helper,getlines)
         "fuga\r\n"
         "piyo\r\n"
     );
-    const auto lines=getlines(iss);
+    const auto lines=get_lines(iss);
     CHECK_EQUAL(3,lines.size());
     CHECK_EQUAL("hoge",lines.at(0));
     CHECK_EQUAL("fuga",lines.at(1));
@@ -202,6 +239,18 @@ TEST(helper,integer)
     CHECK_EQUAL(1,integer("1"));
     CHECK_EQUAL(-2,integer("-2"));
     CHECK_EQUAL(3,integer("0x3"));
+    CHECK_EQUAL(1,integer("a",1));
+    CHECK_EQUAL(-2,integer("-2",-3));
+    {
+        int number=1;
+        integer(&number,"a");
+        CHECK_EQUAL(1,number);
+    }
+    {
+        int number=1;
+        integer(&number,"-2");
+        CHECK_EQUAL(-2,number);
+    }
 }
 
 TEST(helper,operator_multiply_POINT_LONG)
@@ -310,10 +359,10 @@ TEST(helper,pos)
     CHECK_EQUAL(POINT({-8,13}),pos(RECT({-8,13,21,-34})));
 }
 
-TEST(helper,putlines)
+TEST(helper,put_lines)
 {
     ostringstream oss;
-    putlines(oss,vector<string>({"hoge","fuga","piyo"}));
+    put_lines(oss,vector<string>({"hoge","fuga","piyo"}));
     CHECK_EQUAL
     (
         "hoge\n"
@@ -345,12 +394,6 @@ TEST(helper,size_RECT)
 {
     CHECK_EQUAL(SIZE({-4,7}),size(RECT({1,-2,-3,5})));
     CHECK_EQUAL(SIZE({29,-47}),size(RECT({-8,13,21,-34})));
-}
-
-TEST(helper,squared_distance)
-{
-    CHECK_EQUAL(9,squared_distance(POINT({0,1}),POINT({0,-2})));
-    CHECK_EQUAL(45,squared_distance(POINT({-2,-3}),POINT({4,-6})));
 }
 
 TEST(helper,tokenize)

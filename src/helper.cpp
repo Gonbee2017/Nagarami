@@ -43,9 +43,6 @@ string chomp(const string&str,const char&ch)
     return result;
 }
 
-bool contain(const POINT&center,const LONG&squaredRadius,const POINT&pos)
-{return squared_distance(center,pos)<=squaredRadius;}
-
 bool contain(const RECT&rect,const POINT&pos)
 {
     return
@@ -66,26 +63,31 @@ POINT cursor_pos(HWND window)
 
 void describe_to_with(ostream&os,const string&separator) {}
 
-SIZE desktop_size()
-{
-    return SIZE(
-    {
-        nm::GetSystemMetrics(SM_CXSCREEN),
-        nm::GetSystemMetrics(SM_CYSCREEN)
-    });
-}
+LONG desktop_height() {return nm::GetSystemMetrics(SM_CYSCREEN);}
 
-double floating_point_number(const string&str)
+SIZE desktop_size() {return SIZE({desktop_width(),desktop_height()});}
+
+LONG desktop_width() {return nm::GetSystemMetrics(SM_CXSCREEN);}
+
+long double floating_point_number(const string&str)
 {
     char*end;
-    double number=strtod(str.c_str(),&end);
+    long double number=strtold(str.c_str(),&end);
     if(*end!='\0')
         throw runtime_error(describe
         ("'",str,"' is an invalid floating-point number."));
     return number;
 }
 
-vector<string> getlines(istream&is)
+long double floating_point_number
+(const string&str,const long double&reserve)
+{
+    long double number=reserve;
+    try {number=floating_point_number(str);} catch(...) {}
+    return number;
+}
+
+vector<string> get_lines(istream&is)
 {
     vector<string> lines;
     string line;
@@ -99,12 +101,19 @@ shared_ptr<istream> input_file
 (const string&name,const ios::openmode&mode)
 {return make_shared<ifstream>(name,mode);}
 
-long integer(const string&str)
+long long integer(const string&str)
 {
     char*end;
-    long number=strtol(str.c_str(),&end,0);
+    long long number=strtoll(str.c_str(),&end,0);
     if(*end!='\0')
         throw runtime_error(describe("'",str,"' is an invalid integer."));
+    return number;
+}
+
+long long integer(const string&str,const long long&reserve)
+{
+    long long number=reserve;
+    try {number=integer(str);} catch(...) {}
     return number;
 }
 
@@ -151,7 +160,7 @@ POINT_DOUBLE point_double(const POINT&point)
 
 POINT pos(const RECT&rect) {return POINT({rect.left,rect.top});}
 
-void putlines(ostream&os,const vector<string>&lines)
+void put_lines(ostream&os,const vector<string>&lines)
 {for(const string&line:lines) os<<line<<endl;}
 
 RECT rect(const POINT&pos,const SIZE&size)
@@ -163,13 +172,6 @@ SIZE size(LPARAM lParam)
 SIZE size(const POINT&pos) {return SIZE({pos.x,pos.y});}
 
 SIZE size(const RECT&rect) {return SIZE({width(rect),height(rect)});}
-
-LONG squared_distance(const POINT&p,const POINT&q)
-{
-    const LONG dx=p.x-q.x;
-    const LONG dy=p.y-q.y;
-    return SQUARE(dx)+SQUARE(dy);
-}
 
 vector<string> tokenize(const string&str,const string&dels)
 {

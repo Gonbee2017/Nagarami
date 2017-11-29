@@ -7,6 +7,7 @@
 #include<functional>
 #include<iomanip>
 #include<iostream>
+#include<memory>
 #include<ostream>
 #include<stdexcept>
 #include<string>
@@ -41,14 +42,17 @@ namespace nm
 
 using namespace std;
 
-constexpr char NULL_STRING[]="null_string";
-constexpr char OMIT_ARGUMENT[]="omit_argument";
+constexpr char NULL_STRING[]="nullstr";
+constexpr unsigned int OMIT_POINTER=0x74696d6fu;
 
 class call
 {
 public:
-    template<class FUNC,class...ARGUMENTS>
-        call(const pair<string,FUNC*>&namedFunc,ARGUMENTS&&...arguments);
+    template<class RESULT,class...ARGUMENTS> call
+    (
+        const pair<string,function<RESULT(ARGUMENTS...)>*>&namedFunc,
+        ARGUMENTS...arguments
+    );
 
     const void*address() const;
     const vector<string>&arguments() const;
@@ -62,7 +66,7 @@ private:
     string name_;
 };
 
-class logger
+class Imitator
 {
 public:
     template<class...ARGUMENTS> void mockUp
@@ -91,6 +95,8 @@ template<class ARGUMENT>
     void describe_each_to(vector<string>&strs,ARGUMENT&&argument);
 template<class LEAD,class...TRAILER> void describe_each_to
 (vector<string>&strs,LEAD&&lead,TRAILER&&...trailer);
+template<class POD,class...ARGUMENTS>
+    shared_ptr<POD> make_shared_pod(ARGUMENTS&&...arguments);
 template<class RESULT,class...ARGUMENTS> ostream&operator<<
 (ostream&os,RESULT(CALLBACK*const procedure)(ARGUMENTS...));
 
@@ -126,13 +132,16 @@ bool operator==(const POINT_DOUBLE&lhs,const POINT_DOUBLE&rhs);
 bool operator==(const RECT&lhs,const RECT&rhs);
 bool operator==(const SIZE&lhs,const SIZE&rhs);
 
-template<class FUNC,class...ARGUMENTS>
-    call::call(const pair<string,FUNC*>&namedFunc,ARGUMENTS&&...arguments):
+template<class RESULT,class...ARGUMENTS> call::call
+(
+    const pair<string,function<RESULT(ARGUMENTS...)>*>&namedFunc,
+    ARGUMENTS...arguments
+):
     address_(namedFunc.second),
     arguments_(describe_each(arguments...)),
     name_(namedFunc.first) {}
 
-template<class...ARGUMENTS> void logger::mockUp
+template<class...ARGUMENTS> void Imitator::mockUp
 (const pair<string,function<void(ARGUMENTS...)>*>&namedFunc)
 {
     *namedFunc.second=[this,namedFunc] (ARGUMENTS&&...arguments)
@@ -140,7 +149,7 @@ template<class...ARGUMENTS> void logger::mockUp
 }
 
 template<class BODY,class RESULT,class...ARGUMENTS>
-    void logger::mockUpWithBody
+    void Imitator::mockUpWithBody
 (
     const pair<string,function<RESULT(ARGUMENTS...)>*>&namedFunc,
     const BODY&body
@@ -154,7 +163,7 @@ template<class BODY,class RESULT,class...ARGUMENTS>
     };
 }
 
-template<class RESULT,class...ARGUMENTS> void logger::mockUpWithResult
+template<class RESULT,class...ARGUMENTS> void Imitator::mockUpWithResult
 (
     const pair<string,function<RESULT(ARGUMENTS...)>*>&namedFunc,
     const RESULT&result
@@ -168,7 +177,7 @@ template<class RESULT,class...ARGUMENTS> void logger::mockUpWithResult
     };
 }
 
-template<class RESULT,class...ARGUMENTS> size_t logger::count
+template<class RESULT,class...ARGUMENTS> size_t Imitator::count
 (const pair<string,function<RESULT(ARGUMENTS...)>*>&namedFunc) const
 {
     return count_if
@@ -205,6 +214,10 @@ template<class LEAD,class...TRAILER> void describe_each_to
     strs.push_back(describe(lead));
     describe_each_to(strs,trailer...);
 }
+
+template<class POD,class...ARGUMENTS>
+    shared_ptr<POD> make_shared_pod(ARGUMENTS&&...arguments)
+{return shared_ptr<POD>(new POD({arguments...}));}
 
 template<class RESULT,class...ARGUMENTS> ostream&operator<<
 (ostream&os,RESULT(CALLBACK*const procedure)(ARGUMENTS...))

@@ -12,11 +12,9 @@ int WINAPI WinMain
     int commandShow
 )
 {
-    pt=make_shared<port>();
+    pt=make_shared<Port>();
     pt->import();
-    ct=make_shared<context>();
-    int result=execute(instance,previousInstance,commandLine,commandShow);
-    ct.reset();
-    pt.reset();
-    return result;
+    ps=make_shared<Properties>();
+    ct=make_shared<Context>();
+    return execute(instance,previousInstance,commandLine,commandShow);
 }
