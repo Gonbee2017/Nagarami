@@ -176,8 +176,13 @@ void GetClientRect(HWND window,LPRECT rect)
 
 void GetCursorPos(LPPOINT pos)
 {
+    static POINT lastPos = POINT({0,0});
     fill(pos,0);
-    if(pt->GetCursorPos(pos)==FALSE) throw api_error("GetCursorPos");
+    if(pt->GetCursorPos(pos)==FALSE) {
+        if (GetLastError() == 5) *pos = lastPos;
+        else throw api_error("GetCursorPos");
+    }
+    lastPos = *pos;
 }
 
 shared_ptr<ReleaseDC> GetDC(HWND window)
